@@ -25,24 +25,20 @@ const DEFAULT_FINANCE_SEEDS = [
 
 export async function GET() {
   try {
-    const countRow = db.prepare("SELECT COUNT(*) as cnt FROM finance_items").get() as { cnt: number }
-    if (countRow.cnt === 0) {
+    const countRes = await db.execute("SELECT COUNT(*) as cnt FROM finance_items")
+    const count = Number(countRes.rows[0]?.cnt ?? 0)
+
+    if (count === 0) {
       console.log("[*] Seeding default balance sheet items into SQLite...")
-      const stmt = db.prepare(
-        "INSERT INTO finance_items (id, category, label, amount, currency) VALUES (?, ?, ?, ?, ?)"
-      )
-      
-      const transaction = db.transaction((seeds) => {
-        for (const s of seeds) {
-          const id = crypto.randomUUID()
-          stmt.run(id, s.category, s.label, s.amount, s.currency)
-        }
-      })
-      transaction(DEFAULT_FINANCE_SEEDS)
+      const statements = DEFAULT_FINANCE_SEEDS.map((s) => ({
+        sql: "INSERT INTO finance_items (id, category, label, amount, currency) VALUES (?, ?, ?, ?, ?)",
+        args: [crypto.randomUUID(), s.category, s.label, s.amount, s.currency]
+      }))
+      await db.batch(statements)
     }
 
-    const items = db.prepare("SELECT * FROM finance_items ORDER BY category, created_at ASC").all()
-    return NextResponse.json(items)
+    const itemsRes = await db.execute("SELECT * FROM finance_items ORDER BY category, created_at ASC")
+    return NextResponse.json(itemsRes.rows)
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Internal server error"
     return NextResponse.json({ error: msg }, { status: 500 })
@@ -56,12 +52,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
     const id = crypto.randomUUID()
-    db.prepare(
-      "INSERT INTO finance_items (id, category, label, amount, currency) VALUES (?, ?, ?, ?, ?)"
-    ).run(id, category, label, amount, currency ?? "THB")
+    await db.execute({
+      sql: "INSERT INTO finance_items (id, category, label, amount, currency) VALUES (?, ?, ?, ?, ?)",
+      args: [id, category, label, amount, currency ?? "THB"]
+    })
 
-    const item = db.prepare("SELECT * FROM finance_items WHERE id = ?").get(id)
-    return NextResponse.json(item, { status: 201 })
+    const itemRes = await db.execute({
+      sql: "SELECT * FROM finance_items WHERE id = ?",
+      args: [id]
+    })
+    return NextResponse.json(itemRes.rows[0], { status: 201 })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Internal server error"
     return NextResponse.json({ error: msg }, { status: 500 })

@@ -34,27 +34,23 @@ const DEFAULT_SEEDS = [
 export async function GET() {
   try {
     // Check if table has items
-    const countRow = db.prepare("SELECT COUNT(*) as cnt FROM monthly_items").get() as { cnt: number }
+    const countRes = await db.execute("SELECT COUNT(*) as cnt FROM monthly_items")
+    const count = Number(countRes.rows[0]?.cnt ?? 0)
     
-    if (countRow.cnt === 0) {
+    if (count === 0) {
       console.log("[*] Seeding default monthly items into SQLite...")
-      const stmt = db.prepare(
-        "INSERT INTO monthly_items (id, type, label, amount, currency) VALUES (?, ?, ?, ?, ?)"
-      )
-      
-      const transaction = db.transaction((seeds) => {
-        for (const s of seeds) {
-          const id = crypto.randomUUID()
-          stmt.run(id, s.type, s.label, s.amount, s.currency)
-        }
-      })
-      transaction(DEFAULT_SEEDS)
+      const statements = DEFAULT_SEEDS.map((s) => ({
+        sql: "INSERT INTO monthly_items (id, type, label, amount, currency) VALUES (?, ?, ?, ?, ?)",
+        args: [crypto.randomUUID(), s.type, s.label, s.amount, s.currency]
+      }))
+      await db.batch(statements)
     }
 
-    const items = db.prepare("SELECT * FROM monthly_items ORDER BY created_at ASC").all()
-    return NextResponse.json(items)
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    const itemsRes = await db.execute("SELECT * FROM monthly_items ORDER BY created_at ASC")
+    return NextResponse.json(itemsRes.rows)
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Internal server error"
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
 
@@ -66,13 +62,18 @@ export async function POST(req: NextRequest) {
     }
     
     const id = crypto.randomUUID()
-    db.prepare(
-      "INSERT INTO monthly_items (id, type, label, amount, currency) VALUES (?, ?, ?, ?, ?)"
-    ).run(id, type, label, amount, currency ?? "THB")
+    await db.execute({
+      sql: "INSERT INTO monthly_items (id, type, label, amount, currency) VALUES (?, ?, ?, ?, ?)",
+      args: [id, type, label, amount, currency ?? "THB"]
+    })
 
-    const item = db.prepare("SELECT * FROM monthly_items WHERE id = ?").get(id)
-    return NextResponse.json(item, { status: 201 })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    const itemRes = await db.execute({
+      sql: "SELECT * FROM monthly_items WHERE id = ?",
+      args: [id]
+    })
+    return NextResponse.json(itemRes.rows[0], { status: 201 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Internal server error"
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
