@@ -24,18 +24,6 @@ const sections: Section[] = [
     color: "from-indigo-50 to-blue-50",
   },
   {
-    href: "/finance?tab=Investments",
-    emoji: "📈",
-    tag: "Finance",
-    title: "Investments",
-    desc: "Portfolio tracker — US stocks and Bitcoin with real-time prices, P&L, 30-day charts, and balance sheet.",
-    stats: [
-      { label: "Markets", value: "US + BTC" },
-      { label: "Track", value: "Auto" },
-    ],
-    color: "from-emerald-50 to-teal-50",
-  },
-  {
     href: "/menu",
     emoji: "🍽️",
     tag: "Food",
@@ -87,7 +75,6 @@ const sections: Section[] = [
 
 const quickLinks = [
   { href: "/finance", label: "Personal Finance" },
-  { href: "/finance?tab=Investments", label: "Investments" },
   { href: "/menu", label: "Food Menu" },
   { href: "/music", label: "Music" },
   { href: "/travel", label: "Travel" },

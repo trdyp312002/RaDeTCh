@@ -6,7 +6,6 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie, Legend, CartesianGrid
 } from "recharts"
-import InvestmentDashboard from "./InvestmentDashboard"
 
 type FinanceData = Record<string, string[][]>
 
@@ -89,10 +88,9 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
   // Hardcode unified tab layout: Overview, Investments, Monthly Expenses tab, Statement, and Sheets tabs
   const sheetTabs = Object.keys(data).filter(k => k !== "Personal Financial Statement" && data[k] && data[k].length > 0)
   const tabs = useMemo(() => [
-    "Personal Finance", 
-    "Investments", 
-    "Monthly Expenses", 
-    "Personal Financial Statement", 
+    "Personal Finance",
+    "Monthly Expenses",
+    "Personal Financial Statement",
     ...sheetTabs
   ], [sheetTabs])
   
@@ -396,7 +394,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
 
   // Parse current active sheet holdings dynamically
   const parsedHoldings = useMemo(() => {
-    if (activeTab === "Personal Finance" || activeTab === "Investments" || activeTab === "Monthly Expenses" || activeTab === "Personal Financial Statement" || activeTab === "BTC transaction") {
+    if (activeTab === "Personal Finance" || activeTab === "Monthly Expenses" || activeTab === "Personal Financial Statement" || activeTab === "BTC transaction") {
       return { holdings: [], summary: { totalValue: "0", totalCost: "0", pnl: "0", pnlPercent: "0%" }, portfolioSummary: [] }
     }
     return parseSheetHoldings(activeTab)
@@ -627,13 +625,10 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
           <div>
             <p className="text-[10px] uppercase tracking-[0.4em] font-semibold text-gray-400 mb-2">Unified Wealth Manager</p>
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-              📊 {isInvestmentsTab ? "Portfolio Tracker" : "Personal Finance Dashboard"}
+              📊 Personal Finance Dashboard
             </h1>
             <p className="text-gray-400 text-xs mt-1.5 max-w-xl">
-              {isInvestmentsTab 
-                ? "Real-time pricing tracking, transaction histories, US stock allocations, and local SQLite data ledger."
-                : "SQLite database backed financial records. Dynamic Recharts visualizations, interactive portfolio metrics, and fully editable spreadsheets."
-              }
+              SQLite database backed financial records. Dynamic Recharts visualizations, interactive portfolio metrics, and fully editable spreadsheets.
             </p>
           </div>
           <div className="flex items-center gap-4 flex-wrap">
@@ -1156,13 +1151,6 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
 
             </div>
 
-          </div>
-        )}
-
-        {/* ─── B. SQLITE INVESTMENTS TAB ─── */}
-        {isInvestmentsTab && (
-          <div className="animate-fadeIn" id="sqlite-investments-panel">
-            <InvestmentDashboard />
           </div>
         )}
 
@@ -1766,7 +1754,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
         )}
 
         {/* ─── E. STANDARD SHEETS TABS (Long-term, Short-term, Store of Wealth) ─── */}
-        {!isBtcTab && !isPfsTab && !isInvestmentsTab && !isOverviewTab && !isExpensesTab && (
+        {!isBtcTab && !isPfsTab && !isOverviewTab && !isExpensesTab && (
           <div className="space-y-8" id="portfolio-tab-view">
             
             {/* Top Metrics Cards */}
