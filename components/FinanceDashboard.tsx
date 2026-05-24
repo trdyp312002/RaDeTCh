@@ -87,7 +87,7 @@ export default function FinanceDashboard() {
   const tabParam = searchParams.get("tab")
 
   const tabs = useMemo(() => [
-    "Personal Finance",
+    "Summary",
     "Long-term Portfolio",
     "Short-term Portfolio",
     "Retirement Portfolio",
@@ -95,7 +95,7 @@ export default function FinanceDashboard() {
     "Personal Financial Statement"
   ], [])
   
-  const [activeTab, setActiveTab] = useState("Personal Finance")
+  const [activeTab, setActiveTab] = useState("Summary")
 
   // ─── SQLite DB States ───────────────────────────────────────────────────────
   const [dbFinanceItems, setDbFinanceItems] = useState<DBFinanceItem[]>([])
@@ -160,7 +160,7 @@ export default function FinanceDashboard() {
   }, [fetchDbHoldings])
 
   useEffect(() => {
-    if (activeTab === "Personal Finance") {
+    if (activeTab === "Summary") {
       fetchDbHoldings()
     }
   }, [activeTab, fetchDbHoldings])
@@ -580,7 +580,7 @@ export default function FinanceDashboard() {
 
 
   const isPfsTab = activeTab === "Personal Financial Statement"
-  const isOverviewTab = activeTab === "Personal Finance"
+  const isOverviewTab = activeTab === "Summary"
   const isExpensesTab = activeTab === "Monthly Expenses"
   const isLongTermTab = activeTab === "Long-term Portfolio"
   const isShortTermTab = activeTab === "Short-term Portfolio"
@@ -594,10 +594,13 @@ export default function FinanceDashboard() {
           <div>
             <p className="text-[10px] uppercase tracking-[0.4em] font-semibold text-gray-400 mb-2">Unified Wealth Manager</p>
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-              📊 Personal Finance Dashboard
+              📊 {isOverviewTab ? "Summary" : activeTab}
             </h1>
             <p className="text-gray-400 text-xs mt-1.5 max-w-xl">
-              SQLite database backed financial records. Dynamic Recharts visualizations, interactive portfolio metrics, and fully editable spreadsheets.
+              {isOverviewTab
+                ? "Wealth overview — net worth, portfolio performance, monthly cashflow, and key metrics across all tabs."
+                : "SQLite database backed financial records. Dynamic Recharts visualizations, interactive portfolio metrics, and fully editable spreadsheets."
+              }
             </p>
           </div>
           <div className="flex items-center gap-4 flex-wrap">
@@ -1087,34 +1090,95 @@ export default function FinanceDashboard() {
               {/* Jump Sections summary cards */}
               <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
                 <div>
-                  <h4 className="text-sm font-bold text-gray-950 mb-4">Financial Sections</h4>
-                  
-                  <div className="space-y-3">
+                  <h4 className="text-sm font-bold text-gray-950 mb-4">All Tabs Overview</h4>
+
+                  <div className="space-y-2.5">
                     {[
-                      { tab: "Long-term Portfolio", label: "Long-term US Stocks", value: masterOverviewData.longTerm.summary.totalValue, pnl: masterOverviewData.longTerm.summary.pnlPercent, color: "bg-indigo-50 text-indigo-700" },
-                      { tab: "Short-term Portfolio", label: "Short-term Assets", value: masterOverviewData.shortTerm.summary.totalValue, pnl: masterOverviewData.shortTerm.summary.pnlPercent, color: "bg-teal-50 text-teal-700" },
-                      { tab: "Retirement Portfolio", label: "DCA Bitcoin Ledger", value: parsedBtc.dashboard.portfolioValue, pnl: parsedBtc.dashboard.avgPnl, color: "bg-orange-50 text-orange-700" },
-                      { tab: "Personal Financial Statement", label: "Gold & Cash reserves", value: masterOverviewData.storeWealth.summary.totalValue, pnl: masterOverviewData.storeWealth.summary.pnlPercent, color: "bg-emerald-50 text-emerald-700" }
+                      {
+                        tab: "Long-term Portfolio",
+                        emoji: "📈",
+                        label: "Long-term (US Stocks)",
+                        value: masterOverviewData.longTerm.summary.totalValue,
+                        cost: masterOverviewData.longTerm.summary.totalCost,
+                        pnl: masterOverviewData.longTerm.summary.pnlPercent,
+                        pnlNum: masterOverviewData.longTerm.summary.pnl,
+                        color: "bg-indigo-50 text-indigo-700",
+                        from: "USD" as const
+                      },
+                      {
+                        tab: "Short-term Portfolio",
+                        emoji: "🤖",
+                        label: "Short-term (AI Bot)",
+                        value: masterOverviewData.shortTerm.summary.totalValue,
+                        cost: masterOverviewData.shortTerm.summary.totalCost,
+                        pnl: masterOverviewData.shortTerm.summary.pnlPercent,
+                        pnlNum: masterOverviewData.shortTerm.summary.pnl,
+                        color: "bg-violet-50 text-violet-700",
+                        from: "USD" as const
+                      },
+                      {
+                        tab: "Retirement Portfolio",
+                        emoji: "₿",
+                        label: "Retirement (Bitcoin DCA)",
+                        value: cleanNum(parsedBtc.dashboard.portfolioValue),
+                        cost: cleanNum(parsedBtc.dashboard.totalInvested),
+                        pnl: parsedBtc.dashboard.avgPnl,
+                        pnlNum: cleanNum(parsedBtc.dashboard.profit),
+                        color: "bg-orange-50 text-orange-700",
+                        from: "USD" as const
+                      },
+                      {
+                        tab: "Monthly Expenses",
+                        emoji: "💳",
+                        label: "Monthly Expenses",
+                        value: parsedPfs.totalFixedNum + parsedPfs.totalVariableNum,
+                        cost: parsedPfs.totalIncomeNum,
+                        pnl: parsedPfs.remainingMoneyNum >= 0 ? "Surplus" : "Deficit",
+                        pnlNum: parsedPfs.remainingMoneyNum,
+                        color: parsedPfs.remainingMoneyNum >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600",
+                        from: "THB" as const
+                      },
+                      {
+                        tab: "Personal Financial Statement",
+                        emoji: "🏦",
+                        label: "Balance Sheet",
+                        value: parsedPfs.totalAssetsNum,
+                        cost: parsedPfs.totalDebtNum,
+                        pnl: parsedPfs.netWorthNum >= 0 ? "Positive" : "Deficit",
+                        pnlNum: parsedPfs.netWorthNum,
+                        color: parsedPfs.netWorthNum >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600",
+                        from: "THB" as const
+                      }
                     ].map((sec, idx) => (
-                      <div 
-                        key={idx} 
+                      <div
+                        key={idx}
                         onClick={() => setActiveTab(sec.tab)}
-                        className="flex justify-between items-center p-3.5 border border-gray-100 hover:border-indigo-100 hover:bg-gray-50 rounded-2xl cursor-pointer transition-all"
+                        className="flex justify-between items-center p-3.5 border border-gray-100 hover:border-indigo-100 hover:bg-gray-50/80 rounded-2xl cursor-pointer transition-all group"
                       >
-                        <div>
-                           <p className="text-xs font-bold text-gray-900 leading-tight">{sec.label}</p>
-                           <span className={`text-[8.5px] font-semibold px-2 py-0.5 rounded-full mt-1.5 inline-block ${sec.color}`}>
-                             {sec.pnl} ROI
-                           </span>
+                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                          <span className="text-base shrink-0">{sec.emoji}</span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-900 leading-tight truncate">{sec.label}</p>
+                            <span className={`text-[8.5px] font-semibold px-1.5 py-0.5 rounded-full mt-1 inline-block ${sec.color}`}>
+                              {sec.pnl}
+                            </span>
+                          </div>
                         </div>
-                        <DualCurrencyValue amount={cleanNum(String(sec.value))} from="USD" className="font-mono text-xs font-bold text-gray-800 text-right" subClassName="text-[9px] text-gray-405 font-normal font-mono mt-0.5 text-right font-semibold" />
+                        <div className="text-right shrink-0 ml-3">
+                          <DualCurrencyValue
+                            amount={sec.value}
+                            from={sec.from}
+                            className="font-mono text-xs font-bold text-gray-800"
+                            subClassName="text-[9px] text-gray-400 font-normal font-mono mt-0.5"
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div className="border-t border-gray-100 pt-4 mt-4 text-center">
-                  <span className="text-[10px] text-gray-400 font-medium">Click on any section card to view detail sheet</span>
+                  <span className="text-[10px] text-gray-400 font-medium">Click any row to navigate →</span>
                 </div>
               </div>
 
