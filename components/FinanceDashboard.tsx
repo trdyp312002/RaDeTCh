@@ -6,6 +6,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie, Legend, CartesianGrid
 } from "recharts"
+import PortfolioTab from "./PortfolioTab"
 
 type FinanceData = Record<string, string[][]>
 
@@ -85,10 +86,13 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
 
-  // Hardcode unified tab layout: Overview, Investments, Monthly Expenses tab, Statement, and Sheets tabs
+  // Hardcode unified tab layout
   const sheetTabs = Object.keys(data).filter(k => k !== "Personal Financial Statement" && data[k] && data[k].length > 0)
   const tabs = useMemo(() => [
     "Personal Finance",
+    "Long-term Portfolio",
+    "Short-term Portfolio",
+    "Retirement Portfolio",
     "Monthly Expenses",
     "Personal Financial Statement",
     ...sheetTabs
@@ -394,7 +398,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
 
   // Parse current active sheet holdings dynamically
   const parsedHoldings = useMemo(() => {
-    if (activeTab === "Personal Finance" || activeTab === "Monthly Expenses" || activeTab === "Personal Financial Statement" || activeTab === "BTC transaction") {
+    if (activeTab === "Personal Finance" || activeTab === "Long-term Portfolio" || activeTab === "Short-term Portfolio" || activeTab === "Retirement Portfolio" || activeTab === "Monthly Expenses" || activeTab === "Personal Financial Statement" || activeTab === "BTC transaction") {
       return { holdings: [], summary: { totalValue: "0", totalCost: "0", pnl: "0", pnlPercent: "0%" }, portfolioSummary: [] }
     }
     return parseSheetHoldings(activeTab)
@@ -613,9 +617,11 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
 
   const isBtcTab = activeTab === "BTC transaction"
   const isPfsTab = activeTab === "Personal Financial Statement"
-  const isInvestmentsTab = activeTab === "Investments"
   const isOverviewTab = activeTab === "Personal Finance"
   const isExpensesTab = activeTab === "Monthly Expenses"
+  const isLongTermTab = activeTab === "Long-term Portfolio"
+  const isShortTermTab = activeTab === "Short-term Portfolio"
+  const isRetirementTab = activeTab === "Retirement Portfolio"
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -1152,6 +1158,17 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
             </div>
 
           </div>
+        )}
+
+        {/* ─── B. PORTFOLIO TABS ─── */}
+        {isLongTermTab && (
+          <PortfolioTab portfolio="long_term" displayCurrency={displayCurrency} fxRates={fxRates} />
+        )}
+        {isShortTermTab && (
+          <PortfolioTab portfolio="short_term" displayCurrency={displayCurrency} fxRates={fxRates} />
+        )}
+        {isRetirementTab && (
+          <PortfolioTab portfolio="retirement" displayCurrency={displayCurrency} fxRates={fxRates} />
         )}
 
         {/* ─── C. INTERACTIVE EDITABLE MONTHLY EXPENSES TAB ─── */}
@@ -1754,7 +1771,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
         )}
 
         {/* ─── E. STANDARD SHEETS TABS (Long-term, Short-term, Store of Wealth) ─── */}
-        {!isBtcTab && !isPfsTab && !isOverviewTab && !isExpensesTab && (
+        {!isBtcTab && !isPfsTab && !isOverviewTab && !isExpensesTab && !isLongTermTab && !isShortTermTab && !isRetirementTab && (
           <div className="space-y-8" id="portfolio-tab-view">
             
             {/* Top Metrics Cards */}
