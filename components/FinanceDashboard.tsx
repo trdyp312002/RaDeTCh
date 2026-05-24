@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -29,7 +29,7 @@ type DBMonthlyItem = {
 // ─── Numeric Parsing Helpers ──────────────────────────────────────────────────
 function cleanNum(val: string): number {
   if (!val) return 0
-  const clean = val.replace(/[$,฿\s,]/g, "")
+  const clean = val.replace(/[$,฿\s]/g, "")
   const num = parseFloat(clean)
   return isNaN(num) ? 0 : num
 }
@@ -54,12 +54,20 @@ const COLORS = [
 ]
 
 // ─── Custom Tooltip ──────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label, prefix = "$" }: any) {
+type TooltipPayloadEntry = { name: string; value: number; color: string }
+type CustomTooltipProps = {
+  active?: boolean
+  payload?: TooltipPayloadEntry[]
+  label?: string
+  prefix?: string
+}
+
+function CustomTooltip({ active, payload, label, prefix = "$" }: CustomTooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-gray-900/95 text-white px-3.5 py-2.5 rounded-xl border border-gray-800 shadow-2xl backdrop-blur-md text-xs">
         {label && <p className="text-gray-400 font-mono mb-1">{label}</p>}
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index) => (
           <div key={index} className="flex items-center gap-2 mt-1">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
             <span className="text-gray-300">{entry.name}:</span>
@@ -94,8 +102,15 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
   const [dbFinanceItems, setDbFinanceItems] = useState<DBFinanceItem[]>([])
   const [dbMonthlyItems, setDbMonthlyItems] = useState<DBMonthlyItem[]>([])
   const [savingState, setSavingState] = useState<Record<string, "saved" | "saving" | "error">>({})
+  const [fxRates, setFxRates] = useState<Record<string, number>>({ THB: 35.5, JPY: 150 })
+  const [displayCurrency, setDisplayCurrency] = useState<"THB" | "USD">("THB")
+  const [overviewMetricTab, setOverviewMetricTab] = useState<"payoff" | "goals">("payoff")
+  
+  // Payoff simulator inputs
+  const [payoffMonthly, setPayoffMonthly] = useState<string>("1500")
+  const [payoffInterest, setPayoffInterest] = useState<string>("15")
 
-  // Fetch db items on mount
+  // Fetch db items and fx rates on mount
   useEffect(() => {
     fetch("/api/finance")
       .then(res => res.json())
@@ -106,7 +121,76 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
       .then(res => res.json())
       .then(setDbMonthlyItems)
       .catch(console.error)
+
+    fetch("/api/fx")
+      .then(res => res.json())
+      .then(d => {
+        if (d?.rates) setFxRates(d.rates)
+      })
+      .catch(console.error)
   }, [])
+
+  // Currency Converter Helpers
+  const convertAmount = (amount: number, from: string, to: string) => {
+    if (from === to) return amount
+    const thbRate = fxRates.THB || 35.5
+    
+    // First, convert from original currency to USD
+    let usdVal = amount
+    if (from === "THB") {
+      usdVal = amount / thbRate
+    } else if (from === "JPY") {
+      usdVal = amount / (fxRates.JPY || 150)
+    }
+    
+    // Then convert from USD to target currency
+    if (to === "USD") {
+      return usdVal
+    } else {
+      return usdVal * thbRate
+    }
+  }
+
+  const formatCurrency = (amount: number, currency: "THB" | "USD") => {
+    if (currency === "THB") {
+      return "฿" + amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    } else {
+      return "$" + amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    }
+  }
+
+  // Dual Currency Renderer Component
+  const DualCurrencyValue = ({ amount, from, className = "", subClassName = "", inline = false }: {
+    amount: number
+    from: "THB" | "USD"
+    className?: string
+    subClassName?: string
+    inline?: boolean
+  }) => {
+    const primaryVal = convertAmount(amount, from, displayCurrency)
+    const secondaryCurrency = displayCurrency === "THB" ? "USD" : "THB"
+    const secondaryVal = convertAmount(amount, from, secondaryCurrency)
+    
+    if (inline) {
+      return (
+        <span className={className}>
+          {formatCurrency(primaryVal, displayCurrency)}{" "}
+          <span className={`text-[10px] text-gray-400 font-normal font-mono ${subClassName}`}>
+            ({formatCurrency(secondaryVal, secondaryCurrency)})
+          </span>
+        </span>
+      )
+    }
+    
+    return (
+      <div className="flex flex-col">
+        <span className={className}>{formatCurrency(primaryVal, displayCurrency)}</span>
+        <span className={`text-[10px] text-gray-450 font-normal font-mono mt-0.5 ${subClassName}`}>
+          ~{formatCurrency(secondaryVal, secondaryCurrency)}
+        </span>
+      </div>
+    )
+  }
 
   // Automatically select parameter tab on mount
   useEffect(() => {
@@ -248,7 +332,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
   // ─── Data Parsers & Syntheses ────────────────────────────────────────────────
 
   // 1. Long-term / Short-term / Store of Wealth parser helper
-  const parseSheetHoldings = (sheetName: string) => {
+  const parseSheetHoldings = useCallback((sheetName: string) => {
     const currentData = data[sheetName] || []
     const holdings: any[] = []
     const summary: any = { totalValue: "0", totalCost: "0", pnl: "0", pnlPercent: "0%" }
@@ -308,7 +392,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
     })
 
     return { holdings, summary, portfolioSummary }
-  }
+  }, [data])
 
   // Parse current active sheet holdings dynamically
   const parsedHoldings = useMemo(() => {
@@ -316,7 +400,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
       return { holdings: [], summary: { totalValue: "0", totalCost: "0", pnl: "0", pnlPercent: "0%" }, portfolioSummary: [] }
     }
     return parseSheetHoldings(activeTab)
-  }, [data, activeTab])
+  }, [data, activeTab, parseSheetHoldings])
 
   // 2. BTC transaction parser
   const parsedBtc = useMemo(() => {
@@ -469,7 +553,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
       shortTerm,
       storeWealth
     }
-  }, [data, parsedBtc])
+  }, [data, parsedBtc, parseSheetHoldings])
 
   // ─── Form Submission Local Hooks ───────────────────────────────────────────
   const [newExpenseType, setNewExpenseType] = useState<DBMonthlyItem["type"]>("expense_fixed")
@@ -552,9 +636,35 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
               }
             </p>
           </div>
-          <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-emerald-100 shadow-sm animate-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            SQLite Active
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Base Currency Switcher Toggle */}
+            <div className="flex items-center bg-gray-100 p-1 rounded-2xl border border-gray-200/80 shadow-sm">
+              <button
+                onClick={() => setDisplayCurrency("THB")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                  displayCurrency === "THB"
+                    ? "bg-white text-gray-950 shadow-sm scale-102"
+                    : "text-gray-400 hover:text-gray-700"
+                }`}
+              >
+                ฿ THB
+              </button>
+              <button
+                onClick={() => setDisplayCurrency("USD")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                  displayCurrency === "USD"
+                    ? "bg-white text-gray-950 shadow-sm scale-102"
+                    : "text-gray-400 hover:text-gray-700"
+                }`}
+              >
+                $ USD
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-emerald-100 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              SQLite Active
+            </div>
           </div>
         </div>
       </header>
@@ -584,26 +694,33 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
           <div className="space-y-8 animate-fadeIn" id="overview-dashboard">
             
             {/* Master Net Worth Banner */}
-            <div className="bg-gradient-to-r from-gray-900 to-slate-800 rounded-3xl p-8 text-white shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 relative overflow-hidden">
-              <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-indigo-500/20 via-transparent to-transparent pointer-events-none" />
+            <div className={`border-2 rounded-3xl p-8 text-white shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 relative overflow-hidden transition-all duration-300 ${
+              parsedPfs.netWorthNum >= 0 
+                ? "bg-gradient-to-r from-gray-900 via-slate-850 to-slate-800 border-slate-700/50" 
+                : "bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/20 border-red-950/10"
+            }`}>
+              <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent pointer-events-none" />
               <div>
                 <p className="text-[10px] uppercase tracking-[0.4em] text-gray-400 font-semibold mb-2">Master Net Worth Summary</p>
-                <h2 className="text-4xl font-extrabold font-mono tracking-tight text-emerald-400">
-                  {parsedPfs.netWorth}
-                </h2>
-                <p className="text-xs text-gray-300 mt-2 max-w-lg">
-                  Reflected in Thai Baht (฿). This represents your net liquidity and investment capital after subtracting your SPaylator, SEasyCash, and bank debt leverages.
+                <div className={`text-4xl font-extrabold font-mono tracking-tight ${parsedPfs.netWorthNum >= 0 ? "text-emerald-400" : "text-rose-500"}`}>
+                  <DualCurrencyValue amount={parsedPfs.netWorthNum} from="THB" className="text-4xl font-extrabold font-mono tracking-tight" subClassName="text-xs font-semibold font-mono text-gray-400 mt-1.5" />
+                </div>
+                <p className="text-xs text-gray-300 mt-2.5 max-w-lg leading-relaxed">
+                  {parsedPfs.netWorthNum >= 0 
+                    ? `ความมั่งคั่งสุทธิสะท้อนในหน่วยหลัก (${displayCurrency}). แสดงมูลค่าสินทรัพย์รวมที่หักลบภาระหนี้สินทั้งหมดแล้ว` 
+                    : `⚠️ ความมั่งคั่งสุทธิติดลบ! (Debt Deficit) คุณมีภาระหนี้สินรวมมากกว่าสินทรัพย์ในปัจจุบัน แนะนำให้ชะลอการลงทุนและเร่งปลดหนี้สินก่อน`
+                  }
                 </p>
               </div>
 
               <div className="flex gap-4 flex-wrap">
                 <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4.5 border border-white/10 min-w-[140px] text-right">
                   <p className="text-[9px] uppercase tracking-widest text-gray-400 mb-0.5">Total Assets</p>
-                  <p className="text-sm font-bold font-mono text-emerald-400">{parsedPfs.totalAssets}</p>
+                  <DualCurrencyValue amount={parsedPfs.totalAssetsNum} from="THB" className="text-sm font-bold font-mono text-emerald-400" subClassName="text-[10px] text-gray-400 font-mono mt-0.5" />
                 </div>
                 <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4.5 border border-white/10 min-w-[140px] text-right">
                   <p className="text-[9px] uppercase tracking-widest text-gray-400 mb-0.5">Total Liabilities</p>
-                  <p className="text-sm font-bold font-mono text-rose-400">{parsedPfs.totalDebt}</p>
+                  <DualCurrencyValue amount={parsedPfs.totalDebtNum} from="THB" className="text-sm font-bold font-mono text-rose-400" subClassName="text-[10px] text-gray-400 font-mono mt-0.5" />
                 </div>
               </div>
             </div>
@@ -615,14 +732,17 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
               <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
                   <p className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Portfolio Valuation</p>
-                  <h3 className="text-3xl font-extrabold text-gray-900 font-mono">
-                    ${masterOverviewData.totalPortfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </h3>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold mt-2 inline-block ${
-                    masterOverviewData.totalPnl >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                  }`}>
-                    {masterOverviewData.totalPnl >= 0 ? "+" : ""}{masterOverviewData.totalPnlPercent.toFixed(2)}% ROI
-                  </span>
+                  <DualCurrencyValue amount={masterOverviewData.totalPortfolioValue} from="USD" className="text-3xl font-extrabold text-gray-900 font-mono" subClassName="text-xs text-gray-400 font-semibold font-mono mt-1" />
+                  <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      masterOverviewData.totalPnl >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                    }`}>
+                      {masterOverviewData.totalPnl >= 0 ? "+" : ""}{masterOverviewData.totalPnlPercent.toFixed(2)}% ROI
+                    </span>
+                    <span className="text-[9.5px] text-gray-400 font-semibold font-mono">
+                      (<DualCurrencyValue amount={masterOverviewData.totalPnl} from="USD" inline={true} />)
+                    </span>
+                  </div>
                 </div>
                 <button 
                   onClick={() => setActiveTab("Long-term")}
@@ -636,12 +756,20 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
               <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
                   <p className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Monthly Inflow Buffer</p>
-                  <h3 className="text-3xl font-extrabold text-gray-900 font-mono">
-                    {parsedPfs.remainingMoney}
-                  </h3>
-                  <span className="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full font-bold mt-2 inline-block">
-                    Earnings Reserve Left
-                  </span>
+                  <DualCurrencyValue amount={parsedPfs.remainingMoneyNum} from="THB" className="text-3xl font-extrabold text-gray-900 font-mono" subClassName="text-xs text-gray-400 font-semibold font-mono mt-1" />
+                  {parsedPfs.remainingMoneyNum <= 0 ? (
+                    <span className="text-[10px] text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full font-bold mt-2.5 inline-block border border-rose-100 animate-pulse">
+                      🚨 วิกฤต! งบประมาณติดลบ (Critical Deficit)
+                    </span>
+                  ) : parsedPfs.remainingMoneyNum < 1500 ? (
+                    <span className="text-[10px] text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full font-bold mt-2.5 inline-block border border-amber-100">
+                      ⚠️ ระวัง! งบประมาณกระชั้นชิด (Tight Budget)
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full font-bold mt-2.5 inline-block border border-emerald-100">
+                      ✓ ปลอดภัย! งบประมาณคงเหลือดี (Healthy Buffer)
+                    </span>
+                  )}
                 </div>
                 <button 
                   onClick={() => setActiveTab("Personal Financial Statement")}
@@ -658,8 +786,8 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
                   <h3 className="text-3xl font-extrabold text-orange-500 font-mono">
                     {parsedBtc.dashboard.totalBtc} BTC
                   </h3>
-                  <span className="text-[10px] text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full font-bold mt-2 inline-block">
-                    Value: ${parsedBtc.dashboard.portfolioValue}
+                  <span className="text-[10px] text-orange-500 bg-orange-50 px-2.5 py-1 rounded-full font-bold mt-2.5 inline-block border border-orange-100">
+                    Value: <DualCurrencyValue amount={cleanNum(parsedBtc.dashboard.portfolioValue)} from="USD" inline={true} />
                   </span>
                 </div>
                 <button 
@@ -676,38 +804,321 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               
               {/* Pie Allocation */}
-              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[360px] lg:col-span-2">
-                <div>
-                  <h4 className="text-sm font-bold text-gray-950 mb-1">Master Portfolio Weight Allocation</h4>
-                  <p className="text-[11px] text-gray-400 mb-6">Percentage weighting consolidating all US Stocks, Crypto, Bitcoin, and cash wealth reserves.</p>
+              {/* Pie Allocation or Savings Goal Hub if empty */}
+              {masterOverviewData.totalPortfolioValue > 0 ? (
+                <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[360px] lg:col-span-2">
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-950 mb-1">Master Portfolio Weight Allocation</h4>
+                    <p className="text-[11px] text-gray-400 mb-6">Percentage weighting consolidating all US Stocks, Crypto, Bitcoin, and cash wealth reserves.</p>
+                  </div>
+                  <div className="h-64 relative flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={masterOverviewData.pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={65}
+                          outerRadius={85}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {masterOverviewData.pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          iconSize={10} 
+                          iconType="circle"
+                          wrapperStyle={{ fontSize: "10px", paddingTop: "15px" }} 
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 relative flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={masterOverviewData.pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={65}
-                        outerRadius={85}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {masterOverviewData.pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend 
-                        verticalAlign="bottom" 
-                        iconSize={10} 
-                        iconType="circle"
-                        wrapperStyle={{ fontSize: "10px", paddingTop: "15px" }} 
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+              ) : (
+                <div className="bg-white border border-gray-150 rounded-3xl p-6.5 shadow-sm flex flex-col justify-between min-h-[420px] lg:col-span-2">
+                  <div>
+                    <div className="flex justify-between items-center mb-2.5 flex-wrap gap-2">
+                      <h4 className="text-sm font-extrabold text-gray-950 flex items-center gap-1.5">
+                        🎯 Savings Goals & Interactive Debt Payoff
+                      </h4>
+                      
+                      {/* Sub Tabs */}
+                      <div className="flex bg-gray-100 p-0.5 rounded-xl border border-gray-250">
+                        <button
+                          onClick={() => setOverviewMetricTab("payoff")}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                            overviewMetricTab === "payoff"
+                              ? "bg-white text-indigo-600 shadow-sm"
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                        >
+                          💸 Debt Payoff Simulator
+                        </button>
+                        <button
+                          onClick={() => setOverviewMetricTab("goals")}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                            overviewMetricTab === "goals"
+                              ? "bg-white text-indigo-600 shadow-sm"
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                        >
+                          🛡️ Safety Net & Goals
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <p className="text-[11px] text-gray-400 mb-6 leading-relaxed">
+                      {overviewMetricTab === "payoff"
+                        ? "เนื่องจากพอร์ตลงทุนหลักยังว่างอยู่ หน้าจำลองปลดหนี้สินนี้จะช่วยแสดงทิศทางและระยะเวลาที่คุณจะปลดแอกหนี้สินทั้งหมดได้สำเร็จ"
+                        : "วิเคราะห์เงินสำรองฉุกเฉินปัจจุบัน (Emergency Fund) เปรียบเทียบกับค่าใช้จ่ายรายเดือนคงที่และไม่คงที่ของคุณ"
+                      }
+                    </p>
+                  </div>
+
+                  {overviewMetricTab === "payoff" ? (() => {
+                    const totalDebt = parsedPfs.totalDebtNum
+                    const monthlyPay = parseFloat(payoffMonthly) || 500
+                    const rateVal = parseFloat(payoffInterest) || 0
+                    
+                    // math logic
+                    let payoffMonths = 0
+                    let totalInterestAccrued = 0
+                    let isNeverEnding = false
+                    
+                    if (totalDebt > 0) {
+                      const monthlyRate = (rateVal / 100) / 12
+                      if (monthlyRate === 0) {
+                        payoffMonths = Math.ceil(totalDebt / monthlyPay)
+                      } else {
+                        if (monthlyPay <= totalDebt * monthlyRate) {
+                          isNeverEnding = true
+                        } else {
+                          payoffMonths = Math.ceil(
+                            Math.log(monthlyPay / (monthlyPay - totalDebt * monthlyRate)) / Math.log(1 + monthlyRate)
+                          )
+                          totalInterestAccrued = Math.max(0, (monthlyPay * payoffMonths) - totalDebt)
+                        }
+                      }
+                    }
+                    
+                    const payoffDate = new Date()
+                    if (!isNeverEnding && payoffMonths > 0) {
+                      payoffDate.setMonth(payoffDate.getMonth() + payoffMonths)
+                    }
+                    
+                    return (
+                      <div className="space-y-5 flex-1 flex flex-col justify-between">
+                        {/* Sliders Area */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-bold text-gray-700">ผ่อนชำระต่อเดือน (Monthly Payoff)</span>
+                              <span className="font-mono font-bold text-indigo-600">
+                                {formatCurrency(monthlyPay, "THB")}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="500"
+                              max="15000"
+                              step="250"
+                              value={payoffMonthly}
+                              onChange={(e) => setPayoffMonthly(e.target.value)}
+                              className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                            />
+                            <div className="flex justify-between text-[9px] text-gray-400 font-mono">
+                              <span>฿500</span>
+                              <span>฿15,000</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-bold text-gray-700">อัตราดอกเบี้ยเฉลี่ยรายปี (Est. APR)</span>
+                              <span className="font-mono font-bold text-indigo-600">
+                                {rateVal}%
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="30"
+                              step="0.5"
+                              value={payoffInterest}
+                              onChange={(e) => setPayoffInterest(e.target.value)}
+                              className="w-full h-1.5 bg-gray-250 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                            />
+                            <div className="flex justify-between text-[9px] text-gray-400 font-mono">
+                              <span>0% (ไม่มีดอกเบี้ย)</span>
+                              <span>30% APR</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Debts breakdown bars */}
+                        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4.5 space-y-3.5">
+                          <p className="text-[10px] uppercase tracking-wider font-extrabold text-gray-500 mb-1.5">สัดส่วนหนี้สิน (Debt Breakdown)</p>
+                          {parsedPfs.debts.length === 0 ? (
+                            <p className="text-xs text-gray-400 text-center py-2">ไม่มีภาระหนี้สินในระบบ</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {parsedPfs.debts.map((debt, index) => {
+                                const percentage = totalDebt > 0 ? (debt.amount / totalDebt) * 100 : 0
+                                return (
+                                  <div key={debt.id} className="space-y-1">
+                                    <div className="flex justify-between text-xs font-semibold">
+                                      <span className="text-gray-700">{debt.label}</span>
+                                      <span className="font-mono text-gray-900">
+                                        <DualCurrencyValue amount={debt.amount} from="THB" inline={true} /> ({percentage.toFixed(1)}%)
+                                      </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full rounded-full transition-all duration-500" 
+                                        style={{ 
+                                          backgroundColor: COLORS[index % COLORS.length],
+                                          width: `${percentage}%` 
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Payoff Math Results */}
+                        <div className={`rounded-2xl p-4.5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left border transition-all duration-300 ${
+                          isNeverEnding 
+                            ? "bg-red-50/60 border-red-100 text-red-900" 
+                            : "bg-indigo-50/50 border-indigo-100 text-indigo-950"
+                        }`}>
+                          {isNeverEnding ? (
+                            <div className="w-full text-center py-1">
+                              <p className="text-xs font-bold text-red-600 animate-pulse mb-1">🚨 ยอดชำระน้อยกว่าดอกเบี้ยสะสม!</p>
+                              <p className="text-[10.5px] text-red-500 leading-relaxed font-semibold">ดอกเบี้ยรายเดือนของหนี้มีจำนวนสูงกว่ายอดจ่ายคืน กรุณาเลื่อนแถบสไลด์จ่ายคืนต่อเดือนให้สูงขึ้น</p>
+                            </div>
+                          ) : (
+                            <>
+                              <div>
+                                <p className="text-[10px] uppercase tracking-wider font-extrabold text-indigo-500/80 mb-1">คาดว่าจะหมดหนี้สินภายใน (Payoff Date)</p>
+                                <p className="text-lg font-black font-sans text-indigo-900">
+                                  {payoffMonths === 0 ? "ไม่มีหนี้สิน" : payoffDate.toLocaleDateString("th-TH", { year: "numeric", month: "long" })}
+                                </p>
+                                <p className="text-[10px] text-indigo-600 font-semibold font-mono mt-0.5">
+                                  ใช้เวลาผ่อนชำระ {payoffMonths} เดือน (ชำระดอกเบี้ยสะสม: <DualCurrencyValue amount={totalInterestAccrued} from="THB" inline={true} />)
+                                </p>
+                              </div>
+                              <div className="bg-indigo-600 text-white font-bold px-4 py-2.5 rounded-xl text-center shadow-md min-w-[120px] transition-all">
+                                <p className="text-[8px] uppercase tracking-widest text-indigo-200">ยอดชำระสุทธิ</p>
+                                <p className="text-sm font-extrabold font-mono mt-0.5">
+                                  <DualCurrencyValue amount={totalDebt + totalInterestAccrued} from="THB" inline={true} className="text-sm font-extrabold text-white" />
+                                </p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })() : (() => {
+                    const cashTotal = parsedPfs.assets[0]?.items.reduce((sum, item) => sum + item.amount, 0) || 0
+                    const monthlyExpenses = parsedPfs.totalFixedNum + parsedPfs.totalVariableNum
+                    const coveredMonths = monthlyExpenses > 0 ? (cashTotal / monthlyExpenses) : 0
+                    
+                    // safety net levels
+                    let safetyRating = ""
+                    let safetyAdvice = ""
+                    let safetyColor = ""
+                    
+                    if (coveredMonths < 1) {
+                      safetyRating = "🔴 ระดับวิกฤต (Critical)"
+                      safetyAdvice = "คุณมีเงินสำรองต่ำกว่าค่าใช้จ่าย 1 เดือน ควรเร่งเก็บออมเงินส่วนนี้ด่วนเพื่อเป็นเบาะกันกระแทก"
+                      safetyColor = "bg-rose-500"
+                    } else if (coveredMonths < 3) {
+                      safetyRating = "🟠 ระดับเตือนภัย (Warning)"
+                      safetyAdvice = "เงินสำรองฉุกเฉินยังน้อยเกินไป แนะนำให้สะสมเงินสดเพิ่มให้ครอบคลุม 3-6 เดือนของค่าใช้จ่าย"
+                      safetyColor = "bg-amber-500"
+                    } else if (coveredMonths < 6) {
+                      safetyRating = "🟢 ระดับปลอดภัย (Healthy)"
+                      safetyAdvice = "ยอดเยี่ยม! คุณมีเกราะป้องกันทางการเงินที่ดีมาก สามารถรับมือเหตุฉุกเฉินได้เป็นอย่างดี"
+                      safetyColor = "bg-emerald-500"
+                    } else {
+                      safetyRating = "✨ ระดับดีเยี่ยม (Excellent)"
+                      safetyAdvice = "เงินสำรองแข็งแกร่งมาก! พร้อมขยายการเก็บออมส่วนเกินไปลงทุนเพื่อต่อยอดความมั่งคั่ง"
+                      safetyColor = "bg-teal-500"
+                    }
+
+                    // savings goal target: ฿5,000 for emergency or payoff
+                    const firstGoalTarget = 5000
+                    const goalProgress = Math.min(100, (cashTotal / firstGoalTarget) * 100)
+
+                    return (
+                      <div className="space-y-5 flex-1 flex flex-col justify-between">
+                        {/* Emergency Safety Net Visuals */}
+                        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 space-y-4">
+                          <div className="flex justify-between items-start flex-wrap gap-2">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-wider font-extrabold text-gray-500 mb-1">ระยะเวลาปลอดภัยทางการเงิน (Safety Net)</p>
+                              <h5 className="text-xl font-extrabold text-gray-900 font-sans">
+                                {coveredMonths.toFixed(1)} เดือน <span className="text-xs text-gray-400 font-normal font-sans">(Months of Expenses covered)</span>
+                              </h5>
+                            </div>
+                            <span className="text-[10.5px] px-2.5 py-1 rounded-full font-bold bg-white shadow-sm border border-gray-150">
+                              {safetyRating}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="w-full bg-gray-250 h-3 rounded-full overflow-hidden relative shadow-inner">
+                              <div 
+                                className={`h-full rounded-full transition-all duration-700 ${safetyColor}`}
+                                style={{ width: `${Math.min(100, (coveredMonths / 6) * 100)}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-[9px] text-gray-400 font-mono">
+                              <span>0 เดือน</span>
+                              <span>เป้าหมายขั้นต่ำ 3 เดือน</span>
+                              <span>เป้าหมายสูงสุด 6 เดือน+</span>
+                            </div>
+                          </div>
+
+                          <p className="text-[11px] text-gray-500 leading-relaxed font-semibold">
+                            💡 **แนะนำ:** {safetyAdvice}
+                          </p>
+                        </div>
+
+                        {/* First Goal Goal Tracker */}
+                        <div className="bg-indigo-50/40 border border-indigo-100/50 rounded-2xl p-5 space-y-3.5">
+                          <div className="flex justify-between items-center font-bold text-xs">
+                            <span className="text-indigo-950">🎯 เป้าหมายเก็บเงินสำรองฉุกเฉิน ฿5,000 แรก</span>
+                            <span className="font-mono text-indigo-700">
+                              {goalProgress.toFixed(0)}%
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <div className="w-full bg-indigo-150 h-2.5 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full rounded-full bg-indigo-600 transition-all duration-700"
+                                style={{ width: `${goalProgress}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-[9.5px] text-indigo-800 font-semibold font-mono">
+                              <span>สะสมแล้ว: <DualCurrencyValue amount={cashTotal} from="THB" inline={true} /></span>
+                              <span>เป้าหมาย: <DualCurrencyValue amount={firstGoalTarget} from="THB" inline={true} /></span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
-              </div>
+              )}
 
               {/* Jump Sections summary cards */}
               <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
@@ -732,7 +1143,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
                             {sec.pnl} ROI
                           </span>
                         </div>
-                        <span className="font-mono text-xs font-bold text-gray-800">${sec.value}</span>
+                        <DualCurrencyValue amount={cleanNum(sec.value)} from="USD" className="font-mono text-xs font-bold text-gray-800 text-right" subClassName="text-[9px] text-gray-405 font-normal font-mono mt-0.5 text-right font-semibold" />
                       </div>
                     ))}
                   </div>
@@ -1125,7 +1536,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
 
                 {/* DEPT Section */}
                 <div className="bg-red-600 text-white py-2 px-4 text-xs font-bold text-center uppercase tracking-wider">
-                  Dept (หนี้สิน)
+                  Debt (หนี้สิน)
                 </div>
                 <div className="bg-red-50 px-4 py-1.5 text-[10px] font-bold text-red-700 uppercase tracking-widest border-b border-red-100">
                   Leverage (เงินกู้และหนี้สินคงเหลือ)
@@ -1162,9 +1573,9 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
                   + Add Liability
                 </button>
 
-                {/* Total Dept Row */}
+                {/* Total Debt Row */}
                 <div className="flex items-center bg-red-600 text-white">
-                  <span className="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wide">Total Dept</span>
+                  <span className="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wide">Total Debt</span>
                   <span className="w-32 px-3 py-2.5 text-xs font-extrabold font-mono text-right border-l border-red-500">{parsedPfs.totalDebt}</span>
                   <div className="w-8" />
                 </div>

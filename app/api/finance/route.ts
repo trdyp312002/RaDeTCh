@@ -41,8 +41,9 @@ export async function GET() {
 
     const items = db.prepare("SELECT * FROM finance_items ORDER BY category, created_at ASC").all()
     return NextResponse.json(items)
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Internal server error"
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
 
@@ -59,7 +60,8 @@ export async function POST(req: NextRequest) {
 
     const item = db.prepare("SELECT * FROM finance_items WHERE id = ?").get(id)
     return NextResponse.json(item, { status: 201 })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Internal server error"
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
