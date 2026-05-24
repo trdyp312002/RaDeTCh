@@ -5,6 +5,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie, Legend, CartesianGrid
 } from "recharts"
+import InvestmentDashboard from "./InvestmentDashboard"
 
 type FinanceData = Record<string, string[][]>
 
@@ -58,14 +59,16 @@ function CustomTooltip({ active, payload, label, prefix = "$" }: any) {
 }
 
 export default function FinanceDashboard({ data }: { data: FinanceData }) {
-  const tabs = Object.keys(data).filter(k => data[k] && data[k].length > 0)
-  const [activeTab, setActiveTab] = useState(tabs[0] || "")
+  // Hardcode unified tab layout: Personal Finance overview, SQLite Investments, and Sheets worksheets
+  const sheetTabs = Object.keys(data).filter(k => data[k] && data[k].length > 0)
+  const tabs = useMemo(() => ["Personal Finance", "Investments", ...sheetTabs], [sheetTabs])
+  const [activeTab, setActiveTab] = useState("Personal Finance")
 
   // ─── Data Parsers ───────────────────────────────────────────────────────────
 
-  // 1. Long-term / Short-term / Store of Wealth parser
-  const parsedHoldings = useMemo(() => {
-    const currentData = data[activeTab] || []
+  // 1. Long-term / Short-term / Store of Wealth parser helper
+  const parseSheetHoldings = (sheetName: string) => {
+    const currentData = data[sheetName] || []
     const holdings: any[] = []
     const summary: any = { totalValue: "0", totalCost: "0", pnl: "0", pnlPercent: "0%" }
     const portfolioSummary: any[] = []
@@ -75,7 +78,6 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
       const portfolio = row[1]?.trim() || ""
       const assetName = row[2]?.trim() || ""
 
-      // Standard Holdings parsing
       if (
         type &&
         type !== "ประเภท" &&
@@ -99,7 +101,6 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
         })
       }
 
-      // Summary search inside rows
       row.forEach((cell, cellIndex) => {
         const trimmed = cell?.trim()
         if (trimmed === "มูลค่าปัจจุบัน" && cellIndex >= 11) {
@@ -126,13 +127,20 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
     })
 
     return { holdings, summary, portfolioSummary }
+  }
+
+  // Parse current active sheet holdings dynamically
+  const parsedHoldings = useMemo(() => {
+    if (activeTab === "Personal Finance" || activeTab === "Investments" || activeTab === "BTC transaction" || activeTab === "Personal Financial Statement") {
+      return { holdings: [], summary: { totalValue: "0", totalCost: "0", pnl: "0", pnlPercent: "0%" }, portfolioSummary: [] }
+    }
+    return parseSheetHoldings(activeTab)
   }, [data, activeTab])
 
   // 2. BTC transaction parser
   const parsedBtc = useMemo(() => {
-    if (activeTab !== "BTC transaction") return null
-
-    const currentData = data[activeTab] || []
+    const sheetName = "BTC transaction"
+    const currentData = data[sheetName] || []
     const transactions: any[] = []
     const dashboard: any = {
       totalBtc: "0",
@@ -186,13 +194,12 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
     })
 
     return { transactions, dashboard }
-  }, [data, activeTab])
+  }, [data])
 
   // 3. Personal Financial Statement parser
   const parsedPfs = useMemo(() => {
-    if (activeTab !== "Personal Financial Statement") return null
-
-    const currentData = data[activeTab] || []
+    const sheetName = "Personal Financial Statement"
+    const currentData = data[sheetName] || []
     const assets: { label: string; amount: string }[] = []
     const debts: { label: string; amount: string }[] = []
     const income: { label: string; amount: string }[] = []
@@ -272,13 +279,51 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
       assets, debts, income, fixedExpenses, variableExpenses,
       totalAssets, totalDebt, netWorth, totalIncome, totalFixedExpenses, totalVariableExpenses, remainingMoney
     }
-  }, [data, activeTab])
+  }, [data])
 
-  // ─── Chart Data Preparations ────────────────────────────────────────────────
+  // ─── Master Overview Preparations ──────────────────────────────────────────
+
+  // Consolidated master asset data compiled from all sheets
+  const masterOverviewData = useMemo(() => {
+    const longTerm = parseSheetHoldings("Long-term")
+    const shortTerm = parseSheetHoldings("Short-term")
+    const storeWealth = parseSheetHoldings("Store of Wealth")
+
+    const ltValue = cleanNum(longTerm.summary.totalValue)
+    const stValue = cleanNum(shortTerm.summary.totalValue)
+    const btcValue = cleanNum(parsedBtc.dashboard.portfolioValue)
+    const wealthValue = cleanNum(storeWealth.summary.totalValue)
+
+    // Combined Pie data
+    const pieData = [
+      { name: "Long-term (US Stock)", value: ltValue },
+      { name: "Short-term (Crypto/Assets)", value: stValue },
+      { name: "Bitcoin Reserve", value: btcValue },
+      { name: "Store of Wealth (Gold/Cash)", value: wealthValue }
+    ].filter(d => d.value > 0)
+
+    const totalPortfolioValue = ltValue + stValue + btcValue + wealthValue
+    const totalPortfolioCost = cleanNum(longTerm.summary.totalCost) + cleanNum(shortTerm.summary.totalCost) + cleanNum(parsedBtc.dashboard.totalInvested) + cleanNum(storeWealth.summary.totalCost)
+    const totalPnl = totalPortfolioValue - totalPortfolioCost
+    const totalPnlPercent = totalPortfolioCost > 0 ? (totalPnl / totalPortfolioCost) * 100 : 0
+
+    return {
+      pieData,
+      totalPortfolioValue,
+      totalPortfolioCost,
+      totalPnl,
+      totalPnlPercent,
+      longTerm,
+      shortTerm,
+      storeWealth
+    }
+  }, [data, parsedBtc])
+
+  // ─── Sheet Tab Data Preparations ────────────────────────────────────────────
 
   // Pie chart data for Long/Short holdings
   const allocationPieData = useMemo(() => {
-    if (activeTab === "BTC transaction" || activeTab === "Personal Financial Statement") return []
+    if (activeTab === "Personal Finance" || activeTab === "Investments" || activeTab === "BTC transaction" || activeTab === "Personal Financial Statement") return []
     return parsedHoldings.holdings
       .map(h => ({
         name: h.asset,
@@ -289,7 +334,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
 
   // Bar chart data for Cost vs Value comparison
   const costVsValueBarData = useMemo(() => {
-    if (activeTab === "BTC transaction" || activeTab === "Personal Financial Statement") return []
+    if (activeTab === "Personal Finance" || activeTab === "Investments" || activeTab === "BTC transaction" || activeTab === "Personal Financial Statement") return []
     return parsedHoldings.holdings
       .map(h => ({
         name: h.asset,
@@ -305,7 +350,6 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
     let cumulativeInvested = 0
     let cumulativeBtc = 0
 
-    // Reverse transactions to display chronologically from oldest to newest
     const sortedTx = [...parsedBtc.transactions].reverse()
 
     return sortedTx.map(t => {
@@ -314,7 +358,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
       cumulativeInvested += paid
       cumulativeBtc += btcAmt
       
-      const btcPrice = cleanNum(parsedBtc.dashboard.btcPrice) || 70000 // Fallback
+      const btcPrice = cleanNum(parsedBtc.dashboard.btcPrice) || 70000
       const curValue = cumulativeBtc * btcPrice
 
       return {
@@ -326,10 +370,12 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
     })
   }, [parsedBtc, activeTab])
 
-  // ─── Rendering Helper ───────────────────────────────────────────────────────
+  // ─── Rendering Selectors ────────────────────────────────────────────────────
 
   const isBtcTab = activeTab === "BTC transaction"
   const isPfsTab = activeTab === "Personal Financial Statement"
+  const isInvestmentsTab = activeTab === "Investments"
+  const isOverviewTab = activeTab === "Personal Finance"
 
   if (tabs.length === 0) {
     return (
@@ -349,17 +395,20 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
       <header className="bg-white border-b border-gray-100/80 pt-10 pb-8 px-6 md:px-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.4em] font-semibold text-gray-400 mb-2">Google Sheets Live Sync</p>
+            <p className="text-[10px] uppercase tracking-[0.4em] font-semibold text-gray-400 mb-2">Unified Wealth Manager</p>
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-              📊 Personal Finance Dashboard
+              📊 {activeTab === "Investments" ? "Portfolio Tracker" : "Personal Finance Dashboard"}
             </h1>
             <p className="text-gray-400 text-xs mt-1.5 max-w-xl">
-              Automatic sync with Google Sheets Assets. Dynamic Recharts visualizations, interactive portfolio metrics, and a full Balance Sheet analyzer.
+              {activeTab === "Investments" 
+                ? "Real-time pricing tracking, transaction histories, US stock allocations, and local SQLite data ledger."
+                : "Automatic sync with Google Sheets Assets. Dynamic Recharts visualizations, interactive portfolio metrics, and a full Balance Sheet analyzer."
+              }
             </p>
           </div>
           <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-emerald-100 shadow-sm animate-pulse">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Live Synced
+            Live Connected
           </div>
         </div>
       </header>
@@ -384,8 +433,184 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
           ))}
         </nav>
 
-        {/* ─── 1. STANDARD INVESTMENT TAB VIEW (Long-term, Short-term, Store of Wealth) ─── */}
-        {!isBtcTab && !isPfsTab && (
+        {/* ─── A. OVERVIEW MASTER DASHBOARD TAB ─── */}
+        {isOverviewTab && (
+          <div className="space-y-8 animate-fadeIn" id="overview-dashboard">
+            
+            {/* Master Net Worth Banner */}
+            <div className="bg-gradient-to-r from-gray-900 to-slate-800 rounded-3xl p-8 text-white shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 relative overflow-hidden">
+              <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-indigo-500/20 via-transparent to-transparent pointer-events-none" />
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.4em] text-gray-400 font-semibold mb-2">Master Net Worth Summary</p>
+                <h2 className="text-4xl font-extrabold font-mono tracking-tight text-emerald-400">
+                  {parsedPfs.netWorth}
+                </h2>
+                <p className="text-xs text-gray-300 mt-2 max-w-lg">
+                  Reflected in Thai Baht (฿). This represents your net liquidity and investment capital after subtracting your SPaylator, SEasyCash, and bank debt leverages.
+                </p>
+              </div>
+
+              <div className="flex gap-4 flex-wrap">
+                <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4.5 border border-white/10 min-w-[140px] text-right">
+                  <p className="text-[9px] uppercase tracking-widest text-gray-400 mb-0.5">Total Assets</p>
+                  <p className="text-sm font-bold font-mono text-emerald-400">{parsedPfs.totalAssets}</p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4.5 border border-white/10 min-w-[140px] text-right">
+                  <p className="text-[9px] uppercase tracking-widest text-gray-400 mb-0.5">Total Liabilities</p>
+                  <p className="text-sm font-bold font-mono text-rose-400">{parsedPfs.totalDebt}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Investments Summary */}
+              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                <div>
+                  <p className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Portfolio Valuation</p>
+                  <h3 className="text-3xl font-extrabold text-gray-900 font-mono">
+                    ${masterOverviewData.totalPortfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </h3>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold mt-2 inline-block ${
+                    masterOverviewData.totalPnl >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                  }`}>
+                    {masterOverviewData.totalPnl >= 0 ? "+" : ""}{masterOverviewData.totalPnlPercent.toFixed(2)}% ROI
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setActiveTab("Long-term")}
+                  className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold mt-4 text-left flex items-center gap-1.5"
+                >
+                  Explore Holdings →
+                </button>
+              </div>
+
+              {/* Monthly Savings buffer */}
+              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                <div>
+                  <p className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Monthly Inflow Buffer</p>
+                  <h3 className="text-3xl font-extrabold text-gray-900 font-mono">
+                    {parsedPfs.remainingMoney}
+                  </h3>
+                  <span className="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full font-bold mt-2 inline-block">
+                    Earnings Reserve Left
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setActiveTab("Personal Financial Statement")}
+                  className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold mt-4 text-left flex items-center gap-1.5"
+                >
+                  View Cashflow Sheet →
+                </button>
+              </div>
+
+              {/* BTC Dashboard Summary */}
+              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                <div>
+                  <p className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold mb-1">DCA Bitcoin Reserve</p>
+                  <h3 className="text-3xl font-extrabold text-orange-500 font-mono">
+                    {parsedBtc.dashboard.totalBtc} BTC
+                  </h3>
+                  <span className="text-[10px] text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full font-bold mt-2 inline-block">
+                    Value: ${parsedBtc.dashboard.portfolioValue}
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setActiveTab("BTC transaction")}
+                  className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold mt-4 text-left flex items-center gap-1.5"
+                >
+                  View DCA Ledger →
+                </button>
+              </div>
+
+            </div>
+
+            {/* Split Visuals Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Pie Allocation */}
+              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[360px] lg:col-span-2">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-950 mb-1">Master Portfolio Weight Allocation</h4>
+                  <p className="text-[11px] text-gray-400 mb-6">Percentage weighting consolidating all US Stocks, Crypto, Bitcoin, and cash wealth reserves.</p>
+                </div>
+                <div className="h-64 relative flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={masterOverviewData.pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={85}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {masterOverviewData.pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        iconSize={10} 
+                        iconType="circle"
+                        wrapperStyle={{ fontSize: "10px", paddingTop: "15px" }} 
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Jump Sections summary cards */}
+              <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-950 mb-4">Financial Sections</h4>
+                  
+                  <div className="space-y-3">
+                    {[
+                      { tab: "Long-term", label: "Long-term US Stocks", value: masterOverviewData.longTerm.summary.totalValue, pnl: masterOverviewData.longTerm.summary.pnlPercent, color: "bg-indigo-50 text-indigo-700" },
+                      { tab: "Short-term", label: "Short-term Assets", value: masterOverviewData.shortTerm.summary.totalValue, pnl: masterOverviewData.shortTerm.summary.pnlPercent, color: "bg-teal-50 text-teal-700" },
+                      { tab: "BTC transaction", label: "DCA Bitcoin Ledger", value: parsedBtc.dashboard.portfolioValue, pnl: parsedBtc.dashboard.avgPnl, color: "bg-orange-50 text-orange-700" },
+                      { tab: "Store of Wealth", label: "Gold & Bank Cash", value: masterOverviewData.storeWealth.summary.totalValue, pnl: masterOverviewData.storeWealth.summary.pnlPercent, color: "bg-emerald-50 text-emerald-700" }
+                    ].map((sec, idx) => (
+                      <div 
+                        key={idx} 
+                        onClick={() => setActiveTab(sec.tab)}
+                        className="flex justify-between items-center p-3.5 border border-gray-100 hover:border-indigo-100 hover:bg-gray-50 rounded-2xl cursor-pointer transition-all"
+                      >
+                        <div>
+                          <p className="text-xs font-bold text-gray-900 leading-tight">{sec.label}</p>
+                          <span className={`text-[8.5px] font-semibold px-2 py-0.5 rounded-full mt-1.5 inline-block ${sec.color}`}>
+                            {sec.pnl} ROI
+                          </span>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-gray-800">${sec.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 pt-4 mt-4 text-center">
+                  <span className="text-[10px] text-gray-400 font-medium">Click on any section card to view detail sheet</span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ─── B. SQLITE INVESTMENTS TAB integration ─── */}
+        {isInvestmentsTab && (
+          <div className="animate-fadeIn" id="sqlite-investments-panel">
+            <InvestmentDashboard />
+          </div>
+        )}
+
+        {/* ─── C. STANDARD SHEETS TAB VIEW (Long-term, Short-term, Store of Wealth) ─── */}
+        {!isBtcTab && !isPfsTab && !isInvestmentsTab && !isOverviewTab && (
           <div className="space-y-8" id="portfolio-tab-view">
             
             {/* Top Metrics Cards */}
@@ -598,7 +823,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
           </div>
         )}
 
-        {/* ─── 2. BTC TRANSACTION DASHBOARD VIEW ─── */}
+        {/* ─── D. BTC TRANSACTION DASHBOARD VIEW ─── */}
         {isBtcTab && parsedBtc && (
           <div className="space-y-8" id="btc-dashboard-view">
             
@@ -729,7 +954,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
           </div>
         )}
 
-        {/* ─── 3. PERSONAL FINANCIAL STATEMENT (BALANCE SHEET & DAILY CASHFLOW) ─── */}
+        {/* ─── E. PERSONAL FINANCIAL STATEMENT (BALANCE SHEET & DAILY CASHFLOW) ─── */}
         {isPfsTab && parsedPfs && (
           <div className="space-y-10" id="financial-statement-view">
             
@@ -935,7 +1160,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
                     {parsedPfs.fixedExpenses.map((fe, idx) => (
                       <div key={idx} className="flex justify-between items-center py-1">
                         <span className="font-semibold text-gray-600">{fe.label}</span>
-                        <span className="font-bold text-gray-800 font-mono">{fe.amount}</span>
+                        <span className="font-bold text-gray-850 font-mono">{fe.amount}</span>
                       </div>
                     ))}
                   </div>
@@ -951,7 +1176,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
                     {parsedPfs.variableExpenses.map((ve, idx) => (
                       <div key={idx} className="flex justify-between items-center py-1">
                         <span className="font-semibold text-gray-600">{ve.label}</span>
-                        <span className="font-bold text-gray-800 font-mono">{ve.amount}</span>
+                        <span className="font-bold text-gray-850 font-mono">{ve.amount}</span>
                       </div>
                     ))}
                   </div>
@@ -981,6 +1206,13 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
         }
         .scale-102 {
           transform: scale(1.02);
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.25s ease-out forwards;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}} />
     </div>
