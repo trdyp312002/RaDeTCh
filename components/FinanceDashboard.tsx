@@ -120,15 +120,20 @@ export default function FinanceDashboard() {
       const res = await fetch("/api/holdings")
       if (!res.ok) throw new Error("Failed to fetch holdings")
       const holdingsData = await res.json()
-      setAllHoldings(holdingsData)
       
-      const symbols = [...new Set(holdingsData.map((h: any) => h.symbol))].filter(Boolean).join(",")
-      if (symbols) {
-        const qRes = await fetch(`/api/market?symbols=${symbols}`)
-        if (qRes.ok) {
-          const quotes = await qRes.json()
-          setMarketQuotes(quotes)
+      if (Array.isArray(holdingsData)) {
+        setAllHoldings(holdingsData)
+        
+        const symbols = [...new Set(holdingsData.map((h: any) => h.symbol))].filter(Boolean).join(",")
+        if (symbols) {
+          const qRes = await fetch(`/api/market?symbols=${symbols}`)
+          if (qRes.ok) {
+            const quotes = await qRes.json()
+            setMarketQuotes(quotes)
+          }
         }
+      } else {
+        console.error("Holdings data is not an array:", holdingsData)
       }
     } catch (e) {
       console.error(e)
@@ -140,17 +145,30 @@ export default function FinanceDashboard() {
   // Fetch db items and fx rates on mount
   useEffect(() => {
     fetch("/api/finance")
-      .then(res => res.json())
-      .then(setDbFinanceItems)
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch finance items")
+        return res.json()
+      })
+      .then(data => {
+        if (Array.isArray(data)) setDbFinanceItems(data)
+      })
       .catch(console.error)
 
     fetch("/api/monthly")
-      .then(res => res.json())
-      .then(setDbMonthlyItems)
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch monthly items")
+        return res.json()
+      })
+      .then(data => {
+        if (Array.isArray(data)) setDbMonthlyItems(data)
+      })
       .catch(console.error)
 
     fetch("/api/fx")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch fx rates")
+        return res.json()
+      })
       .then(d => {
         if (d?.rates) setFxRates(d.rates)
       })
