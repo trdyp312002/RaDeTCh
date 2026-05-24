@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -10,10 +10,25 @@ import InvestmentDashboard from "./InvestmentDashboard"
 
 type FinanceData = Record<string, string[][]>
 
+type DBFinanceItem = {
+  id: string
+  category: "cash" | "other_asset" | "liability"
+  label: string
+  amount: number
+  currency: string
+}
+
+type DBMonthlyItem = {
+  id: string
+  type: "income_fixed" | "income_variable" | "expense_fixed" | "expense_variable"
+  label: string
+  amount: number
+  currency: string
+}
+
 // ─── Numeric Parsing Helpers ──────────────────────────────────────────────────
 function cleanNum(val: string): number {
   if (!val) return 0
-  // Remove currency symbols, commas, spaces
   const clean = val.replace(/[$,฿\s,]/g, "")
   const num = parseFloat(clean)
   return isNaN(num) ? 0 : num
@@ -63,19 +78,174 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
 
-  // Hardcode unified tab layout: Personal Finance overview, SQLite Investments, and Sheets worksheets
-  const sheetTabs = Object.keys(data).filter(k => data[k] && data[k].length > 0)
-  const tabs = useMemo(() => ["Personal Finance", "Investments", ...sheetTabs], [sheetTabs])
+  // Hardcode unified tab layout: Overview, Investments, Monthly Expenses tab, Statement, and Sheets tabs
+  const sheetTabs = Object.keys(data).filter(k => k !== "Personal Financial Statement" && data[k] && data[k].length > 0)
+  const tabs = useMemo(() => [
+    "Personal Finance", 
+    "Investments", 
+    "Monthly Expenses", 
+    "Personal Financial Statement", 
+    ...sheetTabs
+  ], [sheetTabs])
+  
+  const [activeTab, setActiveTab] = useState("Personal Finance")
 
-  const [activeTab, setActiveTab] = useState(() => {
+  // ─── SQLite DB States ───────────────────────────────────────────────────────
+  const [dbFinanceItems, setDbFinanceItems] = useState<DBFinanceItem[]>([])
+  const [dbMonthlyItems, setDbMonthlyItems] = useState<DBMonthlyItem[]>([])
+  const [savingState, setSavingState] = useState<Record<string, "saved" | "saving" | "error">>({})
+
+  // Fetch db items on mount
+  useEffect(() => {
+    fetch("/api/finance")
+      .then(res => res.json())
+      .then(setDbFinanceItems)
+      .catch(console.error)
+
+    fetch("/api/monthly")
+      .then(res => res.json())
+      .then(setDbMonthlyItems)
+      .catch(console.error)
+  }, [])
+
+  // Automatically select parameter tab on mount
+  useEffect(() => {
     if (tabParam) {
       const found = tabs.find(t => t.toLowerCase() === tabParam.toLowerCase())
-      if (found) return found
+      if (found) setActiveTab(found)
     }
-    return "Personal Finance"
-  })
+  }, [tabParam, tabs])
 
-  // ─── Data Parsers ───────────────────────────────────────────────────────────
+  // ─── SQLite Mutation Handlers ──────────────────────────────────────────────
+
+  // 1. Finance Items Mutations
+  const handleUpdateFinanceItem = async (id: string, field: "label" | "amount", value: any) => {
+    setSavingState(prev => ({ ...prev, [id]: "saving" }))
+    try {
+      const target = dbFinanceItems.find(f => f.id === id)
+      if (!target) return
+      
+      const payload = {
+        label: field === "label" ? value : target.label,
+        amount: field === "amount" ? parseFloat(value) || 0 : target.amount,
+        currency: target.currency
+      }
+
+      const res = await fetch(`/api/finance/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+
+      if (!res.ok) throw new Error("Save failed")
+      
+      const updated = await res.json()
+      setDbFinanceItems(prev => prev.map(item => item.id === id ? updated : item))
+      setSavingState(prev => ({ ...prev, [id]: "saved" }))
+      
+      // Auto clear saved status after 2 seconds
+      setTimeout(() => {
+        setSavingState(prev => {
+          const next = { ...prev }
+          delete next[id]
+          return next
+        })
+      }, 2000)
+    } catch (err) {
+      console.error(err)
+      setSavingState(prev => ({ ...prev, [id]: "error" }))
+    }
+  }
+
+  const handleAddFinanceItem = async (category: DBFinanceItem["category"], label: string, amount: number) => {
+    try {
+      const res = await fetch("/api/finance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, label, amount, currency: "THB" })
+      })
+      if (!res.ok) throw new Error("Add failed")
+      const newItem = await res.json()
+      setDbFinanceItems(prev => [...prev, newItem])
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleDeleteFinanceItem = async (id: string) => {
+    try {
+      const res = await fetch(`/api/finance/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Delete failed")
+      setDbFinanceItems(prev => prev.filter(item => item.id !== id))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  // 2. Monthly Items Mutations
+  const handleUpdateMonthlyItem = async (id: string, field: "label" | "amount", value: any) => {
+    setSavingState(prev => ({ ...prev, [id]: "saving" }))
+    try {
+      const target = dbMonthlyItems.find(m => m.id === id)
+      if (!target) return
+
+      const payload = {
+        type: target.type,
+        label: field === "label" ? value : target.label,
+        amount: field === "amount" ? parseFloat(value) || 0 : target.amount,
+        currency: target.currency
+      }
+
+      const res = await fetch(`/api/monthly/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+
+      if (!res.ok) throw new Error("Save failed")
+      const updated = await res.json()
+      setDbMonthlyItems(prev => prev.map(item => item.id === id ? updated : item))
+      setSavingState(prev => ({ ...prev, [id]: "saved" }))
+
+      setTimeout(() => {
+        setSavingState(prev => {
+          const next = { ...prev }
+          delete next[id]
+          return next
+        })
+      }, 2000)
+    } catch (e) {
+      console.error(e)
+      setSavingState(prev => ({ ...prev, [id]: "error" }))
+    }
+  }
+
+  const handleAddMonthlyItem = async (type: DBMonthlyItem["type"], label: string, amount: number) => {
+    try {
+      const res = await fetch("/api/monthly", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, label, amount, currency: "THB" })
+      })
+      if (!res.ok) throw new Error("Add failed")
+      const newItem = await res.json()
+      setDbMonthlyItems(prev => [...prev, newItem])
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleDeleteMonthlyItem = async (id: string) => {
+    try {
+      const res = await fetch(`/api/monthly/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Delete failed")
+      setDbMonthlyItems(prev => prev.filter(item => item.id !== id))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  // ─── Data Parsers & Syntheses ────────────────────────────────────────────────
 
   // 1. Long-term / Short-term / Store of Wealth parser helper
   const parseSheetHoldings = (sheetName: string) => {
@@ -142,7 +312,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
 
   // Parse current active sheet holdings dynamically
   const parsedHoldings = useMemo(() => {
-    if (activeTab === "Personal Finance" || activeTab === "Investments" || activeTab === "BTC transaction" || activeTab === "Personal Financial Statement") {
+    if (activeTab === "Personal Finance" || activeTab === "Investments" || activeTab === "Monthly Expenses" || activeTab === "Personal Financial Statement" || activeTab === "BTC transaction") {
       return { holdings: [], summary: { totalValue: "0", totalCost: "0", pnl: "0", pnlPercent: "0%" }, portfolioSummary: [] }
     }
     return parseSheetHoldings(activeTab)
@@ -163,7 +333,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
       btcPrice: "0"
     }
 
-    currentData.forEach((row, rowIndex) => {
+    currentData.forEach((row) => {
       const exchange = row[0]?.trim() || ""
       const date = row[1]?.trim() || ""
       const btcAmount = row[2]?.trim() || ""
@@ -207,90 +377,61 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
     return { transactions, dashboard }
   }, [data])
 
-  // 3. Personal Financial Statement parser
+  // 3. Synthesized Personal Financial Statement (Calculated from SQLite DB)
   const parsedPfs = useMemo(() => {
-    const sheetName = "Personal Financial Statement"
-    const currentData = data[sheetName] || []
-    const assets: { label: string; amount: string }[] = []
-    const debts: { label: string; amount: string }[] = []
-    const income: { label: string; amount: string }[] = []
-    const fixedExpenses: { label: string; amount: string }[] = []
-    const variableExpenses: { label: string; amount: string }[] = []
+    // Group Balance Sheet items
+    const cashAssets = dbFinanceItems.filter(f => f.category === "cash")
+    const otherAssets = dbFinanceItems.filter(f => f.category === "other_asset")
+    const liabilityItems = dbFinanceItems.filter(f => f.category === "liability")
 
-    let totalAssets = "฿0.00"
-    let totalDebt = "฿0.00"
-    let netWorth = "฿0.00"
+    const totalAssetsVal = [...cashAssets, ...otherAssets].reduce((sum, item) => sum + item.amount, 0)
+    const totalDebtVal = liabilityItems.reduce((sum, item) => sum + item.amount, 0)
+    const netWorthVal = totalAssetsVal - totalDebtVal
 
-    let totalIncome = "฿0.00"
-    let totalFixedExpenses = "฿0.00"
-    let totalVariableExpenses = "฿0.00"
-    let remainingMoney = "฿0.00"
+    // Group Monthly cashflow items
+    const monthlyIncomeItems = dbMonthlyItems.filter(m => m.type.startsWith("income"))
+    const monthlyFixedExpenses = dbMonthlyItems.filter(m => m.type === "expense_fixed")
+    const monthlyVariableExpenses = dbMonthlyItems.filter(m => m.type === "expense_variable")
 
-    currentData.forEach((row) => {
-      // Assets
-      const assetLabel = row[0]?.trim() || ""
-      const assetVal = row[2]?.trim() || ""
-      if (assetLabel && assetLabel !== "ASSET" && assetLabel !== "Liquid Assets" && assetLabel !== "Investment Assets" && assetLabel !== "Personal Assets" && assetLabel !== "PERSONAL BALANCE SHEET") {
-        if (assetLabel === "Total Asset") {
-          totalAssets = assetVal
-        } else if (assetLabel === "NET WORTH") {
-          netWorth = row[4]?.trim() || assetVal
-        } else {
-          assets.push({ label: assetLabel, amount: assetVal || "฿0.00" })
-        }
-      }
+    const totalIncomeVal = monthlyIncomeItems.reduce((sum, item) => sum + item.amount, 0)
+    const totalFixedVal = monthlyFixedExpenses.reduce((sum, item) => sum + item.amount, 0)
+    const totalVariableVal = monthlyVariableExpenses.reduce((sum, item) => sum + item.amount, 0)
+    const totalExpensesVal = totalFixedVal + totalVariableVal
+    const remainingMoneyVal = totalIncomeVal - totalExpensesVal
 
-      // Debts
-      const debtLabel = row[4]?.trim() || ""
-      const debtVal = row[6]?.trim() || ""
-      if (debtLabel && debtLabel !== "DEPT" && debtLabel !== "Leverage" && debtLabel !== "NET WORTH") {
-        if (debtLabel === "Total Dept") {
-          totalDebt = debtVal
-        } else {
-          debts.push({ label: debtLabel, amount: debtVal || "฿0.00" })
-        }
-      }
-
-      // Income
-      const incCategory = row[8]?.trim() || ""
-      const incLabel = row[9]?.trim() || ""
-      const incVal = row[10]?.trim() || ""
-      if (incCategory === "รวม" && incVal) {
-        totalIncome = incVal
-      } else if (incCategory === "เหลือ" && incVal) {
-        remainingMoney = incVal
-      } else if (incLabel && incLabel !== "หัวข้อ") {
-        income.push({ label: incLabel, amount: incVal || "฿0.00" })
-      }
-
-      // Fixed Expenses
-      const fixLabel = row[11]?.trim() || ""
-      const fixVal = row[12]?.trim() || ""
-      if (fixLabel && fixLabel !== "ค่าใช้จ่ายคงที่") {
-        if (fixLabel === "รวม") {
-          totalFixedExpenses = fixVal
-        } else {
-          fixedExpenses.push({ label: fixLabel, amount: fixVal || "฿0.00" })
-        }
-      }
-
-      // Variable Expenses
-      const varLabel = row[14]?.trim() || ""
-      const varVal = row[15]?.trim() || ""
-      if (varLabel && varLabel !== "ค่าใช้จ่ายไม่คงที่") {
-        if (varLabel === "รวม") {
-          totalVariableExpenses = varVal
-        } else {
-          variableExpenses.push({ label: varLabel, amount: varVal || "฿0.00" })
-        }
-      }
-    })
+    // Formatters
+    const fmtTHB = (num: number) => "฿" + num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
     return {
-      assets, debts, income, fixedExpenses, variableExpenses,
-      totalAssets, totalDebt, netWorth, totalIncome, totalFixedExpenses, totalVariableExpenses, remainingMoney
+      assets: [
+        { title: "Liquid Assets", items: cashAssets },
+        { title: "Investment & Personal Assets", items: otherAssets }
+      ],
+      debts: liabilityItems,
+      income: monthlyIncomeItems,
+      fixedExpenses: monthlyFixedExpenses,
+      variableExpenses: monthlyVariableExpenses,
+      
+      // Values
+      totalAssetsNum: totalAssetsVal,
+      totalDebtNum: totalDebtVal,
+      netWorthNum: netWorthVal,
+      totalIncomeNum: totalIncomeVal,
+      totalFixedNum: totalFixedVal,
+      totalVariableNum: totalVariableVal,
+      remainingMoneyNum: remainingMoneyVal,
+      
+      // Strings
+      totalAssets: fmtTHB(totalAssetsVal),
+      totalDebt: fmtTHB(totalDebtVal),
+      netWorth: fmtTHB(netWorthVal),
+      totalIncome: fmtTHB(totalIncomeVal),
+      totalFixedExpenses: fmtTHB(totalFixedVal),
+      totalVariableExpenses: fmtTHB(totalVariableVal),
+      remainingMoney: fmtTHB(remainingMoneyVal),
+      totalExpenses: fmtTHB(totalExpensesVal)
     }
-  }, [data])
+  }, [dbFinanceItems, dbMonthlyItems])
 
   // ─── Master Overview Preparations ──────────────────────────────────────────
 
@@ -330,56 +471,61 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
     }
   }, [data, parsedBtc])
 
-  // ─── Sheet Tab Data Preparations ────────────────────────────────────────────
+  // ─── Form Submission Local Hooks ───────────────────────────────────────────
+  const [newExpenseType, setNewExpenseType] = useState<DBMonthlyItem["type"]>("expense_fixed")
+  const [newExpenseLabel, setNewExpenseLabel] = useState("")
+  const [newExpenseAmount, setNewExpenseAmount] = useState("")
 
-  // Pie chart data for Long/Short holdings
+  const [newAssetCategory, setNewAssetCategory] = useState<DBFinanceItem["category"]>("cash")
+  const [newAssetLabel, setNewAssetLabel] = useState("")
+  const [newAssetAmount, setNewAssetAmount] = useState("")
+
+  const handleAddNewExpense = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newExpenseLabel.trim() || !newExpenseAmount) return
+    handleAddMonthlyItem(newExpenseType, newExpenseLabel.trim(), parseFloat(newExpenseAmount) || 0)
+    setNewExpenseLabel("")
+    setNewExpenseAmount("")
+  }
+
+  const handleAddNewAsset = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newAssetLabel.trim() || !newAssetAmount) return
+    handleAddFinanceItem(newAssetCategory, newAssetLabel.trim(), parseFloat(newAssetAmount) || 0)
+    setNewAssetLabel("")
+    setNewAssetAmount("")
+  }
+
+  // ─── Chart Data Computations ────────────────────────────────────────────────
+
+  // Pie chart data for current sheet's holdings allocation
   const allocationPieData = useMemo(() => {
-    if (activeTab === "Personal Finance" || activeTab === "Investments" || activeTab === "BTC transaction" || activeTab === "Personal Financial Statement") return []
     return parsedHoldings.holdings
-      .map(h => ({
-        name: h.asset,
-        value: cleanNum(h.currentValue)
-      }))
+      .map(h => ({ name: h.asset, value: cleanNum(h.currentValue) }))
       .filter(d => d.value > 0)
-  }, [parsedHoldings, activeTab])
+  }, [parsedHoldings])
 
-  // Bar chart data for Cost vs Value comparison
+  // Bar chart: cost basis vs current value per holding
   const costVsValueBarData = useMemo(() => {
-    if (activeTab === "Personal Finance" || activeTab === "Investments" || activeTab === "BTC transaction" || activeTab === "Personal Financial Statement") return []
     return parsedHoldings.holdings
+      .filter(h => cleanNum(h.costValue) > 0 || cleanNum(h.currentValue) > 0)
       .map(h => ({
-        name: h.asset,
+        name: h.asset.length > 10 ? h.asset.slice(0, 10) + "…" : h.asset,
         Cost: cleanNum(h.costValue),
         Value: cleanNum(h.currentValue)
       }))
-      .filter(d => d.Cost > 0 || d.Value > 0)
-  }, [parsedHoldings, activeTab])
+  }, [parsedHoldings])
 
-  // Btc historical / transaction cumulative chart data
+  // Area chart: BTC DCA cumulative investment vs value
   const btcDcaChartData = useMemo(() => {
-    if (activeTab !== "BTC transaction" || !parsedBtc) return []
-    let cumulativeInvested = 0
-    let cumulativeBtc = 0
-
-    const sortedTx = [...parsedBtc.transactions].reverse()
-
-    return sortedTx.map(t => {
-      const paid = cleanNum(t.usdPaid)
-      const btcAmt = cleanNum(t.btcAmount)
-      cumulativeInvested += paid
-      cumulativeBtc += btcAmt
-      
-      const btcPrice = cleanNum(parsedBtc.dashboard.btcPrice) || 70000
-      const curValue = cumulativeBtc * btcPrice
-
-      return {
-        date: t.date,
-        Invested: cumulativeInvested,
-        Value: curValue,
-        BTC: cumulativeBtc
-      }
+    let cumInvested = 0
+    let cumValue = 0
+    return parsedBtc.transactions.map((t, i) => {
+      cumInvested += cleanNum(t.usdPaid)
+      cumValue += cleanNum(t.currentValue)
+      return { date: t.date, Invested: parseFloat(cumInvested.toFixed(2)), Value: parseFloat(cumValue.toFixed(2)) }
     })
-  }, [parsedBtc, activeTab])
+  }, [parsedBtc])
 
   // ─── Rendering Selectors ────────────────────────────────────────────────────
 
@@ -387,18 +533,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
   const isPfsTab = activeTab === "Personal Financial Statement"
   const isInvestmentsTab = activeTab === "Investments"
   const isOverviewTab = activeTab === "Personal Finance"
-
-  if (tabs.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6" id="no-data-view">
-        <div className="text-center bg-white border border-gray-100 rounded-3xl p-10 max-w-sm shadow-xl">
-          <div className="text-4xl mb-4">📭</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">No Data Available</h2>
-          <p className="text-gray-400 text-sm">Could not find any data in your Google Sheet. Check connectivity.</p>
-        </div>
-      </div>
-    )
-  }
+  const isExpensesTab = activeTab === "Monthly Expenses"
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -408,18 +543,18 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
           <div>
             <p className="text-[10px] uppercase tracking-[0.4em] font-semibold text-gray-400 mb-2">Unified Wealth Manager</p>
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-              📊 {activeTab === "Investments" ? "Portfolio Tracker" : "Personal Finance Dashboard"}
+              📊 {isInvestmentsTab ? "Portfolio Tracker" : "Personal Finance Dashboard"}
             </h1>
             <p className="text-gray-400 text-xs mt-1.5 max-w-xl">
-              {activeTab === "Investments" 
+              {isInvestmentsTab 
                 ? "Real-time pricing tracking, transaction histories, US stock allocations, and local SQLite data ledger."
-                : "Automatic sync with Google Sheets Assets. Dynamic Recharts visualizations, interactive portfolio metrics, and a full Balance Sheet analyzer."
+                : "SQLite database backed financial records. Dynamic Recharts visualizations, interactive portfolio metrics, and fully editable spreadsheets."
               }
             </p>
           </div>
           <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-semibold border border-emerald-100 shadow-sm animate-pulse">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Live Connected
+            SQLite Active
           </div>
         </div>
       </header>
@@ -613,15 +748,614 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
           </div>
         )}
 
-        {/* ─── B. SQLITE INVESTMENTS TAB integration ─── */}
+        {/* ─── B. SQLITE INVESTMENTS TAB ─── */}
         {isInvestmentsTab && (
           <div className="animate-fadeIn" id="sqlite-investments-panel">
             <InvestmentDashboard />
           </div>
         )}
 
-        {/* ─── C. STANDARD SHEETS TAB VIEW (Long-term, Short-term, Store of Wealth) ─── */}
-        {!isBtcTab && !isPfsTab && !isInvestmentsTab && !isOverviewTab && (
+        {/* ─── C. INTERACTIVE EDITABLE MONTHLY EXPENSES TAB ─── */}
+        {isExpensesTab && parsedPfs && (
+          <div className="space-y-8 animate-fadeIn" id="monthly-expenses-editor">
+            
+            {/* Headers & Overview */}
+            <div className="bg-white border border-gray-150 rounded-3xl p-6.5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Manage Monthly Subscriptions & Spending</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Directly edit labels or figures below. Click outside to trigger instant database save.</p>
+              </div>
+              <div className="flex gap-4">
+                <div className="bg-rose-50 text-rose-700 border border-rose-100 px-4 py-2 rounded-2xl text-right">
+                  <p className="text-[9px] uppercase tracking-wider font-semibold">Total Expenses</p>
+                  <p className="text-base font-extrabold font-mono">{parsedPfs.totalExpenses}</p>
+                </div>
+                <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-2 rounded-2xl text-right">
+                  <p className="text-[9px] uppercase tracking-wider font-semibold">Savings Buffer</p>
+                  <p className="text-base font-extrabold font-mono">{parsedPfs.remainingMoney}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Split Grid: Inputs on Left, New Form on Right */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Ledger Lists */}
+              <div className="lg:col-span-2 space-y-8">
+                
+                {/* Fixed Commitment list */}
+                <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm">
+                  <h4 className="text-xs font-extrabold text-gray-900 mb-4 uppercase tracking-widest flex items-center justify-between">
+                    <span>📌 Fixed Expenses (ค่าใช้จ่ายคงที่)</span>
+                    <span className="font-mono text-gray-400 font-normal normal-case text-[10px]">Total: {parsedPfs.totalFixedExpenses}</span>
+                  </h4>
+                  
+                  <div className="divide-y divide-gray-100">
+                    {parsedPfs.fixedExpenses.map((fe) => (
+                      <div key={fe.id} className="flex justify-between items-center py-3.5 gap-4">
+                        <div className="flex-1 flex items-center gap-3">
+                          <input 
+                            value={fe.label}
+                            onChange={(e) => {
+                              const v = e.target.value
+                              setDbMonthlyItems(prev => prev.map(m => m.id === fe.id ? { ...m, label: v } : m))
+                            }}
+                            onBlur={(e) => handleUpdateMonthlyItem(fe.id, "label", e.target.value)}
+                            className="bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-indigo-500 rounded px-2.5 py-1 text-sm font-semibold text-gray-700 w-full focus:outline-none"
+                          />
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono text-gray-400">฿</span>
+                            <input 
+                              type="number"
+                              value={fe.amount}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setDbMonthlyItems(prev => prev.map(m => m.id === fe.id ? { ...m, amount: parseFloat(v) || 0 } : m))
+                              }}
+                              onBlur={(e) => handleUpdateMonthlyItem(fe.id, "amount", e.target.value)}
+                              className="bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-indigo-500 rounded px-2.5 py-1 text-sm font-bold font-mono text-right text-gray-800 w-24 focus:outline-none"
+                            />
+                          </div>
+
+                          {/* Save / Delete status */}
+                          <div className="w-14 text-center">
+                            {savingState[fe.id] === "saving" && <span className="text-[9px] text-indigo-400 animate-pulse">Saving…</span>}
+                            {savingState[fe.id] === "saved" && <span className="text-[9px] text-emerald-500 font-bold">✓ Saved</span>}
+                            {savingState[fe.id] === "error" && <span className="text-[9px] text-rose-500 font-bold">⚠️ Error</span>}
+                            {!savingState[fe.id] && (
+                              <button 
+                                onClick={() => handleDeleteMonthlyItem(fe.id)}
+                                className="text-gray-300 hover:text-rose-500 text-xs leading-none p-1 rounded hover:bg-rose-50 transition-colors"
+                                title="Delete"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Variable Commitments list */}
+                <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm">
+                  <h4 className="text-xs font-extrabold text-gray-900 mb-4 uppercase tracking-widest flex items-center justify-between">
+                    <span>⚡ Variable Expenses (ค่าใช้จ่ายไม่คงที่)</span>
+                    <span className="font-mono text-gray-400 font-normal normal-case text-[10px]">Total: {parsedPfs.totalVariableExpenses}</span>
+                  </h4>
+                  
+                  <div className="divide-y divide-gray-100">
+                    {parsedPfs.variableExpenses.map((ve) => (
+                      <div key={ve.id} className="flex justify-between items-center py-3.5 gap-4">
+                        <div className="flex-1 flex items-center gap-3">
+                          <input 
+                            value={ve.label}
+                            onChange={(e) => {
+                              const v = e.target.value
+                              setDbMonthlyItems(prev => prev.map(m => m.id === ve.id ? { ...m, label: v } : m))
+                            }}
+                            onBlur={(e) => handleUpdateMonthlyItem(ve.id, "label", e.target.value)}
+                            className="bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-indigo-500 rounded px-2.5 py-1 text-sm font-semibold text-gray-700 w-full focus:outline-none"
+                          />
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono text-gray-400">฿</span>
+                            <input 
+                              type="number"
+                              value={ve.amount}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setDbMonthlyItems(prev => prev.map(m => m.id === ve.id ? { ...m, amount: parseFloat(v) || 0 } : m))
+                              }}
+                              onBlur={(e) => handleUpdateMonthlyItem(ve.id, "amount", e.target.value)}
+                              className="bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-indigo-500 rounded px-2.5 py-1 text-sm font-bold font-mono text-right text-gray-800 w-24 focus:outline-none"
+                            />
+                          </div>
+
+                          {/* Save / Delete status */}
+                          <div className="w-14 text-center">
+                            {savingState[ve.id] === "saving" && <span className="text-[9px] text-indigo-400 animate-pulse">Saving…</span>}
+                            {savingState[ve.id] === "saved" && <span className="text-[9px] text-emerald-500 font-bold">✓ Saved</span>}
+                            {savingState[ve.id] === "error" && <span className="text-[9px] text-rose-500 font-bold">⚠️ Error</span>}
+                            {!savingState[ve.id] && (
+                              <button 
+                                onClick={() => handleDeleteMonthlyItem(ve.id)}
+                                className="text-gray-300 hover:text-rose-500 text-xs leading-none p-1 rounded hover:bg-rose-50 transition-colors"
+                                title="Delete"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Expense & Inflow Insertion Panel */}
+              <div className="space-y-6">
+                
+                {/* Form: Add New Outflow Item */}
+                <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm">
+                  <h4 className="text-xs font-extrabold text-gray-900 mb-4 uppercase tracking-widest">➕ Add Outflow Item</h4>
+                  <form onSubmit={handleAddNewExpense} className="space-y-4">
+                    <div>
+                      <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block font-semibold">Type</label>
+                      <select 
+                        value={newExpenseType}
+                        onChange={(e) => setNewExpenseType(e.target.value as DBMonthlyItem["type"])}
+                        className="w-full border border-gray-200 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      >
+                        <option value="expense_fixed">Fixed Expense (ค่าใช้จ่ายคงที่)</option>
+                        <option value="expense_variable">Variable Expense (ค่าใช้จ่ายไม่คงที่)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block font-semibold">Description</label>
+                      <input 
+                        value={newExpenseLabel}
+                        onChange={(e) => setNewExpenseLabel(e.target.value)}
+                        placeholder="Netflix, Water Bill, Traveling…"
+                        required
+                        className="w-full border border-gray-200 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-200 font-sans"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block font-semibold">Amount (THB)</label>
+                      <input 
+                        type="number"
+                        step="any"
+                        value={newExpenseAmount}
+                        onChange={(e) => setNewExpenseAmount(e.target.value)}
+                        placeholder="0.00"
+                        required
+                        className="w-full border border-gray-200 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-200 font-mono"
+                      />
+                    </div>
+
+                    <button 
+                      type="submit"
+                      className="w-full bg-gray-950 hover:bg-slate-800 text-white rounded-2xl py-3 text-xs font-bold transition-all shadow-md mt-2"
+                    >
+                      Insert Outflow Row
+                    </button>
+                  </form>
+                </div>
+
+                {/* Form: Add New Monthly Inflow */}
+                <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm">
+                  <h4 className="text-xs font-extrabold text-gray-900 mb-4 uppercase tracking-widest">➕ Add Monthly Inflow</h4>
+                  <form 
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      const desc = (e.currentTarget.elements.namedItem("inflowDesc") as HTMLInputElement).value
+                      const val = (e.currentTarget.elements.namedItem("inflowVal") as HTMLInputElement).value
+                      if (!desc.trim() || !val) return
+                      handleAddMonthlyItem("income_fixed", desc.trim(), parseFloat(val) || 0)
+                      e.currentTarget.reset()
+                    }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block font-semibold">Description</label>
+                      <input 
+                        name="inflowDesc"
+                        placeholder="Salary, Part-time, Stocks Dividend…"
+                        required
+                        className="w-full border border-gray-200 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-gray-400 uppercase tracking-widest mb-1.5 block font-semibold">Amount (THB)</label>
+                      <input 
+                        type="number"
+                        step="any"
+                        name="inflowVal"
+                        placeholder="0.00"
+                        required
+                        className="w-full border border-gray-200 rounded-2xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-200 font-mono"
+                      />
+                    </div>
+
+                    <button 
+                      type="submit"
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl py-3 text-xs font-bold transition-all shadow-md mt-2"
+                    >
+                      Insert Inflow Row
+                    </button>
+                  </form>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ─── D. INTERACTIVE EDITABLE PERSONAL FINANCIAL STATEMENT TAB ─── */}
+        {isPfsTab && parsedPfs && (
+          <div className="space-y-6 animate-fadeIn" id="pfs-sheet-view">
+            
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-slate-800 to-blue-900 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.4em] text-blue-300 font-semibold mb-1">Editable Spreadsheet</p>
+                <h2 className="text-2xl font-extrabold tracking-tight">Personal Financial Statement</h2>
+                <p className="text-xs text-blue-200 mt-1">Click any label or amount to edit. Changes auto-save on blur.</p>
+              </div>
+              <div className="flex gap-3 flex-wrap">
+                <div className="bg-white/10 backdrop-blur-sm border border-white/20 px-5 py-3 rounded-2xl text-center">
+                  <p className="text-[9px] uppercase tracking-widest text-blue-300 font-semibold mb-0.5">Net Worth</p>
+                  <p className={`text-lg font-extrabold font-mono ${parsedPfs.netWorthNum >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{parsedPfs.netWorth}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm border border-white/20 px-5 py-3 rounded-2xl text-center">
+                  <p className="text-[9px] uppercase tracking-widest text-blue-300 font-semibold mb-0.5">Monthly Savings</p>
+                  <p className={`text-lg font-extrabold font-mono ${parsedPfs.remainingMoneyNum >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{parsedPfs.remainingMoney}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Spreadsheet Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+              {/* ──── LEFT: PERSONAL BALANCE SHEET ──── */}
+              <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                
+                {/* Sheet Title */}
+                <div className="bg-green-700 text-white py-3 px-4 text-sm font-bold text-center uppercase tracking-widest">
+                  Personal Balance Sheet
+                </div>
+
+                {/* ASSET Section */}
+                <div className="bg-green-600 text-white py-2 px-4 text-xs font-bold text-center uppercase tracking-wider">
+                  Asset (สินทรัพย์)
+                </div>
+
+                {/* Liquid Assets */}
+                <div>
+                  <div className="bg-green-50 px-4 py-1.5 text-[10px] font-bold text-green-700 uppercase tracking-widest border-b border-green-100">
+                    Liquid Assets
+                  </div>
+                  {parsedPfs.assets[0]?.items.map((asset) => (
+                    <div key={asset.id} className="flex items-center border-b border-gray-50 group hover:bg-gray-50 transition-colors">
+                      <input
+                        value={asset.label}
+                        onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === asset.id ? {...f, label: v} : f)) }}
+                        onBlur={(e) => handleUpdateFinanceItem(asset.id, "label", e.target.value)}
+                        className="flex-1 px-4 py-2.5 text-xs font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-green-400"
+                      />
+                      <input
+                        type="number"
+                        value={asset.amount}
+                        onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === asset.id ? {...f, amount: parseFloat(v)||0} : f)) }}
+                        onBlur={(e) => handleUpdateFinanceItem(asset.id, "amount", e.target.value)}
+                        className="w-32 px-3 py-2.5 text-xs font-bold font-mono text-right text-gray-800 bg-transparent border-0 border-l border-gray-100 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-green-400"
+                      />
+                      <div className="w-8 flex items-center justify-center">
+                        {savingState[asset.id] === "saving" && <span className="text-[8px] text-indigo-400 animate-pulse">…</span>}
+                        {savingState[asset.id] === "saved" && <span className="text-[8px] text-emerald-500 font-bold">✓</span>}
+                        {!savingState[asset.id] && (
+                          <button onClick={() => handleDeleteFinanceItem(asset.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-[10px] leading-none transition-all" title="Delete">✕</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => handleAddFinanceItem("cash", "New Item", 0)}
+                    className="w-full text-[10px] text-green-600 hover:text-green-800 hover:bg-green-50 py-2 px-4 text-left font-semibold transition-colors border-b border-gray-100"
+                  >
+                    + Add Liquid Asset
+                  </button>
+                </div>
+
+                {/* Investment & Personal Assets */}
+                <div>
+                  <div className="bg-green-50 px-4 py-1.5 text-[10px] font-bold text-green-700 uppercase tracking-widest border-b border-green-100">
+                    Investment &amp; Personal Assets
+                  </div>
+                  {parsedPfs.assets[1]?.items.map((asset) => (
+                    <div key={asset.id} className="flex items-center border-b border-gray-50 group hover:bg-gray-50 transition-colors">
+                      <input
+                        value={asset.label}
+                        onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === asset.id ? {...f, label: v} : f)) }}
+                        onBlur={(e) => handleUpdateFinanceItem(asset.id, "label", e.target.value)}
+                        className="flex-1 px-4 py-2.5 text-xs font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-green-400"
+                      />
+                      <input
+                        type="number"
+                        value={asset.amount}
+                        onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === asset.id ? {...f, amount: parseFloat(v)||0} : f)) }}
+                        onBlur={(e) => handleUpdateFinanceItem(asset.id, "amount", e.target.value)}
+                        className="w-32 px-3 py-2.5 text-xs font-bold font-mono text-right text-gray-800 bg-transparent border-0 border-l border-gray-100 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-green-400"
+                      />
+                      <div className="w-8 flex items-center justify-center">
+                        {savingState[asset.id] === "saving" && <span className="text-[8px] text-indigo-400 animate-pulse">…</span>}
+                        {savingState[asset.id] === "saved" && <span className="text-[8px] text-emerald-500 font-bold">✓</span>}
+                        {!savingState[asset.id] && (
+                          <button onClick={() => handleDeleteFinanceItem(asset.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-[10px] leading-none transition-all" title="Delete">✕</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => handleAddFinanceItem("other_asset", "New Asset", 0)}
+                    className="w-full text-[10px] text-green-600 hover:text-green-800 hover:bg-green-50 py-2 px-4 text-left font-semibold transition-colors border-b border-gray-100"
+                  >
+                    + Add Investment/Personal Asset
+                  </button>
+                </div>
+
+                {/* Total Asset Row */}
+                <div className="flex items-center bg-blue-700 text-white">
+                  <span className="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wide">Total Asset</span>
+                  <span className="w-32 px-3 py-2.5 text-xs font-extrabold font-mono text-right border-l border-blue-600">{parsedPfs.totalAssets}</span>
+                  <div className="w-8" />
+                </div>
+
+                {/* DEPT Section */}
+                <div className="bg-red-600 text-white py-2 px-4 text-xs font-bold text-center uppercase tracking-wider">
+                  Dept (หนี้สิน)
+                </div>
+                <div className="bg-red-50 px-4 py-1.5 text-[10px] font-bold text-red-700 uppercase tracking-widest border-b border-red-100">
+                  Leverage (เงินกู้และหนี้สินคงเหลือ)
+                </div>
+
+                {parsedPfs.debts.map((debt) => (
+                  <div key={debt.id} className="flex items-center border-b border-gray-50 group hover:bg-red-50/40 transition-colors">
+                    <input
+                      value={debt.label}
+                      onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === debt.id ? {...f, label: v} : f)) }}
+                      onBlur={(e) => handleUpdateFinanceItem(debt.id, "label", e.target.value)}
+                      className="flex-1 px-4 py-2.5 text-xs font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-red-400"
+                    />
+                    <input
+                      type="number"
+                      value={debt.amount}
+                      onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === debt.id ? {...f, amount: parseFloat(v)||0} : f)) }}
+                      onBlur={(e) => handleUpdateFinanceItem(debt.id, "amount", e.target.value)}
+                      className="w-32 px-3 py-2.5 text-xs font-bold font-mono text-right text-red-700 bg-transparent border-0 border-l border-gray-100 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-red-400"
+                    />
+                    <div className="w-8 flex items-center justify-center">
+                      {savingState[debt.id] === "saving" && <span className="text-[8px] text-indigo-400 animate-pulse">…</span>}
+                      {savingState[debt.id] === "saved" && <span className="text-[8px] text-emerald-500 font-bold">✓</span>}
+                      {!savingState[debt.id] && (
+                        <button onClick={() => handleDeleteFinanceItem(debt.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-[10px] leading-none transition-all" title="Delete">✕</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => handleAddFinanceItem("liability", "New Debt", 0)}
+                  className="w-full text-[10px] text-red-600 hover:text-red-800 hover:bg-red-50 py-2 px-4 text-left font-semibold transition-colors border-b border-gray-100"
+                >
+                  + Add Liability
+                </button>
+
+                {/* Total Dept Row */}
+                <div className="flex items-center bg-red-600 text-white">
+                  <span className="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wide">Total Dept</span>
+                  <span className="w-32 px-3 py-2.5 text-xs font-extrabold font-mono text-right border-l border-red-500">{parsedPfs.totalDebt}</span>
+                  <div className="w-8" />
+                </div>
+
+                {/* Net Worth Footer */}
+                <div className="flex items-center bg-gray-900 text-white">
+                  <span className="flex-1 px-4 py-3 text-sm font-extrabold uppercase tracking-widest">Net Worth</span>
+                  <span className={`w-32 px-3 py-3 text-sm font-extrabold font-mono text-right border-l border-gray-700 ${parsedPfs.netWorthNum >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{parsedPfs.netWorth}</span>
+                  <div className="w-8" />
+                </div>
+
+              </div>
+
+              {/* ──── RIGHT: DAILY INCOME AND EXPENSES ──── */}
+              <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+
+                {/* Sheet Title */}
+                <div className="bg-blue-800 text-white py-3 px-4 text-sm font-bold text-center uppercase tracking-widest">
+                  Daily Income and Expenses
+                </div>
+
+                {/* Column Headers */}
+                <div className="grid grid-cols-2 bg-gray-100 border-b border-gray-200">
+                  <div className="px-4 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest border-r border-gray-200">รายรับ (Income)</div>
+                  <div className="px-4 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">รายจ่าย (Expenses)</div>
+                </div>
+
+                {/* Sub Column Headers */}
+                <div className="grid grid-cols-2 border-b border-gray-200">
+                  {/* Income sub-header */}
+                  <div className="bg-green-600 text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest border-r border-gray-200">
+                    รายรับคงที่
+                  </div>
+                  {/* Expense sub-header */}
+                  <div className="grid grid-cols-2">
+                    <div className="bg-red-100 text-red-700 px-3 py-2 text-[10px] font-bold uppercase tracking-widest border-r border-gray-200">ค่าใช้จ่ายคงที่</div>
+                    <div className="bg-red-200 text-red-800 px-3 py-2 text-[10px] font-bold uppercase tracking-widest">ค่าใช้จ่ายไม่คงที่</div>
+                  </div>
+                </div>
+
+                {/* Income + Expense rows side by side */}
+                <div className="grid grid-cols-2 divide-x divide-gray-100">
+                  {/* LEFT: Income rows */}
+                  <div className="divide-y divide-gray-50">
+                    {parsedPfs.income.map((inc) => (
+                      <div key={inc.id} className="flex items-center group hover:bg-green-50/40 transition-colors">
+                        <input
+                          value={inc.label}
+                          onChange={(e) => { const v = e.target.value; setDbMonthlyItems(prev => prev.map(m => m.id === inc.id ? {...m, label: v} : m)) }}
+                          onBlur={(e) => handleUpdateMonthlyItem(inc.id, "label", e.target.value)}
+                          className="flex-1 px-3 py-2.5 text-xs font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:bg-white"
+                          placeholder="Income source..."
+                        />
+                        <input
+                          type="number"
+                          value={inc.amount}
+                          onChange={(e) => { const v = e.target.value; setDbMonthlyItems(prev => prev.map(m => m.id === inc.id ? {...m, amount: parseFloat(v)||0} : m)) }}
+                          onBlur={(e) => handleUpdateMonthlyItem(inc.id, "amount", e.target.value)}
+                          className="w-24 px-2 py-2.5 text-xs font-bold font-mono text-right text-green-800 bg-transparent border-0 border-l border-gray-100 focus:outline-none focus:bg-white"
+                        />
+                        <div className="w-6 flex items-center justify-center shrink-0">
+                          {savingState[inc.id] === "saving" && <span className="text-[7px] text-indigo-400">…</span>}
+                          {savingState[inc.id] === "saved" && <span className="text-[7px] text-emerald-500">✓</span>}
+                          {!savingState[inc.id] && (
+                            <button onClick={() => handleDeleteMonthlyItem(inc.id)} className="opacity-0 group-hover:opacity-100 text-gray-200 hover:text-rose-400 text-[9px]" title="Delete">✕</button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => handleAddMonthlyItem("income_fixed", "New Income", 0)}
+                      className="w-full text-[10px] text-green-600 hover:text-green-800 hover:bg-green-50 py-2 px-3 text-left font-semibold transition-colors"
+                    >
+                      + Add Income
+                    </button>
+                  </div>
+
+                  {/* RIGHT: Expense columns (Fixed + Variable) */}
+                  <div className="grid grid-cols-2 divide-x divide-gray-100">
+
+                    {/* Fixed Expenses */}
+                    <div className="divide-y divide-gray-50">
+                      {parsedPfs.fixedExpenses.map((fe) => (
+                        <div key={fe.id} className="flex items-center group hover:bg-red-50/40 transition-colors">
+                          <input
+                            value={fe.label}
+                            onChange={(e) => { const v = e.target.value; setDbMonthlyItems(prev => prev.map(m => m.id === fe.id ? {...m, label: v} : m)) }}
+                            onBlur={(e) => handleUpdateMonthlyItem(fe.id, "label", e.target.value)}
+                            className="flex-1 px-2 py-2.5 text-xs font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:bg-white min-w-0"
+                            placeholder="Expense..."
+                          />
+                          <input
+                            type="number"
+                            value={fe.amount}
+                            onChange={(e) => { const v = e.target.value; setDbMonthlyItems(prev => prev.map(m => m.id === fe.id ? {...m, amount: parseFloat(v)||0} : m)) }}
+                            onBlur={(e) => handleUpdateMonthlyItem(fe.id, "amount", e.target.value)}
+                            className="w-20 px-2 py-2.5 text-xs font-bold font-mono text-right text-red-700 bg-transparent border-0 border-l border-gray-100 focus:outline-none focus:bg-white shrink-0"
+                          />
+                          <div className="w-5 flex items-center justify-center shrink-0">
+                            {savingState[fe.id] === "saving" && <span className="text-[7px] text-indigo-400">…</span>}
+                            {savingState[fe.id] === "saved" && <span className="text-[7px] text-emerald-500">✓</span>}
+                            {!savingState[fe.id] && (
+                              <button onClick={() => handleDeleteMonthlyItem(fe.id)} className="opacity-0 group-hover:opacity-100 text-gray-200 hover:text-rose-400 text-[8px]" title="Delete">✕</button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => handleAddMonthlyItem("expense_fixed", "New Expense", 0)}
+                        className="w-full text-[9px] text-red-500 hover:text-red-700 hover:bg-red-50 py-2 px-2 text-left font-semibold transition-colors"
+                      >
+                        + Fixed
+                      </button>
+                    </div>
+
+                    {/* Variable Expenses */}
+                    <div className="divide-y divide-gray-50">
+                      {parsedPfs.variableExpenses.map((ve) => (
+                        <div key={ve.id} className="flex items-center group hover:bg-orange-50/40 transition-colors">
+                          <input
+                            value={ve.label}
+                            onChange={(e) => { const v = e.target.value; setDbMonthlyItems(prev => prev.map(m => m.id === ve.id ? {...m, label: v} : m)) }}
+                            onBlur={(e) => handleUpdateMonthlyItem(ve.id, "label", e.target.value)}
+                            className="flex-1 px-2 py-2.5 text-xs font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:bg-white min-w-0"
+                            placeholder="Variable..."
+                          />
+                          <input
+                            type="number"
+                            value={ve.amount}
+                            onChange={(e) => { const v = e.target.value; setDbMonthlyItems(prev => prev.map(m => m.id === ve.id ? {...m, amount: parseFloat(v)||0} : m)) }}
+                            onBlur={(e) => handleUpdateMonthlyItem(ve.id, "amount", e.target.value)}
+                            className="w-20 px-2 py-2.5 text-xs font-bold font-mono text-right text-orange-700 bg-transparent border-0 border-l border-gray-100 focus:outline-none focus:bg-white shrink-0"
+                          />
+                          <div className="w-5 flex items-center justify-center shrink-0">
+                            {savingState[ve.id] === "saving" && <span className="text-[7px] text-indigo-400">…</span>}
+                            {savingState[ve.id] === "saved" && <span className="text-[7px] text-emerald-500">✓</span>}
+                            {!savingState[ve.id] && (
+                              <button onClick={() => handleDeleteMonthlyItem(ve.id)} className="opacity-0 group-hover:opacity-100 text-gray-200 hover:text-rose-400 text-[8px]" title="Delete">✕</button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => handleAddMonthlyItem("expense_variable", "New Variable", 0)}
+                        className="w-full text-[9px] text-orange-500 hover:text-orange-700 hover:bg-orange-50 py-2 px-2 text-left font-semibold transition-colors"
+                      >
+                        + Variable
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Totals Footer */}
+                <div className="grid grid-cols-2 border-t border-gray-200 bg-gray-50 divide-x divide-gray-200">
+                  {/* Income Total */}
+                  <div className="flex items-center bg-green-700 text-white">
+                    <span className="flex-1 px-4 py-2.5 text-xs font-bold uppercase tracking-wide">รวม</span>
+                    <span className="w-28 px-3 py-2.5 text-xs font-extrabold font-mono text-right border-l border-green-600">{parsedPfs.totalIncome}</span>
+                    <div className="w-6" />
+                  </div>
+                  {/* Expense Total */}
+                  <div className="grid grid-cols-2 divide-x divide-red-400">
+                    <div className="flex items-center bg-red-600 text-white">
+                      <span className="flex-1 px-3 py-2.5 text-xs font-bold uppercase">รวม</span>
+                      <span className="w-20 px-2 py-2.5 text-xs font-extrabold font-mono text-right border-l border-red-500">{parsedPfs.totalFixedExpenses}</span>
+                      <div className="w-5" />
+                    </div>
+                    <div className="flex items-center bg-red-700 text-white">
+                      <span className="flex-1 px-3 py-2.5 text-xs font-bold uppercase">รวม</span>
+                      <span className="w-20 px-2 py-2.5 text-xs font-extrabold font-mono text-right border-l border-red-600">{parsedPfs.totalVariableExpenses}</span>
+                      <div className="w-5" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Net Savings Footer */}
+                <div className="flex bg-gray-900 text-white">
+                  <span className="flex-1 px-4 py-3 text-xs font-extrabold uppercase tracking-widest">เหลือ (Net Monthly Savings)</span>
+                  <span className={`px-4 py-3 text-sm font-extrabold font-mono ${parsedPfs.remainingMoneyNum >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{parsedPfs.remainingMoney}</span>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ─── E. STANDARD SHEETS TABS (Long-term, Short-term, Store of Wealth) ─── */}
+        {!isBtcTab && !isPfsTab && !isInvestmentsTab && !isOverviewTab && !isExpensesTab && (
           <div className="space-y-8" id="portfolio-tab-view">
             
             {/* Top Metrics Cards */}
@@ -834,7 +1568,7 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
           </div>
         )}
 
-        {/* ─── D. BTC TRANSACTION DASHBOARD VIEW ─── */}
+        {/* ─── F. BTC TRANSACTION DASHBOARD VIEW ─── */}
         {isBtcTab && parsedBtc && (
           <div className="space-y-8" id="btc-dashboard-view">
             
@@ -960,245 +1694,6 @@ export default function FinanceDashboard({ data }: { data: FinanceData }) {
                   </tbody>
                 </table>
               </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* ─── E. PERSONAL FINANCIAL STATEMENT (BALANCE SHEET & DAILY CASHFLOW) ─── */}
-        {isPfsTab && parsedPfs && (
-          <div className="space-y-10" id="financial-statement-view">
-            
-            {/* Top Net Worth Card */}
-            <div className="bg-white border border-gray-150 rounded-3xl p-8 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.4em] font-semibold text-gray-400 mb-1">Master Statement</p>
-                <h2 className="text-lg font-bold text-gray-950">Net Worth Analysis</h2>
-                <p className="text-gray-400 text-xs mt-1">Total Assets subtract Liabilities. Reflected in Thai Baht (฿).</p>
-              </div>
-              <div className="bg-gray-950 text-white px-8 py-5 rounded-2xl flex flex-col items-end shadow-lg">
-                <span className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Calculated Net Worth</span>
-                <span className={`text-3xl font-extrabold font-mono ${
-                  cleanNum(parsedPfs.netWorth) >= 0 ? "text-emerald-400" : "text-rose-400"
-                }`}>
-                  {parsedPfs.netWorth}
-                </span>
-              </div>
-            </div>
-
-            {/* Three Pillar Summary Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Total Combined Assets</p>
-                <h3 className="text-2xl font-bold text-emerald-600 font-mono">{parsedPfs.totalAssets}</h3>
-                <span className="text-[10px] text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full font-bold mt-2 inline-block">Emergency + Investments</span>
-              </div>
-
-              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Total Outstanding Debt</p>
-                <h3 className="text-2xl font-bold text-rose-600 font-mono">{parsedPfs.totalDebt}</h3>
-                <span className="text-[10px] text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full font-bold mt-2 inline-block">Outstanding Liabilities</span>
-              </div>
-
-              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Monthly Inflow (Income)</p>
-                <h3 className="text-2xl font-bold text-gray-900 font-mono">{parsedPfs.totalIncome}</h3>
-                <span className="text-[10px] text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full font-bold mt-2 inline-block">Fixed + Variable Earnings</span>
-              </div>
-
-              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Cash Reserve Surplus</p>
-                <h3 className={`text-2xl font-bold font-mono ${
-                  cleanNum(parsedPfs.remainingMoney) >= 0 ? "text-indigo-600" : "text-rose-600"
-                }`}>{parsedPfs.remainingMoney}</h3>
-                <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full font-medium mt-2 inline-block">End-of-Month Buffer</span>
-              </div>
-            </div>
-
-            {/* Income vs Expenses Recharts */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
-              {/* Assets Allocation Pie Chart */}
-              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[350px]">
-                <div>
-                  <h4 className="text-xs font-bold text-gray-950 mb-1">Asset Allocation Weight</h4>
-                  <p className="text-[10px] text-gray-400 mb-6">Percentage weighting of all liquid and capital asset categories.</p>
-                </div>
-                <div className="h-56 relative flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={parsedPfs.assets.map(a => ({ name: a.label, value: cleanNum(a.amount) })).filter(d => d.value > 0)}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={70}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {parsedPfs.assets.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip prefix="฿" />} />
-                      <Legend verticalAlign="bottom" iconSize={8} iconType="circle" wrapperStyle={{ fontSize: "9px" }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Expense Allocation Weight */}
-              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[350px]">
-                <div>
-                  <h4 className="text-xs font-bold text-gray-950 mb-1">Fixed Subscriptions & Expenses</h4>
-                  <p className="text-[10px] text-gray-400 mb-6">Breakdown of constant monthly outflows (Netflix, Youtube, TradingView, etc.).</p>
-                </div>
-                <div className="h-56 relative flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={parsedPfs.fixedExpenses.map(a => ({ name: a.label, value: cleanNum(a.amount) })).filter(d => d.value > 0)}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={70}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {parsedPfs.fixedExpenses.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<CustomTooltip prefix="฿" />} />
-                      <Legend verticalAlign="bottom" iconSize={8} iconType="circle" wrapperStyle={{ fontSize: "9px" }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Monthly Cashflow Bar Comparison */}
-              <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[350px]">
-                <div>
-                  <h4 className="text-xs font-bold text-gray-950 mb-1">Income vs Major Outflow Blocks</h4>
-                  <p className="text-[10px] text-gray-400 mb-6">Comparing total earnings against Fixed commitments and Variable spending.</p>
-                </div>
-                <div className="h-56">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { name: "Monthly Inflows", Amount: cleanNum(parsedPfs.totalIncome), color: "#10b981" },
-                        { name: "Fixed Exp.", Amount: cleanNum(parsedPfs.totalFixedExpenses), color: "#f43f5e" },
-                        { name: "Variable Exp.", Amount: cleanNum(parsedPfs.totalVariableExpenses), color: "#a855f7" }
-                      ]}
-                      margin={{ left: -10, right: 10, top: 10, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} tickLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
-                      <Tooltip content={<CustomTooltip prefix="฿" />} />
-                      <Bar dataKey="Amount" radius={[4, 4, 0, 0]} barSize={35}>
-                        <Cell fill="#10b981" />
-                        <Cell fill="#f43f5e" />
-                        <Cell fill="#a855f7" />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Financial Ledger Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              
-              {/* Assets & Liabilities Ledger */}
-              <div className="space-y-6">
-                <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm">
-                  <h4 className="text-xs font-extrabold text-gray-900 mb-4 uppercase tracking-widest">Liquid & Investment Assets</h4>
-                  <div className="space-y-3.5">
-                    {parsedPfs.assets.map((a, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-xs">
-                        <span className="font-semibold text-gray-700">{a.label}</span>
-                        <span className="font-bold text-gray-900 font-mono">{a.amount}</span>
-                      </div>
-                    ))}
-                    <div className="border-t border-gray-100 pt-3.5 flex justify-between items-center text-xs font-bold">
-                      <span className="text-gray-900">Total Assets</span>
-                      <span className="text-emerald-600 font-mono">{parsedPfs.totalAssets}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm">
-                  <h4 className="text-xs font-extrabold text-gray-900 mb-4 uppercase tracking-widest">Liabilities & Leverage (Debt)</h4>
-                  <div className="space-y-3.5">
-                    {parsedPfs.debts.map((d, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-xs">
-                        <span className="font-semibold text-gray-700">{d.label}</span>
-                        <span className="font-bold text-gray-900 font-mono">{d.amount}</span>
-                      </div>
-                    ))}
-                    <div className="border-t border-gray-100 pt-3.5 flex justify-between items-center text-xs font-bold">
-                      <span className="text-gray-900">Total Debts</span>
-                      <span className="text-rose-600 font-mono">{parsedPfs.totalDebt}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Monthly Cashflows List */}
-              <div className="bg-white border border-gray-150 rounded-3xl p-6 shadow-sm space-y-6">
-                
-                <div>
-                  <h4 className="text-xs font-extrabold text-gray-900 mb-4 uppercase tracking-widest">Monthly Inflows</h4>
-                  <div className="space-y-3">
-                    {parsedPfs.income.map((i, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-xs">
-                        <span className="font-semibold text-gray-600">{i.label}</span>
-                        <span className="font-bold text-gray-900 font-mono">{i.amount}</span>
-                      </div>
-                    ))}
-                    <div className="border-t border-gray-50 pt-3 flex justify-between items-center text-xs font-bold">
-                      <span className="text-gray-800">Total Inflow</span>
-                      <span className="text-emerald-600 font-mono">{parsedPfs.totalIncome}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-xs font-extrabold text-gray-900 mb-4 uppercase tracking-widest">Fixed Expenses List</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-xs">
-                    {parsedPfs.fixedExpenses.map((fe, idx) => (
-                      <div key={idx} className="flex justify-between items-center py-1">
-                        <span className="font-semibold text-gray-600">{fe.label}</span>
-                        <span className="font-bold text-gray-850 font-mono">{fe.amount}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="border-t border-gray-50 pt-3 mt-3 flex justify-between items-center text-xs font-bold">
-                    <span className="text-gray-800">Total Fixed Commitment</span>
-                    <span className="text-rose-600 font-mono">{parsedPfs.totalFixedExpenses}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-xs font-extrabold text-gray-900 mb-4 uppercase tracking-widest">Variable Expenses List</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-xs">
-                    {parsedPfs.variableExpenses.map((ve, idx) => (
-                      <div key={idx} className="flex justify-between items-center py-1">
-                        <span className="font-semibold text-gray-600">{ve.label}</span>
-                        <span className="font-bold text-gray-850 font-mono">{ve.amount}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="border-t border-gray-50 pt-3 mt-3 flex justify-between items-center text-xs font-bold">
-                    <span className="text-gray-800">Total Variable spending</span>
-                    <span className="text-rose-600 font-mono">{parsedPfs.totalVariableExpenses}</span>
-                  </div>
-                </div>
-
-              </div>
-
             </div>
 
           </div>
