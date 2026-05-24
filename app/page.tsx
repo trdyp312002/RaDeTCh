@@ -24,7 +24,7 @@ const sections: Section[] = [
     color: "from-indigo-50 to-blue-50",
   },
   {
-    href: "/investments",
+    href: "/finance?tab=Investments",
     emoji: "📈",
     tag: "Finance",
     title: "Investments",
@@ -87,7 +87,7 @@ const sections: Section[] = [
 
 const quickLinks = [
   { href: "/finance", label: "Personal Finance" },
-  { href: "/investments", label: "Investments" },
+  { href: "/finance?tab=Investments", label: "Investments" },
   { href: "/menu", label: "Food Menu" },
   { href: "/music", label: "Music" },
   { href: "/travel", label: "Travel" },

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useSearchParams } from "next/navigation"
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie, Legend, CartesianGrid
@@ -59,10 +60,20 @@ function CustomTooltip({ active, payload, label, prefix = "$" }: any) {
 }
 
 export default function FinanceDashboard({ data }: { data: FinanceData }) {
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
+
   // Hardcode unified tab layout: Personal Finance overview, SQLite Investments, and Sheets worksheets
   const sheetTabs = Object.keys(data).filter(k => data[k] && data[k].length > 0)
   const tabs = useMemo(() => ["Personal Finance", "Investments", ...sheetTabs], [sheetTabs])
-  const [activeTab, setActiveTab] = useState("Personal Finance")
+
+  const [activeTab, setActiveTab] = useState(() => {
+    if (tabParam) {
+      const found = tabs.find(t => t.toLowerCase() === tabParam.toLowerCase())
+      if (found) return found
+    }
+    return "Personal Finance"
+  })
 
   // ─── Data Parsers ───────────────────────────────────────────────────────────
 
