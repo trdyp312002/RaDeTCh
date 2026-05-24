@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import db from "@/lib/db"
 
+export const dynamic = "force-dynamic"
+
 const DEFAULT_SEEDS = [
   // Income Fixed
   { type: "income_fixed", label: "เงินเดือน", amount: 22668.82, currency: "THB" },

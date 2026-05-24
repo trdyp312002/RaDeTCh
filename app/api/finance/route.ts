@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import db from "@/lib/db"
 
+export const dynamic = "force-dynamic"
+
 const DEFAULT_FINANCE_SEEDS = [
   // cash (Liquid Assets)
   { category: "cash", label: "EMERGENCY FUND", amount: 2060.80, currency: "THB" },
