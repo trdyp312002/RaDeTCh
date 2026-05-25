@@ -384,63 +384,7 @@ export default function FinanceDashboard() {
 
   // ─── Data Parsers & Syntheses ────────────────────────────────────────────────
 
-  // 1. Synthesized Personal Financial Statement (Calculated from SQLite DB)
-  const parsedPfs = useMemo(() => {
-    // Group Balance Sheet items
-    const cashAssets = dbFinanceItems.filter(f => f.category === "cash")
-    const otherAssets = dbFinanceItems.filter(f => f.category === "other_asset")
-    const liabilityItems = dbFinanceItems.filter(f => f.category === "liability")
-
-    const totalAssetsVal = [...cashAssets, ...otherAssets].reduce((sum, item) => sum + item.amount, 0)
-    const totalDebtVal = liabilityItems.reduce((sum, item) => sum + item.amount, 0)
-    const netWorthVal = totalAssetsVal - totalDebtVal
-
-    // Group Monthly cashflow items
-    const monthlyIncomeItems = dbMonthlyItems.filter(m => m.type.startsWith("income"))
-    const monthlyFixedExpenses = dbMonthlyItems.filter(m => m.type === "expense_fixed")
-    const monthlyVariableExpenses = dbMonthlyItems.filter(m => m.type === "expense_variable")
-
-    const totalIncomeVal = monthlyIncomeItems.reduce((sum, item) => sum + item.amount, 0)
-    const totalFixedVal = monthlyFixedExpenses.reduce((sum, item) => sum + item.amount, 0)
-    const totalVariableVal = monthlyVariableExpenses.reduce((sum, item) => sum + item.amount, 0)
-    const totalExpensesVal = totalFixedVal + totalVariableVal
-    const remainingMoneyVal = totalIncomeVal - totalExpensesVal
-
-    // Formatters
-    const fmtTHB = (num: number) => "฿" + num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
-    return {
-      assets: [
-        { title: "Liquid Assets", items: cashAssets },
-        { title: "Investment & Personal Assets", items: otherAssets }
-      ],
-      debts: liabilityItems,
-      income: monthlyIncomeItems,
-      fixedExpenses: monthlyFixedExpenses,
-      variableExpenses: monthlyVariableExpenses,
-      
-      // Values
-      totalAssetsNum: totalAssetsVal,
-      totalDebtNum: totalDebtVal,
-      netWorthNum: netWorthVal,
-      totalIncomeNum: totalIncomeVal,
-      totalFixedNum: totalFixedVal,
-      totalVariableNum: totalVariableVal,
-      remainingMoneyNum: remainingMoneyVal,
-      
-      // Strings
-      totalAssets: fmtTHB(totalAssetsVal),
-      totalDebt: fmtTHB(totalDebtVal),
-      netWorth: fmtTHB(netWorthVal),
-      totalIncome: fmtTHB(totalIncomeVal),
-      totalFixedExpenses: fmtTHB(totalFixedVal),
-      totalVariableExpenses: fmtTHB(totalVariableVal),
-      remainingMoney: fmtTHB(remainingMoneyVal),
-      totalExpenses: fmtTHB(totalExpensesVal)
-    }
-  }, [dbFinanceItems, dbMonthlyItems])
-
-  // 2. SQLite Bitcoin DCA ledger calculation
+  // 1. SQLite Bitcoin DCA ledger calculation
   const parsedBtc = useMemo(() => {
     const btcHolding = allHoldings.find(h => h.portfolio === "retirement" && (h.symbol === "BTC-USD" || h.symbol.includes("BTC")))
     const btcPrice = marketQuotes["BTC-USD"]?.currentPrice ?? btcHolding?.avgCost ?? 60000
@@ -482,7 +426,7 @@ export default function FinanceDashboard() {
     }
   }, [allHoldings, marketQuotes])
 
-  // 3. Consolidated SQLite master overview data
+  // 2. Consolidated SQLite master overview data
   const masterOverviewData = useMemo(() => {
     const thbRate = fxRates.THB || 35.5
     
@@ -570,6 +514,79 @@ export default function FinanceDashboard() {
       }
     }
   }, [allHoldings, marketQuotes, dbFinanceItems, fxRates])
+
+  // 3. Synthesized Personal Financial Statement (Calculated from SQLite DB + Live Portfolio Linkages)
+  const parsedPfs = useMemo(() => {
+    const thbRate = fxRates.THB || 35.5
+
+    // Group Balance Sheet items
+    const cashAssets = dbFinanceItems.filter(f => f.category === "cash")
+    
+    // Dynamically calculate BTC and US STOCK amounts from portfolios
+    const otherAssets = dbFinanceItems.filter(f => f.category === "other_asset").map(f => {
+      if (f.label.toUpperCase() === "BTC" || f.label.toUpperCase() === "BITCOIN") {
+        const btcValUSD = cleanNum(parsedBtc.dashboard.portfolioValue)
+        const btcValTHB = btcValUSD * thbRate
+        return { ...f, amount: btcValTHB, isLinked: true, linkLabel: "Retirement Portfolio (BTC)" }
+      }
+      if (f.label.toUpperCase() === "US STOCK" || f.label.toUpperCase() === "US STOCKS") {
+        const ltValueUSD = masterOverviewData.longTerm.summary.totalValue
+        const ltValueTHB = ltValueUSD * thbRate
+        return { ...f, amount: ltValueTHB, isLinked: true, linkLabel: "Long-term Portfolio (US Stocks)" }
+      }
+      return { ...f, isLinked: false }
+    })
+
+    const liabilityItems = dbFinanceItems.filter(f => f.category === "liability")
+
+    const totalAssetsVal = [...cashAssets, ...otherAssets].reduce((sum, item) => sum + item.amount, 0)
+    const totalDebtVal = liabilityItems.reduce((sum, item) => sum + item.amount, 0)
+    const netWorthVal = totalAssetsVal - totalDebtVal
+
+    // Group Monthly cashflow items
+    const monthlyIncomeItems = dbMonthlyItems.filter(m => m.type.startsWith("income"))
+    const monthlyFixedExpenses = dbMonthlyItems.filter(m => m.type === "expense_fixed")
+    const monthlyVariableExpenses = dbMonthlyItems.filter(m => m.type === "expense_variable")
+
+    const totalIncomeVal = monthlyIncomeItems.reduce((sum, item) => sum + item.amount, 0)
+    const totalFixedVal = monthlyFixedExpenses.reduce((sum, item) => sum + item.amount, 0)
+    const totalVariableVal = monthlyVariableExpenses.reduce((sum, item) => sum + item.amount, 0)
+    const totalExpensesVal = totalFixedVal + totalVariableVal
+    const remainingMoneyVal = totalIncomeVal - totalExpensesVal
+
+    // Formatters
+    const fmtTHB = (num: number) => "฿" + num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+    return {
+      assets: [
+        { title: "Liquid Assets", items: cashAssets },
+        { title: "Investment & Personal Assets", items: otherAssets }
+      ],
+      debts: liabilityItems,
+      income: monthlyIncomeItems,
+      fixedExpenses: monthlyFixedExpenses,
+      variableExpenses: monthlyVariableExpenses,
+      
+      // Values
+      totalAssetsNum: totalAssetsVal,
+      totalDebtNum: totalDebtVal,
+      netWorthNum: netWorthVal,
+      totalIncomeNum: totalIncomeVal,
+      totalFixedNum: totalFixedVal,
+      totalVariableNum: totalVariableVal,
+      remainingMoneyNum: remainingMoneyVal,
+      
+      // Strings
+      totalAssets: fmtTHB(totalAssetsVal),
+      totalDebt: fmtTHB(totalDebtVal),
+      netWorth: fmtTHB(netWorthVal),
+      totalIncome: fmtTHB(totalIncomeVal),
+      totalFixedExpenses: fmtTHB(totalFixedVal),
+      totalVariableExpenses: fmtTHB(totalVariableVal),
+      remainingMoney: fmtTHB(remainingMoneyVal),
+      totalExpenses: fmtTHB(totalExpensesVal)
+    }
+  }, [dbFinanceItems, dbMonthlyItems, fxRates, parsedBtc, masterOverviewData])
 
   // ─── Form Submission Local Hooks ───────────────────────────────────────────
   const [newExpenseType, setNewExpenseType] = useState<DBMonthlyItem["type"]>("expense_fixed")
@@ -1545,25 +1562,34 @@ export default function FinanceDashboard() {
                   <div className="bg-green-50 px-4 py-1.5 text-[10px] font-bold text-green-700 uppercase tracking-widest border-b border-green-100">
                     Investment &amp; Personal Assets
                   </div>
-                  {parsedPfs.assets[1]?.items.map((asset) => (
+                   {parsedPfs.assets[1]?.items.map((asset: any) => (
                     <div key={asset.id} className="flex items-center border-b border-gray-50 group hover:bg-gray-50 transition-colors">
-                      <input
-                        value={asset.label}
-                        onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === asset.id ? {...f, label: v} : f)) }}
-                        onBlur={(e) => handleUpdateFinanceItem(asset.id, "label", e.target.value)}
-                        className="flex-1 px-4 py-2.5 text-xs font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-green-400"
-                      />
+                      <div className="flex-1 flex items-center relative">
+                        <input
+                          value={asset.label}
+                          disabled={asset.isLinked}
+                          onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === asset.id ? {...f, label: v} : f)) }}
+                          onBlur={(e) => handleUpdateFinanceItem(asset.id, "label", e.target.value)}
+                          className={`flex-1 px-4 py-2.5 text-xs font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-green-400 ${asset.isLinked ? "text-indigo-600 bg-indigo-50/5 cursor-not-allowed" : ""}`}
+                        />
+                        {asset.isLinked && (
+                          <span className="absolute right-3 flex items-center gap-1 text-[8px] bg-indigo-100 text-indigo-700 font-bold px-1.5 py-0.5 rounded-full" title={asset.linkLabel}>
+                            🔗 Linked
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="number"
-                        value={asset.amount}
+                        value={asset.isLinked ? asset.amount.toFixed(2) : asset.amount}
+                        disabled={asset.isLinked}
                         onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === asset.id ? {...f, amount: parseFloat(v)||0} : f)) }}
                         onBlur={(e) => handleUpdateFinanceItem(asset.id, "amount", e.target.value)}
-                        className="w-32 px-3 py-2.5 text-xs font-bold font-mono text-right text-gray-800 bg-transparent border-0 border-l border-gray-100 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-green-400"
+                        className={`w-32 px-3 py-2.5 text-xs font-bold font-mono text-right text-gray-800 bg-transparent border-0 border-l border-gray-100 focus:outline-none focus:bg-white focus:ring-inset focus:ring-1 focus:ring-green-400 ${asset.isLinked ? "text-indigo-700 bg-indigo-50/5 cursor-not-allowed font-semibold" : ""}`}
                       />
                       <div className="w-8 flex items-center justify-center">
                         {savingState[asset.id] === "saving" && <span className="text-[8px] text-indigo-400 animate-pulse">…</span>}
                         {savingState[asset.id] === "saved" && <span className="text-[8px] text-emerald-500 font-bold">✓</span>}
-                        {!savingState[asset.id] && (
+                        {!savingState[asset.id] && !asset.isLinked && (
                           <button onClick={() => handleDeleteFinanceItem(asset.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-[10px] leading-none transition-all" title="Delete">✕</button>
                         )}
                       </div>
