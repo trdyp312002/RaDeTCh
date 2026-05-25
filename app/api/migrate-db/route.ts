@@ -47,21 +47,22 @@ export async function GET(req: NextRequest) {
       )
     `)
 
-    // 1. Move BTC-USD to retirement or insert it if missing
-    logs.push("[*] Moving or inserting BTC-USD holding in retirement portfolio...")
+    // 1. Move BTC/BTC-USD to retirement, and rename 'BTC' -> 'BTC-USD' if it exists to preserve user transactions
+    logs.push("[*] Merging or moving BTC/BTC-USD holding to retirement portfolio...")
     const btcCheck = await db.execute({
-      sql: "SELECT * FROM holdings WHERE symbol = 'BTC-USD' LIMIT 1",
+      sql: "SELECT * FROM holdings WHERE symbol IN ('BTC', 'BTC-USD') LIMIT 2",
       args: []
     })
     
     let btcHoldingId = "d9f453c5-78cc-4726-bc15-b19dad1d9d3f"
     if (btcCheck.rows.length > 0) {
-      btcHoldingId = btcCheck.rows[0].id as string
+      const existingBtc = btcCheck.rows.find(r => (r.symbol as string) === "BTC") || btcCheck.rows[0]
+      btcHoldingId = existingBtc.id as string
       await db.execute({
-        sql: "UPDATE holdings SET portfolio = 'retirement' WHERE id = ?",
+        sql: "UPDATE holdings SET symbol = 'BTC-USD', portfolio = 'retirement' WHERE id = ?",
         args: [btcHoldingId]
       })
-      logs.push(`[+] Updated existing BTC holding (ID: ${btcHoldingId}) portfolio to 'retirement'.`)
+      logs.push(`[+] Found existing Bitcoin holding (Symbol: ${existingBtc.symbol}, ID: ${btcHoldingId}). Updated symbol to 'BTC-USD' and portfolio to 'retirement'. (All transactions preserved!)`)
     } else {
       await db.execute({
         sql: "INSERT INTO holdings (id, symbol, name, type, portfolio) VALUES (?, 'BTC-USD', 'Bitcoin', 'crypto', 'retirement')",
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest) {
       logs.push(`[+] Inserted new BTC-USD holding (ID: ${btcHoldingId}) in retirement.`)
     }
 
-    // 2. Ensure BTC-USD transaction exists so it has a positive quantity
+    // 2. Ensure BTC-USD transaction exists so it has a positive quantity (only seeded if the user has 0 transactions)
     const txCheck = await db.execute({
       sql: "SELECT * FROM transactions WHERE holding_id = ? LIMIT 1",
       args: [btcHoldingId]
@@ -80,9 +81,9 @@ export async function GET(req: NextRequest) {
         sql: "INSERT INTO transactions (id, holding_id, type, quantity, price, fees, date, notes) VALUES ('e61aec7b-f74a-4806-a933-96c2693ccb27', ?, 'BUY', 0.00024486, 67762.96, 0, '2026-02-27', 'Initial retirement seed')",
         args: [btcHoldingId]
       })
-      logs.push("[+] Seeded initial BUY transaction for Bitcoin DCA.")
+      logs.push("[+] Seeded initial BUY transaction for Bitcoin DCA (no previous transactions found).")
     } else {
-      logs.push("[+] Bitcoin transaction already exists.")
+      logs.push("[+] Bitcoin transactions already exist on your database. Skipped seeding to avoid altering your real data.")
     }
 
     // 3. Insert long_term US stocks
