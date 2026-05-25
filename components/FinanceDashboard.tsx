@@ -523,19 +523,35 @@ export default function FinanceDashboard() {
     const cashAssets = dbFinanceItems.filter(f => f.category === "cash")
     
     // Dynamically calculate BTC and US STOCK amounts from portfolios
-    const otherAssets = dbFinanceItems.filter(f => f.category === "other_asset").map(f => {
-      if (f.label.toUpperCase() === "BTC" || f.label.toUpperCase() === "BITCOIN") {
-        const btcValUSD = cleanNum(parsedBtc.dashboard.portfolioValue)
-        const btcValTHB = btcValUSD * thbRate
-        return { ...f, amount: btcValTHB, isLinked: true, linkLabel: "Retirement Portfolio (BTC)" }
+    const dbOtherAssets = dbFinanceItems.filter(f => f.category === "other_asset").map(f => ({ ...f, isLinked: false }))
+    
+    const btcValUSD = cleanNum(parsedBtc.dashboard.portfolioValue)
+    const btcValTHB = btcValUSD * thbRate
+
+    const ltValueUSD = masterOverviewData.longTerm.summary.totalValue
+    const ltValueTHB = ltValueUSD * thbRate
+
+    const otherAssets = [
+      ...dbOtherAssets,
+      {
+        id: "link-btc-id",
+        category: "other_asset" as const,
+        label: "BTC",
+        amount: btcValTHB,
+        currency: "THB",
+        isLinked: true,
+        linkLabel: "Retirement Portfolio (BTC)"
+      },
+      {
+        id: "link-usstock-id",
+        category: "other_asset" as const,
+        label: "US STOCK",
+        amount: ltValueTHB,
+        currency: "THB",
+        isLinked: true,
+        linkLabel: "Long-term Portfolio (US Stocks)"
       }
-      if (f.label.toUpperCase() === "US STOCK" || f.label.toUpperCase() === "US STOCKS") {
-        const ltValueUSD = masterOverviewData.longTerm.summary.totalValue
-        const ltValueTHB = ltValueUSD * thbRate
-        return { ...f, amount: ltValueTHB, isLinked: true, linkLabel: "Long-term Portfolio (US Stocks)" }
-      }
-      return { ...f, isLinked: false }
-    })
+    ]
 
     const liabilityItems = dbFinanceItems.filter(f => f.category === "liability")
 
