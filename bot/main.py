@@ -127,7 +127,13 @@ async def on_message(message):
             # แสดงสถานะ "กำลังพิมพ์..." (Typing...) ใน Discord เพื่อเพิ่มความเป็นธรรมชาติ
             async with message.channel.typing():
                 # ส่งคำพูดไปให้ Gemini คุยตอบกลับมา (ใช้ thread แยกเพื่อไม่บล็อก event loop)
-                reply_text = await asyncio.to_thread(analyzer.chat, clean_content)
+                try:
+                    reply_text = await asyncio.wait_for(
+                        asyncio.to_thread(analyzer.chat, clean_content),
+                        timeout=30.0
+                    )
+                except asyncio.TimeoutError:
+                    reply_text = "❌ Gemini ใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง"
                 await message.reply(reply_text)
             return
 
