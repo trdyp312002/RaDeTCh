@@ -4,6 +4,7 @@ import config
 from src.gemini_analyzer import GeminiAnalyzer
 from src.radetch_api import RadetchAPI
 import sys
+import asyncio
 
 # บังคับใช้ UTF-8 สำหรับแสดงผลใน Terminal ของ Windows ป้องกัน UnicodeEncodeError
 if sys.platform.startswith('win'):
@@ -125,8 +126,8 @@ async def on_message(message):
                 
             # แสดงสถานะ "กำลังพิมพ์..." (Typing...) ใน Discord เพื่อเพิ่มความเป็นธรรมชาติ
             async with message.channel.typing():
-                # ส่งคำพูดไปให้ Gemini คุยตอบกลับมา
-                reply_text = analyzer.chat(clean_content)
+                # ส่งคำพูดไปให้ Gemini คุยตอบกลับมา (ใช้ thread แยกเพื่อไม่บล็อก event loop)
+                reply_text = await asyncio.to_thread(analyzer.chat, clean_content)
                 await message.reply(reply_text)
             return
 
@@ -147,8 +148,8 @@ async def on_message(message):
                     # ดาวน์โหลดไฟล์ภาพมาในแรม (Memory)
                     image_bytes = await attachment.read()
                     
-                    # ส่งรูปภาพไปวิเคราะห์ด้วย Gemini
-                    data = analyzer.analyze_transaction(image_bytes)
+                    # ส่งรูปภาพไปวิเคราะห์ด้วย Gemini (ใช้ thread แยกเพื่อไม่บล็อก event loop)
+                    data = await asyncio.to_thread(analyzer.analyze_transaction, image_bytes)
                     
                     if "error" in data:
                         await loading_msg.edit(content=f"❌ **เกิดข้อผิดพลาดในการแกะข้อมูล:** {data['message']}")
