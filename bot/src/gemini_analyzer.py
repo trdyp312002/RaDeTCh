@@ -9,8 +9,8 @@ class GeminiAnalyzer:
         เตรียมใช้งานโมเดล Gemini Vision สำหรับการอ่านข้อมูลจากภาพสลิป
         """
         genai.configure(api_key=api_key)
-        # ใช้ gemini-2.0-flash ที่รองรับในบัญชีผู้ใช้งานปี 2026
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        # ใช้ gemini-2.5-flash ที่สนับสนุนสำหรับบัญชีผู้ใช้งานชำระเงิน Tier 1 ปี 2026
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
 
     def analyze_transaction(self, image_bytes):
         """
