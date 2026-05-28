@@ -119,20 +119,18 @@ class RadetchAPI:
         orig_total = float(data.get("total_amount", 0))
 
         currency_note = ""
-        if orig_currency not in ("THB", ""):
+        if orig_currency not in ("USD", ""):
             rates = self.get_fx_rates()
-            price_thb = self.convert_currency(orig_price, orig_currency, "THB", rates)
-            total_thb = self.convert_currency(orig_total, orig_currency, "THB", rates)
             price_usd = self.convert_currency(orig_price, orig_currency, "USD", rates)
-            jpy_thb_rate = rates.get("THB", 35.5) / rates.get(orig_currency, 1)
-            print(f"[FX] แปลง {orig_currency}→THB: {orig_price:,.2f} {orig_currency} = {price_thb:,.2f} THB")
+            total_usd = self.convert_currency(orig_total, orig_currency, "USD", rates)
+            orig_rate = rates.get(orig_currency, 1)
+            print(f"[FX] แปลง {orig_currency}→USD: {orig_price:,.2f} {orig_currency} = {price_usd:,.2f} USD")
             currency_note = (
                 f" | ต้นทาง: {orig_price:,.2f} {orig_currency}"
-                f" | THB: {price_thb:,.2f}"
                 f" | USD: {price_usd:,.2f}"
-                f" | rate 1 {orig_currency} = {jpy_thb_rate:.4f} THB"
+                f" | rate 1 USD = {orig_rate:.4f} {orig_currency}"
             )
-            final_price = price_thb
+            final_price = price_usd
         else:
             final_price = orig_price
 
