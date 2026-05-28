@@ -102,7 +102,7 @@ export default function FinanceDashboard() {
   const [dbMonthlyItems, setDbMonthlyItems] = useState<DBMonthlyItem[]>([])
   const [savingState, setSavingState] = useState<Record<string, "saved" | "saving" | "error">>({})
   const [fxRates, setFxRates] = useState<Record<string, number>>({ THB: 35.5, JPY: 150 })
-  const [displayCurrency, setDisplayCurrency] = useState<"THB" | "USD">("THB")
+  const [displayCurrency, setDisplayCurrency] = useState<"THB" | "USD">("USD")
   const [overviewMetricTab, setOverviewMetricTab] = useState<"payoff" | "goals">("payoff")
   
   // SQLite investment states
@@ -570,8 +570,12 @@ export default function FinanceDashboard() {
     const totalExpensesVal = totalFixedVal + totalVariableVal
     const remainingMoneyVal = totalIncomeVal - totalExpensesVal
 
-    // Formatters
-    const fmtTHB = (num: number) => "฿" + num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    // Format THB-based values into displayCurrency
+    const fmtDisplay = (thbAmount: number) => {
+      const val = displayCurrency === "USD" ? thbAmount / thbRate : thbAmount
+      const sym = displayCurrency === "USD" ? "$" : "฿"
+      return sym + val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    }
 
     return {
       assets: [
@@ -593,16 +597,16 @@ export default function FinanceDashboard() {
       remainingMoneyNum: remainingMoneyVal,
       
       // Strings
-      totalAssets: fmtTHB(totalAssetsVal),
-      totalDebt: fmtTHB(totalDebtVal),
-      netWorth: fmtTHB(netWorthVal),
-      totalIncome: fmtTHB(totalIncomeVal),
-      totalFixedExpenses: fmtTHB(totalFixedVal),
-      totalVariableExpenses: fmtTHB(totalVariableVal),
-      remainingMoney: fmtTHB(remainingMoneyVal),
-      totalExpenses: fmtTHB(totalExpensesVal)
+      totalAssets: fmtDisplay(totalAssetsVal),
+      totalDebt: fmtDisplay(totalDebtVal),
+      netWorth: fmtDisplay(netWorthVal),
+      totalIncome: fmtDisplay(totalIncomeVal),
+      totalFixedExpenses: fmtDisplay(totalFixedVal),
+      totalVariableExpenses: fmtDisplay(totalVariableVal),
+      remainingMoney: fmtDisplay(remainingMoneyVal),
+      totalExpenses: fmtDisplay(totalExpensesVal)
     }
-  }, [dbFinanceItems, dbMonthlyItems, fxRates, parsedBtc, masterOverviewData])
+  }, [dbFinanceItems, dbMonthlyItems, fxRates, parsedBtc, masterOverviewData, displayCurrency])
 
   // ─── Form Submission Local Hooks ───────────────────────────────────────────
   const [newExpenseType, setNewExpenseType] = useState<DBMonthlyItem["type"]>("expense_fixed")
@@ -936,7 +940,7 @@ export default function FinanceDashboard() {
                             <div className="flex justify-between items-center text-xs">
                               <span className="font-bold text-gray-700">ผ่อนชำระต่อเดือน (Monthly Payoff)</span>
                               <span className="font-mono font-bold text-indigo-600">
-                                {formatCurrency(monthlyPay, "THB")}
+                                {formatCurrency(convertAmount(monthlyPay, "THB", displayCurrency), displayCurrency)}
                               </span>
                             </div>
                             <input
