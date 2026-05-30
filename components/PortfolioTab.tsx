@@ -56,8 +56,8 @@ const PORTFOLIO_CONFIG: Record<PortfolioType, {
   long_term: {
     label: "Long-term Portfolio",
     emoji: "📈",
-    description: "Growth assets with a 10-year horizon — AI Infrastructure and high-conviction stocks with strong business fundamentals.",
-    symbolHint: "e.g. NVDA, MSFT, META",
+    description: "Growth assets with a 10-year horizon — AI Infrastructure, Energy, Space, Cybersecurity. Fundamental-based, buy and hold. (NVDA · AVGO · ARM · CRWD · OKLO · MSFT · GOOGL · PLTR · TSLA · RKLB)",
+    symbolHint: "e.g. NVDA, AVGO, PLTR",
     defaultType: "stock"
   },
   short_term: {
