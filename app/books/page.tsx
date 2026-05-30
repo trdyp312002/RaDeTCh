@@ -118,6 +118,9 @@ export default function BooksPage() {
         body: JSON.stringify({ status }),
       });
       if (res.ok) {
+        if (selectedBook?.id === id) {
+          setSelectedBook(prev => prev ? { ...prev, status } : null);
+        }
         await fetchBooks();
       }
     } catch (e) {
@@ -285,28 +288,40 @@ export default function BooksPage() {
     ? Math.round((completedCount / purchasedBooksCount) * 100) 
     : 0;
 
+  // หั่นหนังสือออกเป็นชั้นละ 4 เล่มเพื่อสร้างชั้นวางไม้ 3D เสมือนจริง
+  const booksPerShelf = 4;
+  const bookShelves: Book[][] = [];
+  for (let i = 0; i < filteredBooks.length; i += booksPerShelf) {
+    bookShelves.push(filteredBooks.slice(i, i + booksPerShelf));
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50/50 pt-10 pb-24 px-6 md:px-10">
+    <div className="min-h-screen bg-gradient-to-b from-[#f3e9d2] via-[#e7d9b8] to-[#d6c397] pt-10 pb-24 px-6 md:px-10 text-stone-900 relative">
       
       {/* 1. Header Banner */}
-      <div className="max-w-7xl mx-auto mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-8 md:p-10 text-white shadow-xl relative overflow-hidden">
+      <div className="max-w-7xl mx-auto mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-gradient-to-b from-[#4a2f1b] via-[#352011] to-[#1e1007] border-2 border-[#8c5a32]/30 rounded-3xl p-8 md:p-10 text-white shadow-2xl relative overflow-hidden">
+        {/* Subtle background glow/overlay to feel polished */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent pointer-events-none" />
+        
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold tracking-wider uppercase mb-3">
-            📚 Hierarchical Bookshelf
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#dfb269]/15 backdrop-blur-md border border-[#dfb269]/30 text-[10px] font-bold tracking-wider uppercase mb-3 text-[#dfb269]">
+            📚 Hierarchical Bookshelf • คลังปัญญาลำดับขั้น
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">คลังปัญญาลำดับขั้น</h1>
-          <p className="text-emerald-100 max-w-xl text-sm md:text-base leading-relaxed">
-            จัดหมวดหมู่หนังสือแบบซ้อนชั้นระดับลึก เช่น **การเรียน &gt; ภาษา &gt; ภาษาอังกฤษ** ค้นหาง่าย สบายตา และจัดระบบการอ่านได้อย่างแม่นยำ
+          <h1 className="text-3xl md:text-4xl font-serif font-black tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-r from-[#ebdcb9] via-[#fcd34d] to-[#d8c89f]">
+            ห้องสมุดส่วนตัวของราฟาเอล
+          </h1>
+          <p className="text-amber-100/80 max-w-xl text-xs md:text-sm leading-relaxed">
+            ยินดีต้อนรับกลับสู่ห้องสมุดส่วนตัวครับคุณท่าน ที่นี่จัดหมวดหมู่หนังสือแบบซ้อนชั้นระดับลึก ค้นหาง่าย สบายตา และจัดระบบการอ่านได้อย่างครบถ้วนสมบูรณ์แบบ
           </p>
         </div>
         
         {/* บอทราฟาเอล Callout */}
-        <div className="relative z-10 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-5 md:max-w-xs text-xs md:text-sm shadow-inner flex gap-3.5">
+        <div className="relative z-10 bg-black/35 backdrop-blur-md border border-[#8c5a32]/45 rounded-2xl p-5 md:max-w-xs text-xs shadow-2xl flex gap-3.5">
           <div className="text-3xl leading-none">🛡️</div>
           <div>
-            <p className="font-extrabold text-white mb-1.5 leading-none">ราฟาเอลพร้อมบันทึก!</p>
-            <p className="text-emerald-100/90 leading-relaxed text-[11px] md:text-xs">
-              ท่านสามารถถ่ายรูปปก หรือพิมพ์เพิ่มใน Discord สั่งราฟาเอลให้จัดหมวดหมู่แบบซ้อนกันได้ เช่นการใส่ป้ายแยกด้วยเครื่องหมายทับ `/` ครับคุณท่าน!
+            <p className="font-extrabold text-[#dfb269] mb-1.5 leading-none">ราฟาเอลพร้อมรับใช้!</p>
+            <p className="text-amber-100/70 leading-relaxed text-[11px]">
+              ท่านสามารถถ่ายรูปปก หรือส่งข้อมูลในห้อง Discord เพื่อสั่งให้ผมบันทึกข้อมูลปกอย่างละเอียด พร้อมอัปเดตลงชั้นหนังสือบนเว็บไซต์แบบเรียลไทม์ได้ทันทีครับกระผม!
             </p>
           </div>
         </div>
@@ -317,66 +332,66 @@ export default function BooksPage() {
         {/* 2. Statistics Grid Dashboard */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           
-          <div className="col-span-2 lg:col-span-1 bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+          <div className="col-span-2 lg:col-span-1 bg-gradient-to-b from-[#fdfcfb] to-[#f5f1ea] border-2 border-[#8c6b53]/25 rounded-2xl p-5 shadow-md flex flex-col justify-between hover:border-[#8c6b53]/40 transition-colors">
             <div>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-gray-400">อัตราความสำเร็จ</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-stone-400">อัตราความสำเร็จ</p>
               <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-black text-gray-900">{completionRate}%</span>
-                <span className="text-[10px] font-medium text-gray-400 leading-none">ของที่ซื้อมาแล้ว</span>
+                <span className="text-3xl font-serif font-black text-[#5c3e21]">{completionRate}%</span>
+                <span className="text-[10px] font-medium text-stone-400 leading-none">ของที่ซื้อมาแล้ว</span>
               </div>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-2.5 mt-4 overflow-hidden">
+            <div className="w-full bg-[#ebdcb9]/40 border border-[#8c6b53]/15 rounded-full h-2.5 mt-4 overflow-hidden">
               <div 
-                className="bg-emerald-500 h-2.5 rounded-full transition-all duration-500" 
+                className="bg-gradient-to-r from-[#b37d4f] to-[#dfb269] h-2.5 rounded-full transition-all duration-500 shadow-inner" 
                 style={{ width: `${completionRate}%` }} 
               />
             </div>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-b from-[#fdfcfb] to-[#f5f1ea] border-2 border-[#8c6b53]/25 rounded-2xl p-5 shadow-md hover:shadow-lg transition-all hover:border-rose-300">
             <div className="flex justify-between items-start">
-              <p className="text-[10px] uppercase font-bold tracking-widest text-rose-500">❤️ เล็งไว้ / อยากซื้อ</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-rose-700">❤️ เล็งไว้ / อยากซื้อ</p>
             </div>
-            <p className="text-3xl font-black text-gray-900 mt-3">{wishlistCount}</p>
-            <p className="text-xs text-gray-400 mt-1">เป้าหมายของความต้องการ</p>
+            <p className="text-3xl font-serif font-black text-[#5c3e21] mt-3">{wishlistCount}</p>
+            <p className="text-[11px] text-stone-500 mt-1">เป้าหมายของความต้องการ</p>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-b from-[#fdfcfb] to-[#f5f1ea] border-2 border-[#8c6b53]/25 rounded-2xl p-5 shadow-md hover:shadow-lg transition-all hover:border-amber-300">
             <div className="flex justify-between items-start">
-              <p className="text-[10px] uppercase font-bold tracking-widest text-amber-500">📦 ซื้อแล้ว (ดองอยู่)</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-amber-700">📦 ซื้อแล้ว (ดองอยู่)</p>
             </div>
-            <p className="text-3xl font-black text-gray-900 mt-3">{boughtCount}</p>
-            <p className="text-xs text-gray-400 mt-1">คลังหนังสือพร้อมรออ่าน</p>
+            <p className="text-3xl font-serif font-black text-[#5c3e21] mt-3">{boughtCount}</p>
+            <p className="text-[11px] text-stone-500 mt-1">คลังหนังสือพร้อมรออ่าน</p>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-b from-[#fdfcfb] to-[#f5f1ea] border-2 border-[#8c6b53]/25 rounded-2xl p-5 shadow-md hover:shadow-lg transition-all hover:border-indigo-300">
             <div className="flex justify-between items-start">
-              <p className="text-[10px] uppercase font-bold tracking-widest text-indigo-500">📚 กำลังอ่าน</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-indigo-700">📚 กำลังอ่าน</p>
             </div>
-            <p className="text-3xl font-black text-gray-900 mt-3">{readingCount}</p>
-            <p className="text-xs text-gray-400 mt-1">เปิดความรู้/ขัดเกลาวินัย</p>
+            <p className="text-3xl font-serif font-black text-[#5c3e21] mt-3">{readingCount}</p>
+            <p className="text-[11px] text-stone-500 mt-1">เปิดความรู้/ขัดเกลาวินัย</p>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-b from-[#fdfcfb] to-[#f5f1ea] border-2 border-[#8c6b53]/25 rounded-2xl p-5 shadow-md hover:shadow-lg transition-all hover:border-emerald-300">
             <div className="flex justify-between items-start">
-              <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-500">🎉 อ่านจบแล้ว</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-700">🎉 อ่านจบแล้ว</p>
             </div>
-            <p className="text-3xl font-black text-gray-900 mt-3">{completedCount}</p>
-            <p className="text-xs text-gray-400 mt-1">หนังสือที่เติมเต็มคุณท่านแล้ว</p>
+            <p className="text-3xl font-serif font-black text-[#5c3e21] mt-3">{completedCount}</p>
+            <p className="text-[11px] text-stone-500 mt-1">หนังสือที่เติมเต็มคุณท่านแล้ว</p>
           </div>
 
         </div>
 
         {/* 3. Filter & Add Control Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-gradient-to-r from-[#ebdcb9] to-[#dccaa0] border-2 border-[#bca678]/55 rounded-2xl p-4 shadow-md">
           
           <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setFilterStatus("all")}
               className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all duration-150 ${
                 filterStatus === "all"
-                  ? "bg-gray-900 text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                  ? "bg-[#4a2f1b] text-white shadow-md border border-[#2e190b]"
+                  : "text-[#5e4125] hover:text-[#2c1b0e] hover:bg-white/40"
               }`}
             >
               ทั้งหมด ({totalCount})
@@ -397,8 +412,8 @@ export default function BooksPage() {
                   onClick={() => setFilterStatus(status)}
                   className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all duration-150 ${
                     active
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                      ? "bg-[#4a2f1b] text-white shadow-md border border-[#2e190b]"
+                      : "text-[#5e4125] hover:text-[#2c1b0e] hover:bg-white/40"
                   }`}
                 >
                   {config.label.split(" ")[0]} {config.label.split(" ").slice(1).join(" ")} ({countMap[status]})
@@ -414,14 +429,14 @@ export default function BooksPage() {
                 placeholder="ค้นชื่อเรื่อง / ผู้เขียน / หมวด..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                className="w-full pl-9 pr-4 py-2 rounded-xl text-xs border-2 border-[#bca678]/40 bg-white/75 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8c5a32] focus:border-transparent transition-all placeholder-[#8c7457] text-[#4a2f1b]"
               />
-              <span className="absolute left-3.5 top-2.5 text-gray-400 text-xs">🔍</span>
+              <span className="absolute left-3.5 top-2 text-[#8c7457] text-xs">🔍</span>
             </div>
 
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold tracking-tight shadow-md shadow-emerald-600/10 flex items-center gap-1.5 transition-colors"
+              className="px-4 py-2 bg-[#8c5a32] hover:bg-[#704320] text-white rounded-xl text-xs font-semibold tracking-tight shadow-md shadow-amber-950/20 flex items-center gap-1.5 transition-colors border border-[#59381c]"
             >
               <span>{showAddForm ? "✕ ปิดฟอร์ม" : "➕ บันทึกเล่มใหม่"}</span>
             </button>
@@ -589,23 +604,23 @@ export default function BooksPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           
           {/* ซ้ายมือ: กล่องนำทางหมวดหมู่ลำดับขั้น (Hierarchical Category Tree Explorer) */}
-          <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
-            <h3 className="text-xs font-extrabold text-gray-800 tracking-tight uppercase border-b border-gray-50 pb-3 block mb-4">
-              🗂️ ตัวสำรวจลำดับขั้น (Category Explorer)
+          <div className="bg-gradient-to-b from-[#2a170a] to-[#120701] border-2 border-[#593b21]/70 rounded-3xl p-5 shadow-xl text-amber-100">
+            <h3 className="text-xs font-serif font-extrabold tracking-wider uppercase border-b border-[#593b21]/60 pb-3 block mb-4 text-[#dfb269]">
+              🗂️ ตัวสำรวจหมวดหมู่ (Ledger Directory)
             </h3>
             
             <div className="space-y-3.5 max-h-[500px] overflow-y-auto pr-1">
               {/* ปุ่มเลือกทั้งหมด */}
               <button
                 onClick={() => setFilterCategoryPath("all")}
-                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors ${
+                className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-between transition-all ${
                   filterCategoryPath === "all"
-                    ? "bg-slate-900 text-white"
-                    : "text-gray-600 hover:bg-slate-50 hover:text-gray-900"
+                    ? "bg-[#dfb269] text-[#2c1b10] shadow-md border border-[#c49b5c]"
+                    : "text-amber-100/70 hover:bg-white/5 hover:text-white"
                 }`}
               >
-                <span>📦 ทั้งหมดในคลัง</span>
-                <span className={`text-[10px] px-2 py-0.5 rounded-md ${filterCategoryPath === "all" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>
+                <span>📜 ทั้งหมดในคลังหนังสือ</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-md ${filterCategoryPath === "all" ? "bg-black/20 text-[#2c1b10] font-black" : "bg-white/10 text-amber-200/60"}`}>
                   {totalCount}
                 </span>
               </button>
@@ -616,24 +631,26 @@ export default function BooksPage() {
                 const isMainActive = filterCategoryPath === main;
                 
                 return (
-                  <div key={main} className="space-y-1 bg-slate-50/50 rounded-2xl p-2 border border-slate-100/50">
+                  <div key={main} className="space-y-1 bg-black/20 rounded-2xl p-2 border border-[#593b21]/30">
                     
                     {/* หมวดหมู่หลัก Level 1 */}
                     <button
                       onClick={() => setFilterCategoryPath(main)}
-                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-extrabold flex items-center justify-between transition-colors ${
-                        isMainActive ? "bg-emerald-600 text-white" : "text-slate-800 hover:bg-slate-100"
+                      className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-bold flex items-center justify-between transition-all ${
+                        isMainActive 
+                          ? "bg-[#8c5a32] text-white shadow-inner border border-[#b27949]" 
+                          : "text-amber-200 hover:bg-white/5 hover:text-white"
                       }`}
                     >
                       <span className="truncate">📂 {main}</span>
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${isMainActive ? "bg-white/25 text-white" : "bg-slate-200/60 text-slate-600"}`}>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${isMainActive ? "bg-white/20 text-white font-bold" : "bg-white/5 text-amber-200/50"}`}>
                         {mainObj.count}
                       </span>
                     </button>
 
                     {/* หมวดหมู่รอง Level 2 */}
                     {Object.keys(mainObj.subs).length > 0 && (
-                      <div className="pl-3.5 space-y-1 mt-1 border-l border-slate-200 ml-3">
+                      <div className="pl-3.5 space-y-1 mt-1 border-l border-[#593b21]/60 ml-3">
                         {Object.keys(mainObj.subs).map((sub) => {
                           const subObj = mainObj.subs[sub];
                           const subPath = `${main}/${sub}`;
@@ -643,19 +660,21 @@ export default function BooksPage() {
                             <div key={sub} className="space-y-0.5">
                               <button
                                 onClick={() => setFilterCategoryPath(subPath)}
-                                className={`w-full text-left px-2 py-1 rounded-md text-[11px] font-bold flex items-center justify-between transition-colors ${
-                                  isSubActive ? "bg-slate-900 text-white" : "text-gray-500 hover:bg-slate-100 hover:text-gray-900"
+                                className={`w-full text-left px-2 py-1 rounded-md text-[11px] font-bold flex items-center justify-between transition-all ${
+                                  isSubActive 
+                                    ? "bg-[#dfb269] text-[#2c1b10] font-black shadow-inner" 
+                                    : "text-amber-100/60 hover:bg-white/5 hover:text-amber-100"
                                 }`}
                               >
                                 <span className="truncate">↳ {sub}</span>
-                                <span className={`text-[8px] px-1.5 py-0.2 rounded-full ${isSubActive ? "bg-white/20 text-white" : "bg-slate-200/50 text-gray-500"}`}>
+                                <span className={`text-[8px] px-1.5 py-0.2 rounded-full ${isSubActive ? "bg-black/10 text-[#2c1b10] font-bold" : "bg-white/5 text-amber-100/40"}`}>
                                   {subObj.count}
                                 </span>
                               </button>
 
                               {/* หมวดหมู่ย่อยสุด Level 3 */}
                               {Object.keys(subObj.subSubs).length > 0 && (
-                                <div className="pl-3.5 space-y-0.5 border-l border-slate-200 ml-2.5">
+                                <div className="pl-3.5 space-y-0.5 border-l border-[#593b21]/40 ml-2.5">
                                   {Object.keys(subObj.subSubs).map((subSub) => {
                                     const subSubCount = subObj.subSubs[subSub];
                                     const subSubPath = `${main}/${sub}/${subSub}`;
@@ -665,12 +684,14 @@ export default function BooksPage() {
                                       <button
                                         key={subSub}
                                         onClick={() => setFilterCategoryPath(subSubPath)}
-                                        className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium flex items-center justify-between transition-colors ${
-                                          isSubSubActive ? "bg-emerald-600 text-white font-bold" : "text-gray-400 hover:bg-slate-100 hover:text-gray-700"
+                                        className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium flex items-center justify-between transition-all ${
+                                          isSubSubActive 
+                                            ? "text-[#dfb269] font-black" 
+                                            : "text-amber-100/40 hover:text-amber-100"
                                         }`}
                                       >
                                         <span className="truncate">⋄ {subSub}</span>
-                                        <span className={`text-[7px] px-1 py-0.1 ${isSubSubActive ? "text-emerald-100 font-bold" : "text-gray-400"}`}>
+                                        <span className={`text-[7px] px-1 py-0.1 ${isSubSubActive ? "text-[#dfb269] font-bold" : "text-amber-100/30"}`}>
                                           {subSubCount}
                                         </span>
                                       </button>
@@ -681,7 +702,7 @@ export default function BooksPage() {
 
                             </div>
                           );
-                        })}
+                         })}
                       </div>
                     )}
 
@@ -691,120 +712,133 @@ export default function BooksPage() {
             </div>
             
             {/* คำชี้แนะการค้นหาลำดับขั้น */}
-            <p className="text-[10px] text-gray-300 leading-normal mt-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
-              💡 **คำแนะนำการค้นหา:** คลิกเลือกหมวดหลักด้านบน ระบบจะกรองและแสดงผลหนังสือทั้งหมดในหมวดลูกลำดับรองลงมาให้โดยอัตโนมัติครับกระผม!
+            <p className="text-[10px] text-amber-200/50 leading-normal mt-4 bg-black/30 p-3 rounded-xl border border-[#593b21]/40 font-medium">
+              💡 **เคล็ดลับการสำรวจ:** คลิกหมวดหมู่หลักเพื่อแสดงหนังสือทั้งหมดที่สืบทอดในหมวดย่อยครับคุณท่าน!
             </p>
           </div>
 
-          {/* ขวามือ: รายการชั้นหนังสือพรีเมียม */}
+          {/* ขวามือ: รายการชั้นหนังสือไม้ 3D พรีเมียม */}
           <div className="lg:col-span-3">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-20 bg-white border border-gray-100 rounded-3xl p-10">
+              <div className="flex flex-col items-center justify-center py-20 bg-gradient-to-b from-[#fdfcfb] to-[#f5f1ea] border-2 border-[#8c6b53]/25 rounded-3xl p-10 shadow-md">
                 <span className="text-3xl animate-bounce">📖</span>
-                <p className="text-xs text-gray-400 font-medium mt-3">กำลังเรียกอ่านชั้นหนังสือลำดับขั้นของคุณท่าน...</p>
+                <p className="text-xs text-stone-500 font-medium mt-3">กำลังจัดเรียงและปัดฝุ่นชั้นหนังสือของท่าน...</p>
               </div>
             ) : filteredBooks.length === 0 ? (
-              <div className="bg-white border border-gray-100 rounded-3xl p-16 text-center shadow-sm">
+              <div className="bg-gradient-to-b from-[#fdfcfb] to-[#f5f1ea] border-2 border-[#8c6b53]/25 rounded-3xl p-16 text-center shadow-md">
                 <span className="text-4xl">📚</span>
-                <p className="text-sm font-extrabold text-gray-700 mt-4">ไม่พบชั้นหนังสือที่ตรงตามหมวดหมู่ลำดับขั้นดังกล่าวครับ</p>
-                <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto leading-relaxed">
-                  คุณท่านสามารถเพิ่มหนังสือใหม่ในหมวดหมู่นี้ได้ง่ายๆ หรือกดเลือกตัวกรองเป็น "ทั้งหมดในคลัง" เพื่อดูหนังสือเล่มอื่น ๆ ได้ครับกระผม
+                <p className="text-sm font-extrabold text-stone-700 mt-4">ไม่พบหนังสือในหมวดหมู่ที่ท่านต้องการสำรวจครับ</p>
+                <p className="text-xs text-stone-400 mt-1 max-w-sm mx-auto leading-relaxed">
+                  ท่านสามารถบันทึกหนังสือเล่มใหม่ลงในหมวดหมู่นี้ได้ง่ายๆ หรือเลือก "ทั้งหมดในคลัง" เพื่อชมคอลเลกชันเล่มโปรดทั้งหมดได้ทันทีครับกระผม
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredBooks.map((book) => {
-                  const statusCfg = STATUS_CONFIG[book.status];
-                  const isUpdating = updatingId === book.id;
-                  
-                  // ดึงปกจากฐานข้อมูล (ถ้าไม่มีให้ใช้ปกจากหมวดหมู่หลักชั้นที่ 1)
-                  const mainCategoryName = book.category ? book.category.split("/")[0] : "ทั่วไป";
-                  const coverUrl = book.cover_image || CATEGORY_COVERS[mainCategoryName] || DEFAULT_COVER;
+              <div className="space-y-12">
+                {bookShelves.map((shelf, shelfIdx) => (
+                  <div key={shelfIdx} className="relative">
+                    {/* The Backboard wall of the shelf */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-stone-900/5 to-stone-900/15 rounded-2xl border border-stone-800/5 shadow-inner -z-10" />
+                    
+                    {/* The Books standing container */}
+                    <div className="flex justify-start items-end px-6 md:px-12 pb-4 pt-12 min-h-[260px] gap-6 md:gap-10 xl:gap-14 overflow-x-auto scrollbar-thin scrollbar-thumb-amber-800/20">
+                      {shelf.map((book) => {
+                        const statusCfg = STATUS_CONFIG[book.status];
+                        const isUpdating = updatingId === book.id;
+                        const mainCategoryName = book.category ? book.category.split("/")[0] : "ทั่วไป";
+                        const coverUrl = book.cover_image || CATEGORY_COVERS[mainCategoryName] || DEFAULT_COVER;
 
-                  return (
-                    <div 
-                      key={book.id} 
-                      className={`bg-white border border-gray-100 rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col group relative ${
-                        isUpdating ? "opacity-60 pointer-events-none" : ""
-                      }`}
-                    >
-                      
-                      <div className="h-40 w-full relative overflow-hidden bg-slate-900">
-                        <img 
-                          src={coverUrl} 
-                          alt={book.category}
-                          className="object-cover w-full h-full opacity-65 group-hover:scale-105 transition-transform duration-500"
-                        />
-                        
-                        {/* ป้ายแสดงหมวดหมู่ลำดับขั้นทั้งหมด */}
-                        <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-1">
-                          {book.category.split("/").map((part, index) => (
-                            <span 
-                              key={index} 
-                              className={`px-2 py-0.5 text-[9px] font-extrabold rounded-md backdrop-blur-md text-white border border-white/10 ${
-                                index === 0 ? "bg-slate-950/85" : index === 1 ? "bg-slate-800/70" : "bg-emerald-600/70"
-                              }`}
-                            >
-                              {index > 0 ? "› " : ""}{part}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* ปุ่มลบ */}
-                        <button
-                          onClick={() => deleteBook(book.id)}
-                          className="absolute top-3.5 right-3.5 w-7 h-7 flex items-center justify-center rounded-lg bg-gray-950/70 hover:bg-red-600/90 border border-white/10 text-white hover:text-white transition-all shadow-md opacity-0 group-hover:opacity-100"
-                          title="ลบหนังสือ"
-                        >
-                          🗑️
-                        </button>
-                        
-                        {/* ป้ายแสดงสถานะซ้อนด้านล่างรูป */}
-                        <div className="absolute bottom-4 left-4">
-                          <span className={`px-2.5 py-1 text-[10px] font-extrabold rounded-lg border ${statusCfg.bg} ${statusCfg.color} ${statusCfg.border}`}>
-                            {statusCfg.label}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-5 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h4 className="text-xs font-black text-gray-800 tracking-tight leading-snug line-clamp-1 group-hover:text-emerald-700 transition-colors">
-                            {book.title}
-                          </h4>
-                          <p className="text-[10px] font-bold text-gray-400 mt-0.5">ผู้แต่ง: {book.author}</p>
-                          
-                          <p className="text-[11px] text-gray-500 mt-3.5 leading-relaxed line-clamp-2">
-                            {book.description || "*(ยังไม่ได้จดข้อคิดเห็นหรือเหตุผลที่อยากซื้อเล่มนี้)*"}
-                          </p>
-                        </div>
-
-                        <div className="mt-4 pt-3.5 border-t border-gray-50 flex items-center justify-between gap-3">
-                          <button
+                        return (
+                          <div 
+                            key={book.id}
+                            className={`relative flex flex-col items-center group cursor-pointer transition-all duration-300 hover:-translate-y-4 shrink-0 pb-1 ${
+                              isUpdating ? "opacity-60 pointer-events-none" : ""
+                            }`}
                             onClick={() => {
                               setSelectedBook(book);
                               setEditDesc(book.description || "");
                             }}
-                            className="text-[10px] font-bold text-gray-400 hover:text-gray-700 hover:bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5 transition-colors flex items-center gap-1 shrink-0"
                           >
-                            📝 โน้ตสรุป
-                          </button>
+                            {/* 3D Book Cover */}
+                            <div className="relative w-24 h-36 md:w-32 md:h-48 xl:w-36 xl:h-52 rounded-r overflow-hidden shadow-[4px_8px_16px_rgba(0,0,0,0.55)] group-hover:shadow-[8px_16px_28px_rgba(0,0,0,0.7)] transition-all duration-300 border-l-[4px] border-black/45">
+                              <img 
+                                src={coverUrl} 
+                                alt={book.title}
+                                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                              />
+                              {/* Spine curve shadow */}
+                              <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/55 via-black/10 to-transparent pointer-events-none" />
+                              {/* Right page highlight */}
+                              <div className="absolute inset-y-0 right-0 w-[1.5px] bg-white/20 pointer-events-none" />
+                              {/* Left side book binding lines */}
+                              <div className="absolute inset-y-0 left-[5px] w-[1px] bg-white/10 pointer-events-none" />
+                              <div className="absolute inset-y-0 left-[6px] w-[1px] bg-black/25 pointer-events-none" />
+                              {/* Shiny reflective shine */}
+                              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/12 pointer-events-none" />
 
-                          {statusCfg.nextStatus && (
-                            <button
-                              onClick={() => updateBookStatus(book.id, statusCfg.nextStatus!)}
-                              className="text-[10px] font-extrabold tracking-tight px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-500/10 flex items-center gap-1 transition-colors ml-auto"
-                            >
-                              {statusCfg.buttonLabel} →
-                            </button>
-                          )}
-                        </div>
+                              {/* Category ribbon badge */}
+                              <div className="absolute top-2 left-2 max-w-[85%]">
+                                <span className="inline-block truncate bg-black/80 backdrop-blur-[2px] text-white text-[7px] font-black px-1.5 py-0.5 rounded border border-white/10 tracking-wide">
+                                  {book.category.split("/")[0]}
+                                </span>
+                              </div>
 
-                      </div>
+                              {/* Reading status badge */}
+                              <div className="absolute bottom-2 right-2">
+                                <span className={`px-1.5 py-0.5 text-[8px] font-black rounded backdrop-blur-[2px] border ${
+                                  book.status === 'completed' ? 'bg-emerald-950/85 text-emerald-400 border-emerald-500/30' :
+                                  book.status === 'reading' ? 'bg-indigo-950/85 text-indigo-400 border-indigo-500/30' :
+                                  book.status === 'bought' ? 'bg-amber-950/85 text-amber-400 border-amber-500/30' :
+                                  'bg-rose-950/85 text-rose-400 border-rose-500/30'
+                                }`}>
+                                  {statusCfg.label.split(" ")[0]}
+                                </span>
+                              </div>
+                            </div>
 
+                            {/* Book's shadow cast onto the shelf */}
+                            <div className="absolute bottom-12 w-20 h-2 bg-black/45 blur-md rounded-full -z-10 group-hover:scale-x-95 group-hover:opacity-40 transition-all duration-300" />
+
+                            {/* Vintage Metal Nameplate */}
+                            <div className="mt-4 flex flex-col items-center">
+                              <div className="bg-gradient-to-b from-[#2e2d2b] to-[#141312] border border-[#0d0c0c] text-[#dfb269] font-mono text-[9px] py-1 px-3 rounded shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_2px_4px_rgba(0,0,0,0.6)] relative flex items-center gap-1.5 max-w-[110px] md:max-w-[130px]">
+                                {/* Rivet Left */}
+                                <span className="w-1 h-1 rounded-full bg-[#dfb269] shadow-[inset_-0.5px_-0.5px_1px_black] shrink-0" />
+                                
+                                <span className="truncate max-w-[65px] md:max-w-[85px] font-sans font-bold leading-none select-none text-center">
+                                  {book.title}
+                                </span>
+                                
+                                {/* Rivet Right */}
+                                <span className="w-1 h-1 rounded-full bg-[#dfb269] shadow-[inset_-0.5px_-0.5px_1px_black] shrink-0" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+
+                    {/* 3D Wood Shelf Board */}
+                    <div className="relative w-full z-10">
+                      {/* Top Face */}
+                      <div className="h-4 w-full bg-gradient-to-b from-[#c09e75] via-[#a88258] to-[#86603a] border-b border-black/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3)]" />
+                      
+                      {/* Front Bevel */}
+                      <div className="h-6 w-full bg-gradient-to-b from-[#86603a] to-[#5e4125] rounded-b shadow-[0_12px_24px_rgba(0,0,0,0.65),inset_0_1px_2px_rgba(255,255,255,0.1)] flex items-center justify-between px-6">
+                        <div className="flex gap-1 items-center">
+                          <div className="w-1 h-1 rounded-full bg-[#dfb269] opacity-60 shadow-[1px_1px_1px_black]" />
+                          <div className="w-1 h-1 rounded-full bg-[#dfb269] opacity-60 shadow-[1px_1px_1px_black]" />
+                        </div>
+                        <span className="text-[8px] font-bold text-[#dfb269]/40 font-mono tracking-widest uppercase select-none">
+                          Shelf {shelfIdx + 1} • Raphael Library
+                        </span>
+                        <div className="flex gap-1 items-center">
+                          <div className="w-1 h-1 rounded-full bg-[#dfb269] opacity-60 shadow-[1px_1px_1px_black]" />
+                          <div className="w-1 h-1 rounded-full bg-[#dfb269] opacity-60 shadow-[1px_1px_1px_black]" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -813,61 +847,119 @@ export default function BooksPage() {
 
       </div>
 
-      {/* 7. Notes & Summary thoughts Modal Overlay */}
+      {/* 7. Notes & Summary thoughts Modal Overlay (Ledger Details Scroll) */}
       {selectedBook && (
-        <div className="fixed inset-0 bg-black/35 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden border border-gray-100 animate-scaleUp">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#fcf8f2] rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden border-2 border-[#8c6b53]/45 animate-scaleUp">
             
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white relative">
-              <span className="text-[9px] font-extrabold uppercase tracking-widest bg-white/10 px-2 py-0.5 rounded-md border border-white/10 block mb-2 w-max">
-                📂 {selectedBook.category}
-              </span>
-              <h3 className="text-base font-extrabold leading-tight">{selectedBook.title}</h3>
-              <p className="text-xs text-emerald-100/90 mt-0.5">ผู้แต่ง: {selectedBook.author}</p>
+            <div className="bg-gradient-to-b from-[#4a2f1b] to-[#25150a] p-6 text-white relative border-b-2 border-[#dfb269]/40">
+              <div className="flex gap-4 items-start">
+                {/* Large Book Cover in Modal */}
+                <div className="w-20 h-28 md:w-24 md:h-36 rounded-md overflow-hidden bg-slate-900 border-l-[3px] border-black/40 shadow-lg shrink-0">
+                  <img 
+                    src={selectedBook.cover_image || CATEGORY_COVERS[selectedBook.category.split("/")[0]] || DEFAULT_COVER} 
+                    alt={selectedBook.title}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                
+                <div className="flex-1 min-w-0 pr-6">
+                  <span className="text-[9px] font-extrabold uppercase tracking-widest bg-[#dfb269]/15 text-[#dfb269] px-2 py-0.5 rounded border border-[#dfb269]/30 block mb-2 w-max">
+                    📂 {selectedBook.category}
+                  </span>
+                  <h3 className="text-lg md:text-xl font-serif font-black leading-tight text-[#ebdcb9] truncate">{selectedBook.title}</h3>
+                  <p className="text-xs text-amber-200/80 mt-1 font-medium">ผู้แต่ง: {selectedBook.author}</p>
+                  <p className="text-[10px] text-amber-200/40 mt-1.5">
+                    เพิ่มเมื่อ: {new Date(selectedBook.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" })}
+                  </p>
+                </div>
+              </div>
               
               <button 
                 onClick={() => setSelectedBook(null)}
-                className="absolute top-5 right-5 text-lg text-white/70 hover:text-white hover:bg-white/10 w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+                className="absolute top-5 right-5 text-lg text-white/50 hover:text-white hover:bg-white/10 w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-6 bg-[url('https://www.transparenttextures.com/patterns/lined-paper.png')] bg-repeat">
+              
+              {/* Section 1: Change Status Inline */}
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                  📝 บันทึกความในใจ / สรุปประเด็นหลักที่ได้เรียนรู้จากเล่มนี้:
+                <label className="text-[10px] font-bold text-[#8c6b53] uppercase tracking-wider block font-sans">
+                  📌 สถานะการอ่านหนังสือ (Reading Status)
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {(["wishlist", "bought", "reading", "completed"] as Status[]).map((status) => {
+                    const active = selectedBook.status === status;
+                    const config = STATUS_CONFIG[status];
+                    
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => updateBookStatus(selectedBook.id, status)}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold text-center border-2 transition-all flex flex-col items-center justify-center gap-1 ${
+                          active
+                            ? "bg-[#4a2f1b] text-white border-[#2e190b] shadow-md"
+                            : "bg-white/80 border-[#8c6b53]/20 text-[#5e4125] hover:bg-white hover:border-[#8c6b53]/45"
+                        }`}
+                      >
+                        <span>{config.label.split(" ")[0]}</span>
+                        <span className="text-[8px] font-medium opacity-85 leading-none">{config.label.split(" ").slice(1).join(" ")}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Section 2: Edit Notes */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-[#8c6b53] uppercase tracking-wider block font-sans">
+                  📝 บันทึกประเด็นสำคัญ / ความรู้สึกส่วนตัวต่อเล่มนี้:
                 </label>
                 <textarea
                   rows={6}
-                  placeholder="พิมพ์สรุปเนื้อหาสำคัญ ข้อคิดสะกิดใจ หรือเหตุผลที่ทำให้ท่านสนใจซื้อหนังสือเล่มนี้..."
+                  placeholder="พิมพ์ประเด็นหลักที่ได้ศึกษา ข้อคิดเตือนใจ หรือเหตุผลที่ประทับใจหนังสือเล่มนี้..."
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
-                  className="w-full p-4 rounded-2xl text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 leading-relaxed"
+                  className="w-full p-4 rounded-2xl text-xs border-2 border-[#8c6b53]/25 bg-white/90 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8c5a32]/20 focus:border-[#8c5a32] leading-relaxed text-[#4a2f1b] font-medium"
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 pt-2">
-                <span className="text-[10px] text-gray-300 font-mono">
-                  อัปเดตล่าสุด: {selectedBook.updated_at ? selectedBook.updated_at.split(" ")[0] : "—"}
-                </span>
+              {/* Section 3: Bottom Actions */}
+              <div className="flex items-center justify-between gap-4 pt-2 border-t border-[#8c6b53]/20">
+                
+                {/* Delete Button inside modal */}
+                <button
+                  onClick={async () => {
+                    if (confirm("คุณท่านแน่ใจหรือไม่ครับว่าต้องการลบหนังสือเล่มนี้?")) {
+                      setSelectedBook(null);
+                      await deleteBook(selectedBook.id);
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold border-2 border-red-200/50 hover:bg-red-50 text-red-600 transition-colors flex items-center gap-1 bg-white"
+                >
+                  🗑️ ลบเล่มนี้
+                </button>
                 
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedBook(null)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-stone-100 hover:bg-stone-200 text-stone-600 transition-colors font-sans"
                   >
-                    ปิดหน้าจอ
+                    ปิดหน้าต่าง
                   </button>
                   <button
                     onClick={saveBookNote}
                     disabled={savingNote}
-                    className="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/10 transition-colors flex items-center gap-1"
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#8c5a32] hover:bg-[#704320] text-white shadow-md shadow-amber-950/20 transition-all flex items-center gap-1 border border-[#59381c] font-sans"
                   >
                     {savingNote ? "🔄 กำลังบันทึก..." : "💾 บันทึกโน้ตสรุป"}
                   </button>
                 </div>
               </div>
+
             </div>
 
           </div>
