@@ -290,8 +290,8 @@ export default function BooksPage() {
     ? Math.round((completedCount / purchasedBooksCount) * 100) 
     : 0;
 
-  // หั่นหนังสือออกเป็นชั้นละ 4 เล่มเพื่อสร้างชั้นวางไม้ 3D เสมือนจริง
-  const booksPerShelf = 4;
+  // หั่นหนังสือออกเป็นชั้นละ 5 เล่มเพื่อสร้างชั้นวางไม้ 3D เสน่ห์ห้องสมุดยาว
+  const booksPerShelf = 5;
   const bookShelves: Book[][] = [];
   for (let i = 0; i < filteredBooks.length; i += booksPerShelf) {
     bookShelves.push(filteredBooks.slice(i, i + booksPerShelf));
@@ -602,11 +602,8 @@ export default function BooksPage() {
           </div>
         )}
 
-        {/* 6. Layout: Sidebar Category Tree + Book List Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-          
-          {/* ซ้ายมือ: ชั้นหนังสือประเภท 3 มิติ พร้อมสมุดบันทึกดัชนีแยกประเภท (3D Category Bookshelf & Open Index Journal) */}
-          <div className="col-span-1 space-y-6 max-w-sm lg:max-w-none mx-auto w-full z-10 select-none">
+        {/* 6. หมวดหมู่แผ่กว้างแบบสันยาวด้านบน (Horizontal 3D Category Bookshelf & Open Index Journal) */}
+        <div className="w-full space-y-6 select-none mb-12">
             
             {/* 1. ชั้นวางหนังสือหมวดหมู่ 3 มิติ (3D Category Bookshelf) */}
             <div className="relative bg-gradient-to-b from-[#2e190d] via-[#1c0f08] to-[#0c0502] p-4 rounded-3xl border-4 border-[#3e2413] shadow-[0_20px_40px_rgba(0,0,0,0.65),inset_0_4px_12px_black] overflow-hidden">
@@ -619,6 +616,9 @@ export default function BooksPage() {
 
               {/* ชั้นแสดงแนวตั้งของสันหนังสือ (Row of 3D Book Spines) */}
               <div className="flex justify-center items-end h-56 pb-2 px-1 gap-2.5 overflow-x-auto scrollbar-none relative z-10">
+                
+                {/* ที่กั้นหนังสือทองเหลืองซ้าย (Brass Bookend Left) */}
+                <div className="w-4 h-40 bg-gradient-to-r from-[#dfb269] to-[#8c6527] rounded-l border border-[#5a3b11] shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.4),0_4px_8px_black] shrink-0 hidden md:block" />
                 
                 {/* เล่ม 1: สมุดปกทอง Master Book (All Collection) */}
                 {(() => {
@@ -731,6 +731,9 @@ export default function BooksPage() {
                   );
                 })}
 
+                {/* ที่กั้นหนังสือทองเหลืองขวา (Brass Bookend Right) */}
+                <div className="w-4 h-40 bg-gradient-to-l from-[#dfb269] to-[#8c6527] rounded-r border border-[#5a3b11] shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.4),0_4px_8px_black] shrink-0 hidden md:block" />
+
               </div>
 
               {/* แท่นแผ่นไม้รองใต้สันหนังสือเพื่อมิติ 3D (3D Wooden Shelf Board) */}
@@ -741,7 +744,7 @@ export default function BooksPage() {
             </div>
 
             {/* 2. สมุดบันทึกสารบัญดัชนีแผ่แบนราบ (Flat Open Parchment Book/Journal) */}
-            <div className="relative bg-[#FAF6F0] text-stone-900 rounded-3xl border-4 border-[#8c5a32]/35 shadow-2xl p-5 md:p-6 min-h-[300px] z-10 bg-[url('https://www.transparenttextures.com/patterns/lined-paper.png')] bg-repeat">
+            <div className="relative bg-[#FAF6F0] text-stone-900 rounded-3xl border-4 border-[#8c5a32]/35 shadow-2xl p-5 md:p-6 min-h-[300px] z-10 bg-[url('https://www.transparenttextures.com/patterns/lined-paper.png')] bg-repeat max-w-4xl mx-auto w-full">
               
               {/* แสงโค้งและริบบิ้นสีแดงโบราณพาดกลางหน้าสมุด (Red Silk Bookmark Ribbon) */}
               <div className="absolute top-0 bottom-0 left-[50.2%] w-1 bg-gradient-to-r from-red-700 via-red-500 to-red-800 shadow-[2px_0_4px_black] transform -translate-x-1/2 hidden md:block z-20" />
@@ -926,8 +929,8 @@ export default function BooksPage() {
 
           </div>
 
-          {/* ขวามือ: รายการชั้นหนังสือไม้ 3D พรีเมียม */}
-          <div className="lg:col-span-3">
+          {/* 7. รายการชั้นหนังสือไม้ 3D พรีเมียม (Grand Library Shelves) */}
+          <div className="w-full">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 bg-gradient-to-b from-[#fdfcfb] to-[#f5f1ea] border-2 border-[#8c6b53]/25 rounded-3xl p-10 shadow-md">
                 <span className="text-3xl animate-bounce">📖</span>
@@ -1051,8 +1054,6 @@ export default function BooksPage() {
               </div>
             )}
           </div>
-
-        </div>
 
       </div>
 
