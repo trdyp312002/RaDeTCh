@@ -88,9 +88,9 @@ export default function FinanceDashboard() {
 
   const tabs = useMemo(() => [
     "Summary",
+    "Bitcoin & Store of Wealth",
     "Long-term Portfolio",
     "Short-term Portfolio",
-    "Retirement Portfolio",
     "Monthly Expenses",
     "Personal Financial Statement"
   ], [])
@@ -467,8 +467,7 @@ export default function FinanceDashboard() {
     const pieData = [
       { name: "Long-term (US Stock)", value: ltValue },
       { name: "Short-term (Crypto/Assets)", value: stValue },
-      { name: "Bitcoin Reserve", value: btcVal },
-      { name: "Store of Wealth (Gold/Cash)", value: wealthValue }
+      { name: "Bitcoin & Store of Wealth", value: btcVal + wealthValue }
     ].filter(d => d.value > 0)
 
     const totalPortfolioValue = ltValue + stValue + btcVal + wealthValue
@@ -540,7 +539,7 @@ export default function FinanceDashboard() {
         amount: btcValTHB,
         currency: "THB",
         isLinked: true,
-        linkLabel: "Retirement Portfolio (BTC)"
+        linkLabel: "Bitcoin & Store of Wealth (BTC)"
       },
       {
         id: "link-usstock-id",
@@ -639,7 +638,7 @@ export default function FinanceDashboard() {
   const isExpensesTab = activeTab === "Monthly Expenses"
   const isLongTermTab = activeTab === "Long-term Portfolio"
   const isShortTermTab = activeTab === "Short-term Portfolio"
-  const isRetirementTab = activeTab === "Retirement Portfolio"
+  const isBitcoinStoreTab = activeTab === "Bitcoin & Store of Wealth"
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -812,8 +811,8 @@ export default function FinanceDashboard() {
                      Value: <DualCurrencyValue amount={cleanNum(parsedBtc.dashboard.portfolioValue)} from="USD" inline={true} />
                    </span>
                  </div>
-                 <button 
-                   onClick={() => setActiveTab("Retirement Portfolio")}
+                 <button
+                   onClick={() => setActiveTab("Bitcoin & Store of Wealth")}
                    className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold mt-4 text-left flex items-center gap-1.5"
                  >
                    View DCA Ledger →
@@ -1172,11 +1171,11 @@ export default function FinanceDashboard() {
                         from: "USD" as const
                       },
                       {
-                        tab: "Retirement Portfolio",
+                        tab: "Bitcoin & Store of Wealth",
                         emoji: "₿",
-                        label: "Retirement (Bitcoin DCA)",
-                        value: cleanNum(parsedBtc.dashboard.portfolioValue),
-                        cost: cleanNum(parsedBtc.dashboard.totalInvested),
+                        label: "Bitcoin & Store of Wealth",
+                        value: cleanNum(parsedBtc.dashboard.portfolioValue) + masterOverviewData.storeWealth.summary.totalValue,
+                        cost: cleanNum(parsedBtc.dashboard.totalInvested) + masterOverviewData.storeWealth.summary.totalValue,
                         pnl: parsedBtc.dashboard.avgPnl,
                         pnlNum: cleanNum(parsedBtc.dashboard.profit),
                         color: "bg-orange-50 text-orange-700",
@@ -1243,14 +1242,141 @@ export default function FinanceDashboard() {
         )}
 
         {/* ─── B. PORTFOLIO TABS ─── */}
+        {isBitcoinStoreTab && (
+          <div className="space-y-10 animate-fadeIn">
+            {/* Bitcoin DCA Portfolio */}
+            <PortfolioTab portfolio="retirement" displayCurrency={displayCurrency} fxRates={fxRates} />
+
+            {/* Store of Wealth Section */}
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="bg-gradient-to-br from-amber-950 to-yellow-900/80 border border-amber-700/30 rounded-3xl p-8 text-white relative overflow-hidden">
+                <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-yellow-400/10 via-transparent to-transparent pointer-events-none" />
+                <p className="text-[10px] uppercase tracking-[0.4em] text-amber-300 font-semibold mb-1.5">🏦 Store of Wealth</p>
+                <p className="text-xs text-amber-200/70 mb-5 max-w-md">Cash reserves, gold, and tangible assets — your real-world wealth foundation.</p>
+                <div className="flex gap-6 flex-wrap">
+                  <div>
+                    <p className="text-[9px] uppercase tracking-widest text-amber-400/60 mb-0.5">Total Value</p>
+                    <DualCurrencyValue
+                      amount={masterOverviewData.storeWealth.summary.totalValue}
+                      from="USD"
+                      className="text-2xl font-extrabold font-mono"
+                      subClassName="text-[10px] text-amber-300/60 font-mono mt-0.5"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Cash / Liquid Assets */}
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
+                    <h4 className="text-sm font-bold text-gray-900">💵 Liquid Assets (Cash)</h4>
+                    <span className="text-[10px] text-gray-400 font-semibold font-mono">
+                      <DualCurrencyValue
+                        amount={dbFinanceItems.filter(f => f.category === "cash").reduce((s, f) => s + f.amount, 0) / (fxRates.THB || 35.5)}
+                        from="USD"
+                        inline={true}
+                      />
+                    </span>
+                  </div>
+                  <div className="divide-y divide-gray-50">
+                    {dbFinanceItems.filter(f => f.category === "cash").map(item => (
+                      <div key={item.id} className="flex items-center px-6 py-3.5 group hover:bg-gray-50 transition-colors gap-4">
+                        <input
+                          value={item.label}
+                          onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, label: v} : f)) }}
+                          onBlur={(e) => handleUpdateFinanceItem(item.id, "label", e.target.value)}
+                          className="flex-1 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-semibold text-gray-800 focus:outline-none"
+                        />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-xs font-mono text-gray-400">฿</span>
+                          <input
+                            type="number"
+                            value={item.amount}
+                            onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, amount: parseFloat(v)||0} : f)) }}
+                            onBlur={(e) => handleUpdateFinanceItem(item.id, "amount", e.target.value)}
+                            className="w-28 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-bold font-mono text-right text-gray-800 focus:outline-none"
+                          />
+                        </div>
+                        <div className="w-8 text-center shrink-0">
+                          {savingState[item.id] === "saving" && <span className="text-[9px] text-indigo-400 animate-pulse">…</span>}
+                          {savingState[item.id] === "saved" && <span className="text-[9px] text-emerald-500 font-bold">✓</span>}
+                          {!savingState[item.id] && (
+                            <button onClick={() => handleDeleteFinanceItem(item.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-xs transition-all" title="Delete">✕</button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => handleAddFinanceItem("cash", "New Cash Item", 0)}
+                    className="w-full text-[10px] text-amber-600 hover:text-amber-800 hover:bg-amber-50 py-3 px-6 text-left font-semibold transition-colors border-t border-gray-50"
+                  >
+                    + Add Cash / Liquid Asset
+                  </button>
+                </div>
+
+                {/* Other Assets (Gold, etc.) */}
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
+                    <h4 className="text-sm font-bold text-gray-900">🥇 Other Assets (Gold, etc.)</h4>
+                    <span className="text-[10px] text-gray-400 font-semibold font-mono">
+                      <DualCurrencyValue
+                        amount={dbFinanceItems.filter(f => f.category === "other_asset").reduce((s, f) => s + f.amount, 0) / (fxRates.THB || 35.5)}
+                        from="USD"
+                        inline={true}
+                      />
+                    </span>
+                  </div>
+                  <div className="divide-y divide-gray-50">
+                    {dbFinanceItems.filter(f => f.category === "other_asset").map(item => (
+                      <div key={item.id} className="flex items-center px-6 py-3.5 group hover:bg-gray-50 transition-colors gap-4">
+                        <input
+                          value={item.label}
+                          onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, label: v} : f)) }}
+                          onBlur={(e) => handleUpdateFinanceItem(item.id, "label", e.target.value)}
+                          className="flex-1 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-semibold text-gray-800 focus:outline-none"
+                        />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-xs font-mono text-gray-400">฿</span>
+                          <input
+                            type="number"
+                            value={item.amount}
+                            onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, amount: parseFloat(v)||0} : f)) }}
+                            onBlur={(e) => handleUpdateFinanceItem(item.id, "amount", e.target.value)}
+                            className="w-28 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-bold font-mono text-right text-gray-800 focus:outline-none"
+                          />
+                        </div>
+                        <div className="w-8 text-center shrink-0">
+                          {savingState[item.id] === "saving" && <span className="text-[9px] text-indigo-400 animate-pulse">…</span>}
+                          {savingState[item.id] === "saved" && <span className="text-[9px] text-emerald-500 font-bold">✓</span>}
+                          {!savingState[item.id] && (
+                            <button onClick={() => handleDeleteFinanceItem(item.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-xs transition-all" title="Delete">✕</button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => handleAddFinanceItem("other_asset", "New Asset", 0)}
+                    className="w-full text-[10px] text-amber-600 hover:text-amber-800 hover:bg-amber-50 py-3 px-6 text-left font-semibold transition-colors border-t border-gray-50"
+                  >
+                    + Add Other Asset
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
         {isLongTermTab && (
           <PortfolioTab portfolio="long_term" displayCurrency={displayCurrency} fxRates={fxRates} />
         )}
         {isShortTermTab && (
           <PortfolioTab portfolio="short_term" displayCurrency={displayCurrency} fxRates={fxRates} />
-        )}
-        {isRetirementTab && (
-          <PortfolioTab portfolio="retirement" displayCurrency={displayCurrency} fxRates={fxRates} />
         )}
 
         {/* ─── C. INTERACTIVE EDITABLE MONTHLY EXPENSES TAB ─── */}

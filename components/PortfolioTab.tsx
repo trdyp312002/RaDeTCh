@@ -68,9 +68,9 @@ const PORTFOLIO_CONFIG: Record<PortfolioType, {
     defaultType: "stock"
   },
   retirement: {
-    label: "Retirement Portfolio",
+    label: "Bitcoin & Store of Wealth",
     emoji: "₿",
-    description: "Bitcoin DCA accumulation — long-term store of value and retirement reserve.",
+    description: "Bitcoin DCA accumulation — long-term store of value and wealth reserve.",
     symbolHint: "BTC-USD",
     defaultType: "crypto"
   }
