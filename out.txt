@@ -1,0 +1,7 @@
+aec5fba
+HAS proxy.ts
+HAS login
+HAS auth
+aec5fba feat(layout): use flexbox layout and resolve dark mode joint gap next to sidebar
+39df113 @ feat(security): add password gate and fix Sidebar crash
+fdb0f09 feat(books): upgrade books page to premium 3D oak bookshelf design with vintage nameplates and dark mahogany ledger
