@@ -33,33 +33,72 @@ export default function HomeDashboard() {
   useEffect(() => {
     async function fetchNetWorth() {
       try {
+        // 1. Fetch balance sheet items
         const res = await fetch("/api/finance");
+        let cash = 0;
+        let otherAssets = 0;
+        let liability = 0;
+
         if (res.ok) {
           const items = await res.json();
-          let cash = 0;
-          let assets = 0;
-          let liability = 0;
-          
           items.forEach((item: any) => {
              const amt = Number(item.amount) || 0;
              if (item.category === "cash") cash += amt;
-             if (item.category === "other_asset") assets += amt;
+             if (item.category === "other_asset" || item.category === "bond") otherAssets += amt;
              if (item.category === "liability") liability += amt;
           });
-          
-          const totalNetWorth = cash + assets - liability;
-          setNetWorth(totalNetWorth);
-          
-          // Generate a smooth curve ending at current net worth
-          setFinanceData([
-            { name: 'Jan', value: totalNetWorth * 0.8 },
-            { name: 'Feb', value: totalNetWorth * 0.85 },
-            { name: 'Mar', value: totalNetWorth * 0.88 },
-            { name: 'Apr', value: totalNetWorth * 0.92 },
-            { name: 'May', value: totalNetWorth * 0.96 },
-            { name: 'Jun', value: totalNetWorth },
-          ]);
         }
+
+        // 2. Fetch live holdings & market quotes
+        let holdingsValueTHB = 0;
+        try {
+          const [fxRes, hRes] = await Promise.all([
+            fetch("/api/fx"),
+            fetch("/api/holdings")
+          ]);
+          
+          let thbRate = 35.5;
+          if (fxRes.ok) {
+            const fxData = await fxRes.json();
+            if (fxData?.rates?.THB) thbRate = fxData.rates.THB;
+          }
+
+          if (hRes.ok) {
+            const holdings = await hRes.json();
+            const symbols = [...new Set(holdings.map((h: any) => h.symbol))].filter(Boolean).join(",");
+            let quotes: any = {};
+            if (symbols) {
+              const qRes = await fetch(`/api/market?symbols=${symbols}`);
+              if (qRes.ok) {
+                quotes = await qRes.json();
+              }
+            }
+            // Sum all holdings value in THB
+            holdings.forEach((h: any) => {
+              const priceStr = quotes[h.symbol] || "0";
+              const price = parseFloat(priceStr.replace(/,/g, '')) || 0;
+              const valueUSD = (h.quantity || 0) * price;
+              holdingsValueTHB += (valueUSD * thbRate);
+            });
+          }
+        } catch (e) {
+          console.error("Failed to fetch holdings/market data", e);
+        }
+        
+        // Final Net Worth Calculation
+        const totalNetWorth = cash + otherAssets + holdingsValueTHB - liability;
+        setNetWorth(totalNetWorth);
+        
+        // Generate a smooth curve ending at current net worth
+        setFinanceData([
+          { name: 'Jan', value: totalNetWorth * 0.8 },
+          { name: 'Feb', value: totalNetWorth * 0.85 },
+          { name: 'Mar', value: totalNetWorth * 0.88 },
+          { name: 'Apr', value: totalNetWorth * 0.92 },
+          { name: 'May', value: totalNetWorth * 0.96 },
+          { name: 'Jun', value: totalNetWorth },
+        ]);
+        
       } catch (err) {
         console.error("Failed to fetch net worth:", err);
       }
