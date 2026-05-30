@@ -56,21 +56,21 @@ const PORTFOLIO_CONFIG: Record<PortfolioType, {
   long_term: {
     label: "Long-term Portfolio",
     emoji: "📈",
-    description: "US stocks — buy and hold for long-term capital growth.",
-    symbolHint: "e.g. AAPL, VOO, MSFT",
+    description: "Growth assets with a 10-year horizon — AI Infrastructure and high-conviction stocks with strong business fundamentals.",
+    symbolHint: "e.g. NVDA, MSFT, META",
     defaultType: "stock"
   },
   short_term: {
     label: "Short-term Portfolio",
     emoji: "🤖",
-    description: "AI bot trading — short-term positions managed by automated strategies.",
-    symbolHint: "e.g. TSLA, NVDA, SPY",
-    defaultType: "stock"
+    description: "Bot trading only — Technical analysis-driven ETF trades. No fundamental basis. Signal-based entries and exits.",
+    symbolHint: "e.g. SPY, QQQ, TQQQ",
+    defaultType: "etf"
   },
   retirement: {
-    label: "Bitcoin & Store of Wealth",
+    label: "Retirement Portfolio",
     emoji: "₿",
-    description: "Bitcoin DCA accumulation — long-term store of value and wealth reserve.",
+    description: "Store of Wealth assets: Bitcoin, Gold, Land — long-term value preservation. Hold indefinitely, never sell.",
     symbolHint: "BTC-USD",
     defaultType: "crypto"
   }

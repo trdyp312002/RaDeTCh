@@ -88,7 +88,7 @@ export default function FinanceDashboard() {
 
   const tabs = useMemo(() => [
     "Summary",
-    "Bitcoin & Store of Wealth",
+    "Retirement Portfolio",
     "Long-term Portfolio",
     "Short-term Portfolio",
     "Cash & Safety Net",
@@ -474,7 +474,7 @@ export default function FinanceDashboard() {
     const pieData = [
       { name: "Long-term (US Stock)", value: ltValue },
       { name: "Short-term (Crypto/Assets)", value: stValue },
-      { name: "Bitcoin & Store of Wealth", value: btcVal + storeOfWealthUSD },
+      { name: "Retirement Portfolio", value: btcVal + storeOfWealthUSD },
       { name: "Cash & Safety Net", value: safetyNetUSD }
     ].filter(d => d.value > 0)
 
@@ -555,7 +555,7 @@ export default function FinanceDashboard() {
         amount: btcValTHB,
         currency: "THB",
         isLinked: true,
-        linkLabel: "Bitcoin & Store of Wealth (BTC)"
+        linkLabel: "Retirement Portfolio (BTC)"
       },
       {
         id: "link-usstock-id",
@@ -654,7 +654,7 @@ export default function FinanceDashboard() {
   const isExpensesTab = activeTab === "Monthly Expenses"
   const isLongTermTab = activeTab === "Long-term Portfolio"
   const isShortTermTab = activeTab === "Short-term Portfolio"
-  const isBitcoinStoreTab = activeTab === "Bitcoin & Store of Wealth"
+  const isRetirementTab = activeTab === "Retirement Portfolio"
   const isSafetyNetTab = activeTab === "Cash & Safety Net"
 
   return (
@@ -829,7 +829,7 @@ export default function FinanceDashboard() {
                    </span>
                  </div>
                  <button
-                   onClick={() => setActiveTab("Bitcoin & Store of Wealth")}
+                   onClick={() => setActiveTab("Retirement Portfolio")}
                    className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold mt-4 text-left flex items-center gap-1.5"
                  >
                    View DCA Ledger →
@@ -1188,9 +1188,9 @@ export default function FinanceDashboard() {
                         from: "USD" as const
                       },
                       {
-                        tab: "Bitcoin & Store of Wealth",
+                        tab: "Retirement Portfolio",
                         emoji: "₿",
-                        label: "Bitcoin & Store of Wealth",
+                        label: "Retirement Portfolio",
                         value: cleanNum(parsedBtc.dashboard.portfolioValue) + masterOverviewData.storeWealth.summary.totalValue,
                         cost: cleanNum(parsedBtc.dashboard.totalInvested) + masterOverviewData.storeWealth.summary.totalValue,
                         pnl: parsedBtc.dashboard.avgPnl,
@@ -1270,7 +1270,7 @@ export default function FinanceDashboard() {
         )}
 
         {/* ─── B. PORTFOLIO TABS ─── */}
-        {isBitcoinStoreTab && (
+        {isRetirementTab && (
           <div className="space-y-10 animate-fadeIn">
             {/* Bitcoin DCA Portfolio */}
             <PortfolioTab portfolio="retirement" displayCurrency={displayCurrency} fxRates={fxRates} />
@@ -1280,8 +1280,8 @@ export default function FinanceDashboard() {
               {/* Header */}
               <div className="bg-gradient-to-br from-amber-950 to-yellow-900/80 border border-amber-700/30 rounded-3xl p-8 text-white relative overflow-hidden">
                 <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-yellow-400/10 via-transparent to-transparent pointer-events-none" />
-                <p className="text-[10px] uppercase tracking-[0.4em] text-amber-300 font-semibold mb-1.5">🏦 Store of Wealth</p>
-                <p className="text-xs text-amber-200/70 mb-5 max-w-md">Cash reserves, gold, and tangible assets — your real-world wealth foundation.</p>
+                <p className="text-[10px] uppercase tracking-[0.4em] text-amber-300 font-semibold mb-1.5">🏦 Store of Wealth Assets</p>
+                <p className="text-xs text-amber-200/70 mb-5 max-w-md">Gold · Land · Agriculture — สินทรัพย์เก็บมูลค่าระยะยาว ซื้อแล้ว hold ไม่ขาย เสริม Bitcoin ในพอร์ตเกษียณ</p>
                 <div className="flex gap-6 flex-wrap">
                   <div>
                     <p className="text-[9px] uppercase tracking-widest text-amber-400/60 mb-0.5">Total Value</p>
