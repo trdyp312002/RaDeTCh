@@ -27,9 +27,9 @@ export default function Sidebar() {
 
   useEffect(() => {
     fetch("/api/travel/recommendation")
-      .then((r) => r.json())
-      .then(setPick)
-      .catch(() => null)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setPick(d && d.spot ? d : null))
+      .catch(() => setPick(null))
   }, [])
 
   const isActive = (href: string) =>
