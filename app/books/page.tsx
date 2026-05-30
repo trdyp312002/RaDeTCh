@@ -634,232 +634,164 @@ export default function BooksPage() {
           </div>
         )}
 
-        {/* 6. หมวดหมู่แผ่กว้างแบบสันยาวด้านบน (Horizontal 3D Category Bookshelf & Open Index Journal) */}
-        <div className="w-full space-y-6 select-none mb-8">
-            
-            {/* 1. ชั้นวางหนังสือหมวดหมู่ 3 มิติ (3D Category Bookshelf) */}
-            <div className="relative bg-gradient-to-b from-[#2e190d] via-[#1c0f08] to-[#0c0502] p-3 rounded-3xl border-4 border-[#3e2413] shadow-[0_20px_40px_rgba(0,0,0,0.65),inset_0_4px_12px_black] overflow-hidden">
-              {/* ป้ายทองเหลืองของตู้ (Golden Bookshelf Plaque) */}
-              <div className="text-center mb-3">
-                <span className="inline-block text-[9px] font-serif font-black tracking-widest text-[#dfb269]/70 uppercase border-b border-[#dfb269]/25 pb-1">
-                  📚 CATEGORY BOOKSHELF • ชั้นจัดหมวดหมู่คลังปัญญา
-                </span>
-              </div>
+        {/* 6. หมวดหมู่แบบกองหนังสือวางซ้อน 3 มิติ (3D Stacked Category Book Piles) */}
+        <div className="w-full bg-gradient-to-b from-[#2e190d] via-[#1c0f08] to-[#0c0502] p-5 md:p-6 rounded-3xl border-4 border-[#3e2413] shadow-[0_20px_40px_rgba(0,0,0,0.65),inset_0_4px_12px_black] select-none mb-8">
+          
+          {/* ป้ายโลหะบนโต๊ะศึกษา */}
+          <div className="text-center mb-5">
+            <span className="inline-block text-[9px] font-serif font-black tracking-widest text-[#dfb269]/70 uppercase border-b border-[#dfb269]/25 pb-1">
+              {"📚 STUDY DESK CATEGORIES • กองหนังสือสกัดความรู้เชิงระดับชั้น"}
+            </span>
+          </div>
 
-              {/* ชั้นแสดงแนวตั้งของสันหนังสือ (Row of 3D Book Spines) */}
-              <div className="flex justify-center items-end h-56 md:h-72 xl:h-80 pb-3 px-1 gap-3 md:gap-4.5 overflow-x-auto scrollbar-none relative z-10">
+          {/* การแบ่งกองหนังสือ 3 คอลัมน์ (กองหลัก, กองรอง, ป้ายหัวข้อย่อย) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            
+            {/* กองที่ 1: หมวดหมู่หลัก (Main Categories Stack) */}
+            <div className="flex flex-col items-center">
+              <h3 className="text-xs font-serif font-black text-[#dfb269] tracking-wider mb-3 uppercase flex items-center gap-1.5">
+                {"🗂️ กองหมวดหลัก (" + (Object.keys(hierarchicalCategories).length + 1) + ")"}
+              </h3>
+              
+              {/* กองหนังสือ Main Stack - จัดซ้อนแนวตั้งจากบนลงล่าง */}
+              <div className="flex flex-col w-full max-w-sm bg-black/30 p-3 rounded-2xl border border-[#dfb269]/10 shadow-inner space-y-1.5">
                 
-                {/* ที่กั้นหนังสือทองเหลืองซ้าย (Brass Bookend Left) */}
-                <div className="w-4 h-44 md:h-60 xl:h-68 bg-gradient-to-r from-[#dfb269] to-[#8c6527] rounded-l border border-[#5a3b11] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_3px_6px_black] shrink-0 hidden md:block" />
-                
-                {/* เล่ม 1: สมุดปกทอง Master Book (All Collection) */}
+                {/* เล่มพิเศษ: คลังทั้งหมด */}
                 {(() => {
                   const isAllActive = filterCategoryPath === "all";
                   return (
-                    <div 
+                    <div
                       onClick={() => setFilterCategoryPath("all")}
-                      className={`relative cursor-pointer transition-all duration-300 ${
-                        isAllActive ? "-translate-y-5 scale-105 z-30" : "hover:-translate-y-3 hover:z-20 z-10"
+                      className={`relative h-11 md:h-12 w-full cursor-pointer transition-all duration-300 rounded shadow-[0_4px_6px_rgba(0,0,0,0.45)] flex items-center justify-between px-4 border-y border-[#b45309]/30 border-l-[6px] border-[#dfb269] ${
+                        isAllActive
+                          ? "translate-x-4 bg-gradient-to-r from-[#d97706] to-[#b45309] shadow-[0_8px_16px_rgba(0,0,0,0.6)] z-25 scale-[1.01]"
+                          : "hover:translate-x-2 bg-gradient-to-r from-[#b45309] to-[#78350f] hover:z-10 z-10"
                       }`}
-                      title="หนังสือคลังทั้งหมด"
                     >
-                      {/* เล่มหนังสือ 3D */}
-                      <div className="relative w-12 h-44 md:w-16 md:h-56 xl:w-20 xl:h-64 rounded transition-all duration-300">
-                        {/* สันหนังสือ (Spine) */}
-                        <div className={`absolute inset-0 bg-gradient-to-b from-[#d97706] via-[#f59e0b] to-[#b45309] rounded-l-md shadow-[3px_6px_12px_rgba(0,0,0,0.5)] border-y-[4px] border-[#9a5d15] flex flex-col items-center justify-between py-6 px-1 text-center`}>
-                          {/* แสงโค้งของสัน */}
-                          <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-white/20 to-transparent pointer-events-none" />
-                          <div className="absolute inset-y-0 right-0 w-1.5 bg-gradient-to-l from-black/45 to-transparent pointer-events-none" />
-                          
-                          {/* ขอบทองสลักลวดลาย */}
-                          <div className="w-[85%] h-[1px] bg-[#5c3e16]/30 shrink-0" />
-                          
-                          {/* ชื่อหนังสือแนวตั้ง - ปรับปรุงเป็น inline-block และหมุน 90 องศา (บนลงล่าง) ให้อ่านเป็นแนวตั้งได้ดี */}
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span 
-                              className="inline-block transform rotate-90 text-[13px] md:text-[15px] xl:text-[17px] font-serif font-black text-[#5c3e16] tracking-widest uppercase whitespace-nowrap select-none drop-shadow-[0_0.5px_0_rgba(255,255,255,0.2)]"
-                            >
-                              คลังทั้งหมด
-                            </span>
-                          </div>
-                          
-                          {/* สถิติจำนวนรวม */}
-                          <div className="w-full flex flex-col gap-0.5 items-center shrink-0 z-10">
-                            <span className="text-[7px] font-black bg-[#5c3e16] text-[#dfb269] px-1 py-0.2 rounded font-mono leading-none border border-[#dfb269]/10">
-                              {totalCount}
-                            </span>
-                            <div className="w-[85%] h-[1px] bg-[#5c3e16]/30" />
-                          </div>
-                        </div>
-                        {/* ขอบกระดาษ peeking out ด้านข้างจำลองความหนาปก 3 มิติ */}
-                        <div className="absolute inset-y-1.5 right-[-3px] w-[3px] bg-[#fdfaf2] border-r border-t border-b border-black/20 rounded-r shadow-[1.5px_1.5px_3.5px_rgba(0,0,0,0.4)]" />
+                      {/* เงาสันหนังสือเอียงโค้ง */}
+                      <div className="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+                      <div className="absolute inset-y-0 right-0 w-3 bg-gradient-to-l from-black/40 to-transparent pointer-events-none" />
+                      
+                      <div className="flex items-center gap-2 z-10">
+                        <span className="text-stone-300 text-xs">⭐</span>
+                        <span className="text-[12px] md:text-[13px] font-serif font-black text-amber-100 tracking-wide">
+                          {"คลังทั้งหมด (All)"}
+                        </span>
                       </div>
+                      
+                      <span className="text-[9px] font-mono font-bold bg-[#5c3e16] text-[#dfb269] px-2 py-0.5 rounded border border-[#dfb269]/20 z-10">
+                        {totalCount + " เล่ม"}
+                      </span>
                     </div>
                   );
                 })()}
 
-                {/* เล่มหนังสือหมวดหมู่หลัก dynamic จากระบบคลังปัญญา */}
+                {/* เล่มอื่นๆ ในระบบคลังปัญญา */}
                 {Object.keys(hierarchicalCategories).map((main) => {
                   const mainObj = hierarchicalCategories[main];
                   const isMainActive = filterCategoryPath === main || filterCategoryPath.startsWith(main + "/");
                   
-                  // กำหนดสีสันหนังสือแต่ละประเภทให้แตกต่างและสวยงามพรีเมียม
                   const spineColors: Record<string, string> = {
-                    "การเรียน": "from-[#7c1d1d] via-[#b91c1c] to-[#7c1d1d] border-[#581010]",
-                    "การเงิน": "from-[#064e3b] via-[#047857] to-[#064e3b] border-[#022c22]",
-                    "พัฒนาตนเอง": "from-[#312e81] via-[#4338ca] to-[#312e81] border-[#1e1b4b]",
-                    "เทคโนโลยี": "from-[#1e3a8a] via-[#1d4ed8] to-[#1e3a8a] border-[#172554]",
-                    "นิยาย": "from-[#581c87] via-[#7e22ce] to-[#581c87] border-[#3b0764]",
-                    "ประวัติศาสตร์": "from-[#78350f] via-[#a16207] to-[#78350f] border-[#451a03]",
-                    "วิทยาศาสตร์": "from-[#1e1b4b] via-[#312e81] to-[#1e1b4b] border-[#0f0e26]",
-                    "ศิลปะ": "from-[#831843] via-[#9d174d] to-[#831843] border-[#500f27]",
-                    "ทั่วไป": "from-[#78350f] via-[#b45309] to-[#78350f] border-[#451a03]",
+                    "การเรียน": "from-[#8c1d1d] to-[#581010] border-[#7c1d1d]",
+                    "การเงิน": "from-[#064e3b] to-[#022c22] border-[#064e3b]",
+                    "พัฒนาตนเอง": "from-[#1e1b4b] to-[#0f0e26] border-[#312e81]",
+                    "เทคโนโลยี": "from-[#1e3a8a] to-[#172554] border-[#1e3a8a]",
+                    "นิยาย": "from-[#581c87] to-[#3b0764] border-[#581c87]",
+                    "ประวัติศาสตร์": "from-[#6b3a0b] to-[#451e03] border-[#78350f]",
+                    "วิทยาศาสตร์": "from-[#111827] to-[#030712] border-[#1f2937]",
+                    "ศิลปะ": "from-[#831843] to-[#500f27] border-[#9d174d]",
+                    "ทั่วไป": "from-[#78350f] to-[#451a03] border-[#b45309]",
                   };
-                  const spineColor = spineColors[main] || "from-[#451a03] via-[#78350f] to-[#451a03] border-[#291002]";
+                  const spineColor = spineColors[main] || "from-[#451a03] to-[#291002] border-[#78350f]";
 
                   return (
-                    <div 
+                    <div
                       key={main}
                       onClick={() => {
                         setFilterCategoryPath(main);
-                        // เซ็ตขยายหมวดหลักนี้
                         setExpandedMainCats(prev => ({
                           ...Object.keys(hierarchicalCategories).reduce((acc, cat) => ({ ...acc, [cat]: false }), {}),
                           [main]: true
                         }));
                       }}
-                      className={`relative cursor-pointer transition-all duration-300 ${
-                        isMainActive ? "-translate-y-5 scale-105 z-30" : "hover:-translate-y-3 hover:z-20 z-10"
+                      className={`relative h-11 md:h-12 w-full cursor-pointer transition-all duration-300 rounded shadow-[0_4px_6px_rgba(0,0,0,0.45)] flex items-center justify-between px-4 border-y border-white/5 border-l-[6px] ${
+                        isMainActive
+                          ? `translate-x-4 bg-gradient-to-r ${spineColor} border-[#dfb269] shadow-[0_8px_16px_rgba(0,0,0,0.6)] z-20 scale-[1.01]`
+                          : `hover:translate-x-2 bg-gradient-to-r ${spineColor} border-white/10 hover:z-10 z-10`
                       }`}
-                      title={`หมวด: ${main}`}
                     >
-                      {/* เล่มหนังสือ 3D */}
-                      <div className="relative w-12 h-44 md:w-16 md:h-56 xl:w-20 xl:h-64 rounded transition-all duration-300">
-                        {/* สันหนังสือ (Spine) */}
-                        <div className={`absolute inset-0 bg-gradient-to-b ${spineColor} rounded-l shadow-[3px_6px_12px_rgba(0,0,0,0.5)] border-y-[4px] border-[#dfb269]/20 flex flex-col items-center justify-between py-6 px-1 text-center`}>
-                          {/* แสงเงาสันหนังสือ */}
-                          <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
-                          <div className="absolute inset-y-0 right-0 w-1.5 bg-gradient-to-l from-black/35 to-transparent pointer-events-none" />
-                          
-                          {/* แถบทองคาดสลักลายที่หัว */}
-                          <div className="w-[85%] h-[1px] bg-[#dfb269]/40 shrink-0" />
-                          
-                          {/* สลักชื่อหมวดแนวตั้ง - ปรับปรุงเป็น inline-block และหมุน 90 องศา (บนลงล่าง) ให้อ่านเป็นแนวตั้งได้ดี */}
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span 
-                              className="inline-block transform rotate-90 text-[13px] md:text-[15px] xl:text-[17px] font-serif font-black text-[#dfb269] tracking-widest uppercase whitespace-nowrap select-none drop-shadow-[0_1px_1px_black]"
-                            >
-                              {main}
-                            </span>
-                          </div>
-                          
-                          {/* ป้ายจำนวนเล่ม และแถบทองล่าง */}
-                          <div className="w-full flex flex-col gap-0.5 items-center shrink-0 z-10">
-                            <span className="text-[7px] font-black bg-black/45 text-amber-200/90 px-1.5 py-0.2 rounded font-mono leading-none border border-white/5">
-                              {mainObj.count}
-                            </span>
-                            <div className="w-[85%] h-[1px] bg-[#dfb269]/40" />
-                          </div>
-                        </div>
-                        {/* เลียนแบบขอบกระดาษจำลอง 3 มิติ */}
-                        <div className="absolute inset-y-1.5 right-[-3px] w-[3px] bg-[#fdfaf2] border-r border-t border-b border-black/20 rounded-r shadow-[1.5px_1.5px_3.5px_rgba(0,0,0,0.4)]" />
+                      {/* เงาสันหนังสือเอียงโค้ง */}
+                      <div className="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+                      <div className="absolute inset-y-0 right-0 w-3 bg-gradient-to-l from-black/40 to-transparent pointer-events-none" />
+                      
+                      <div className="flex items-center gap-2 z-10">
+                        <span className="text-xs">📘</span>
+                        <span className={`text-[12px] md:text-[13px] font-serif font-black tracking-wide ${isMainActive ? "text-[#dfb269]" : "text-amber-100/90"}`}>
+                          {main}
+                        </span>
                       </div>
+                      
+                      <span className="text-[9px] font-mono font-bold bg-black/45 text-amber-200/90 px-2 py-0.5 rounded border border-white/5 z-10">
+                        {mainObj.count + " เล่ม"}
+                      </span>
                     </div>
                   );
                 })}
 
-                {/* ที่กั้นหนังสือทองเหลืองขวา (Brass Bookend Right) */}
-                <div className="w-4 h-44 md:h-60 xl:h-68 bg-gradient-to-l from-[#dfb269] to-[#8c6527] rounded-r border border-[#5a3b11] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_3px_6px_black] shrink-0 hidden md:block" />
-
-              </div>
-
-              {/* แท่นแผ่นไม้รองใต้สันหนังสือเพื่อมิติ 3D (3D Wooden Shelf Board) */}
-              <div className="relative w-full z-20">
-                {/* ขอบหน้าแผ่นไม้เอียง */}
-                <div className="h-3 w-full bg-gradient-to-b from-[#a88258] via-[#86603a] to-[#5e4125] rounded-b border-b border-black/40 shadow-[0_5px_8px_black]" />
               </div>
             </div>
 
-            {/* 2. สมุดบันทึกสารบัญดัชนีแผ่แบนราบ (Flat Open Parchment Book/Journal) */}
-            <div className="relative bg-[#FAF6F0] text-stone-900 rounded-3xl border-4 border-[#8c5a32]/35 shadow-2xl p-5 md:p-6 min-h-[300px] z-10 bg-[url('https://www.transparenttextures.com/patterns/lined-paper.png')] bg-repeat max-w-4xl mx-auto w-full">
-              
-              {/* แสงโค้งและริบบิ้นสีแดงโบราณพาดกลางหน้าสมุด (Red Silk Bookmark Ribbon) */}
-              <div className="absolute top-0 bottom-0 left-[50.2%] w-1 bg-gradient-to-r from-red-700 via-red-500 to-red-800 shadow-[2px_0_4px_black] transform -translate-x-1/2 hidden md:block z-20" />
-              <div className="absolute bottom-[-14px] left-[50%] -translate-x-1/2 w-3.5 h-4.5 bg-gradient-to-b from-red-600 to-red-950 rounded-b shadow-md border border-red-900 hidden md:block z-20" />
+            {/* กองที่ 2: หมวดหมู่รอง (Subcategories Stack) */}
+            {(() => {
+              const pathParts = filterCategoryPath.split("/");
+              const activeMain = pathParts[0];
+              const activeSub = pathParts[1] || "";
 
-              {/* การจัดแจงฝั่งหน้าซ้าย & หน้าขวา */}
-              {(() => {
-                const pathParts = filterCategoryPath.split("/");
-                const activeMain = pathParts[0];
-                const activeSub = pathParts[1] || "";
-                
-                // กรณีเลือกชมภาพรวมทั้งหมด (Master Welcoming Page)
-                if (activeMain === "all") {
-                  return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10 text-[#4a2e16]">
-                      {/* หน้าสมุดฝั่งซ้าย */}
-                      <div className="space-y-4 md:pr-3">
-                        <div className="border-b border-[#8c5a32]/25 pb-2">
-                          <h4 className="text-xs font-serif font-black uppercase tracking-wider flex items-center gap-1">
-                            📖 สารบัญชั้นใหญ่
-                          </h4>
-                          <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest block">Main Index Journal</span>
-                        </div>
-                        <p className="text-[11px] leading-relaxed font-serif italic text-stone-600">
-                          {"\"คลังปัญญาส่วนตัวของคุณท่าน จัดเก็บระบบจัดประเภทเชิงลึกอย่างเป็นระเบียบ เพื่อขัดเกลาและขยายพูนพูนสติปัญญาครับกระผม\""}
-                        </p>
-                        
-                        {/* รายการสถิติกระดาษ */}
-                        <div className="bg-amber-950/5 border border-stone-200 rounded-xl p-3.5 space-y-2">
-                          <div className="flex justify-between items-center text-[10px] font-bold">
-                            <span>📚 คลังหนังสือสะสม:</span>
-                            <span className="font-mono text-xs">{totalCount} เล่ม</span>
+              return (
+                <div className="flex flex-col items-center">
+                  <h3 className="text-xs font-serif font-black text-[#dfb269] tracking-wider mb-3 uppercase flex items-center gap-1.5">
+                    {"📂 กองหมวดรอง (Sub-Categories)"}
+                  </h3>
+                  
+                  {/* กองหนังสือย่อย */}
+                  <div className="flex flex-col w-full max-w-sm bg-black/30 p-3 rounded-2xl border border-[#dfb269]/10 shadow-inner min-h-[180px] justify-center space-y-1.5">
+                    {(() => {
+                      if (activeMain === "all") {
+                        return (
+                          <div className="text-center py-6 px-4 flex flex-col items-center justify-center text-stone-400 gap-2 font-medium">
+                            <span className="text-3xl animate-bounce">📚</span>
+                            <p className="text-[11px] leading-relaxed text-[#dfb269]/60 font-serif italic">
+                              {"\"กรุณาคลิกเลือกเล่มหนังสือหมวดหลักทางซ้ายมือ เพื่อกางสารบัญหมวดย่อยลงโต๊ะศึกษาครับกระผม\""}
+                            </p>
                           </div>
-                          <div className="flex justify-between items-center text-[10px] font-bold">
-                            <span>❤️ อยู่ในลิสต์ดองรออ่าน:</span>
-                            <span className="font-mono text-xs">{books.filter(b => b.status === 'wishlist' || b.status === 'bought').length} เล่ม</span>
+                        );
+                      }
+
+                      const mainObj = hierarchicalCategories[activeMain];
+                      if (!mainObj) return null;
+                      const hasSubs = Object.keys(mainObj.subs).length > 0;
+
+                      if (!hasSubs) {
+                        return (
+                          <div className="text-center py-8 px-4 flex flex-col items-center justify-center text-stone-400 gap-2">
+                            <span className="text-2xl">🍂</span>
+                            <p className="text-[11px] text-stone-400 font-serif italic">
+                              {"ไม่มีหมวดย่อยจดบันทึกไว้ในกลุ่มนี้ครับ"}
+                            </p>
+                            <button
+                              onClick={() => setFilterCategoryPath(activeMain)}
+                              className="mt-2 px-3 py-1 bg-[#8c5a32]/25 text-[#dfb269] border border-[#8c5a32]/50 rounded text-[9px] hover:bg-[#8c5a32]/45 font-bold uppercase transition-colors"
+                            >
+                              {"ย้อนดูต้นหมวดหลัก"}
+                            </button>
                           </div>
-                        </div>
-                      </div>
+                        );
+                      }
 
-                      {/* หน้าสมุดฝั่งขวา */}
-                      <div className="space-y-4 md:pl-3 border-t border-[#8c5a32]/10 md:border-t-0 pt-4 md:pt-0">
-                        <div className="border-b border-[#8c5a32]/25 pb-2">
-                          <h4 className="text-xs font-serif font-black uppercase tracking-wider flex items-center gap-1">
-                            🛡️ สารจากราฟาเอล
-                          </h4>
-                          <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest block">Butler Callout</span>
-                        </div>
-                        <p className="text-[10px] leading-normal text-stone-500 font-medium">
-                          {"เรียนคุณท่านครับ ที่ชั้นวางหนังสือด้านบนนี้คือ \"สรรหนังสือ\" ของหมวดหมู่หลักทั้งหมดในคลังหนังสือครับ"}
-                        </p>
-                        <p className="text-[10px] leading-normal text-stone-500 font-medium">
-                          ท่านสามารถ **คลิกเลือกสันหนังสือเล่มใดเล่มหนึ่ง** เพื่อหยิบสมุดของหมวดหลักนั้นขึ้นมาเปิดดูรายละเอียดและหมวดหมู่ย่อยบนหน้ากระดาษหนังสือเล่มนี้ได้ทันทีเลยครับกระผม!
-                        </p>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // กรณีเลือกหมวดหมู่หลักแบบแยกประเภท
-                const mainObj = hierarchicalCategories[activeMain];
-                if (!mainObj) return null;
-                const hasSubs = Object.keys(mainObj.subs).length > 0;
-
-                return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10 text-[#4a2e16]">
-                    {/* หน้าสมุดฝั่งซ้าย: สารบัญหมวดหมู่รอง */}
-                    <div className="space-y-3.5 md:pr-3">
-                      <div className="border-b border-[#8c5a32]/25 pb-2">
-                        <h4 className="text-xs font-serif font-black uppercase tracking-wider flex items-center gap-1 truncate">
-                          📂 สมุดจดหมวด: {activeMain}
-                        </h4>
-                        <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest block">Category: {activeMain} ({mainObj.count} เล่ม)</span>
-                      </div>
-                      
-                      <div className="space-y-2 max-h-[190px] overflow-y-auto pr-1">
-                        {hasSubs ? (
-                          Object.keys(mainObj.subs).map((sub) => {
+                      // แสดงรายการหมวดหมู่รอง
+                      return (
+                        <>
+                          {Object.keys(mainObj.subs).map((sub) => {
                             const subObj = mainObj.subs[sub];
                             const subPath = `${activeMain}/${sub}`;
                             const isSubActive = filterCategoryPath === subPath || filterCategoryPath.startsWith(subPath + "/");
@@ -868,103 +800,124 @@ export default function BooksPage() {
                               <div
                                 key={sub}
                                 onClick={() => setFilterCategoryPath(subPath)}
-                                className={`p-2.5 rounded-xl border text-[11px] font-extrabold cursor-pointer select-none flex items-center justify-between transition-all duration-200 ${
+                                className={`relative h-9 md:h-10 w-full cursor-pointer transition-all duration-300 rounded shadow-[0_3px_5px_rgba(0,0,0,0.35)] flex items-center justify-between px-4 border-y border-white/5 border-l-[4px] ${
                                   isSubActive
-                                    ? "bg-[#dfb269]/15 border-[#dfb269] text-[#5c3e21] shadow-inner"
-                                    : "border-stone-200 hover:bg-[#dfb269]/5 hover:border-stone-300 text-stone-700"
+                                    ? "translate-x-3 bg-gradient-to-r from-[#9a6f2b] to-[#704d16] border-[#dfb269] shadow-[0_6px_12px_rgba(0,0,0,0.5)] z-20"
+                                    : "hover:translate-x-2 bg-gradient-to-r from-[#5c4a37] to-[#3a2c20] border-white/10 hover:z-10 z-10"
                                 }`}
                               >
-                                <span className="truncate flex items-center gap-1.5">
-                                  🔖 {sub}
-                                </span>
-                                <span className="text-[8px] px-1.5 py-0.2 rounded bg-stone-200 text-stone-700 font-mono">
-                                  {subObj.count} เล่ม
+                                <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+                                
+                                <div className="flex items-center gap-1.5 z-10">
+                                  <span className="text-xs">🔖</span>
+                                  <span className={`text-[11px] font-sans font-bold ${isSubActive ? "text-[#dfb269]" : "text-amber-100/80"}`}>
+                                    {sub}
+                                  </span>
+                                </div>
+
+                                <span className="text-[8px] font-mono font-bold bg-black/35 text-amber-200/80 px-1.5 py-0.2 rounded border border-white/5 z-10">
+                                  {subObj.count + " เล่ม"}
                                 </span>
                               </div>
                             );
-                          })
-                        ) : (
-                          <div className="text-center py-8 text-stone-400 text-[10px] italic">
-                            ไม่มีสารบัญหมวดย่อยที่จดบันทึกไว้ครับกระผม
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* หน้าสมุดฝั่งขวา: ดัชนีย่อยสูงสุด Level 3 หรือ คำชี้แนะจากราฟาเอล */}
-                    <div className="space-y-3.5 md:pl-3 border-t border-[#8c5a32]/10 md:border-t-0 pt-4 md:pt-0">
-                      {activeSub ? (
-                        (() => {
-                          const subObj = mainObj.subs[activeSub];
-                          if (!subObj) return null;
-                          const subSubs = Object.keys(subObj.subSubs);
-                          
-                          return (
-                            <div className="space-y-3">
-                              <div className="border-b border-[#8c5a32]/25 pb-2">
-                                <h4 className="text-xs font-serif font-black uppercase tracking-wider flex items-center gap-1 truncate">
-                                  📌 แท็บแยกหัวข้อ: {activeSub}
-                                </h4>
-                                <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest block">Sub Category Level 3</span>
-                              </div>
-                              
-                              <p className="text-[10px] font-medium leading-relaxed text-stone-500">
-                                พบประเด็นย่อยที่คุณท่านจดบันทึกยิบไว้บนคลังปัญญา สามารถคลิกแท็บดัชนีย่อยเหล่านี้เพื่อจัดคัดแยกหนังสือเฉพาะหัวข้อนั้น ๆ ได้เลยครับ:
-                              </p>
-                              
-                              <div className="flex flex-wrap gap-1.5 pt-1">
-                                {subSubs.length > 0 ? (
-                                  subSubs.map((subSub) => {
-                                    const subSubCount = subObj.subSubs[subSub];
-                                    const subSubPath = `${activeMain}/${activeSub}/${subSub}`;
-                                    const isSubSubActive = filterCategoryPath === subSubPath;
-
-                                    return (
-                                      <button
-                                        key={subSub}
-                                        onClick={() => setFilterCategoryPath(subSubPath)}
-                                        className={`px-2 py-1 rounded text-[9px] font-black tracking-wide uppercase transition-colors border select-none ${
-                                          isSubSubActive
-                                            ? "bg-[#dfb269] text-[#2c1b10] border-[#9a6f2b] shadow-sm"
-                                            : "bg-[#8c5a32]/10 text-[#8c5a32] border-[#8c5a32]/20 hover:bg-[#8c5a32]/20"
-                                        }`}
-                                      >
-                                        🏷️ {subSub} ({subSubCount})
-                                      </button>
-                                    );
-                                  })
-                                ) : (
-                                  <span className="text-stone-400 text-[10px] italic">
-                                    ไม่มีประเด็นย่อยจัดชั้นแยกประเภทไว้เพิ่มเติมครับ
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })()
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="border-b border-[#8c5a32]/25 pb-2">
-                            <h4 className="text-xs font-serif font-black uppercase tracking-wider flex items-center gap-1">
-                              🛡️ ราฟาเอลแนะแนว
-                            </h4>
-                            <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest block">Raphael Guidance</span>
-                          </div>
-                          <p className="text-[10px] leading-normal text-stone-500 font-medium italic">
-                            {"\"คุณท่านได้ทำการหยิบสมุดบันทึกหมวด '" + activeMain + "' มาเปิดกางแล้วครับ\""}
-                          </p>
-                          <p className="text-[10px] leading-relaxed text-stone-500 font-medium">
-                            ท่านสามารถคลิกเลือก **หมวดหมู่ย่อย (แผ่นป้ายแท็บกระดาษสีเหลือง)** ทางด้านซ้ายมือ เพื่อคัดกรองหนังสือลงลึกถึงดัชนีย่อยสูงสุดและแสดงบนชั้นไม้ทางขวามือได้ทันทีเลยครับกระผม!
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                          })}
+                        </>
+                      );
+                    })()}
                   </div>
-                );
-              })()}
-            </div>
+                </div>
+              );
+            })()}
+
+            {/* กองที่ 3: หัวข้อย่อยเด่น (Sub-subcategories Stack) */}
+            {(() => {
+              const pathParts = filterCategoryPath.split("/");
+              const activeMain = pathParts[0];
+              const activeSub = pathParts[1] || "";
+
+              return (
+                <div className="flex flex-col items-center">
+                  <h3 className="text-xs font-serif font-black text-[#dfb269] tracking-wider mb-3 uppercase flex items-center gap-1.5">
+                    {"📌 ป้ายประเด็นย่อย (Sub-SubCategories)"}
+                  </h3>
+                  
+                  {/* กองป้ายสลักย่อย */}
+                  <div className="flex flex-col w-full max-w-sm bg-black/30 p-3 rounded-2xl border border-[#dfb269]/10 shadow-inner min-h-[180px] justify-center space-y-1.5">
+                    {(() => {
+                      if (!activeSub) {
+                        return (
+                          <div className="text-center py-6 px-4 flex flex-col items-center justify-center text-stone-400 gap-2 font-medium">
+                            <span className="text-3xl opacity-45">📌</span>
+                            <p className="text-[11px] leading-relaxed text-[#dfb269]/60 font-serif italic">
+                              {"\"กรุณาเลือกหมวดหมู่รองตรงกลาง เพื่อสลักป้ายหัวข้อเฉพาะเจาะจงลงคลังปัญญาครับ\""}
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      const mainObj = hierarchicalCategories[activeMain];
+                      if (!mainObj) return null;
+                      const subObj = mainObj.subs[activeSub];
+                      if (!subObj) return null;
+                      const subSubs = Object.keys(subObj.subSubs);
+
+                      if (subSubs.length === 0) {
+                        return (
+                          <div className="text-center py-8 px-4 flex flex-col items-center justify-center text-stone-400 gap-2">
+                            <span className="text-2xl">🏷️</span>
+                            <p className="text-[11px] text-stone-400 font-serif italic">
+                              {"ไม่มีประเด็นย่อยจัดชั้นแยกประเภทไว้เพิ่มเติมครับ"}
+                            </p>
+                            <button
+                              onClick={() => setFilterCategoryPath(`${activeMain}/${activeSub}`)}
+                              className="mt-2 px-3 py-1 bg-[#8c5a32]/25 text-[#dfb269] border border-[#8c5a32]/50 rounded text-[9px] hover:bg-[#8c5a32]/45 font-bold uppercase transition-colors"
+                            >
+                              {"ดูรวมหมวดรอง"}
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <>
+                          {subSubs.map((subSub) => {
+                            const subSubCount = subObj.subSubs[subSub];
+                            const subSubPath = `${activeMain}/${activeSub}/${subSub}`;
+                            const isSubSubActive = filterCategoryPath === subSubPath;
+
+                            return (
+                              <div
+                                key={subSub}
+                                onClick={() => setFilterCategoryPath(subSubPath)}
+                                className={`relative h-8 w-full cursor-pointer transition-all duration-300 rounded shadow-[0_2px_4px_rgba(0,0,0,0.3)] flex items-center justify-between px-4 border-y border-white/5 border-l-[3px] ${
+                                  isSubSubActive
+                                    ? "translate-x-3 bg-gradient-to-r from-[#dfb269]/30 to-[#b48332]/30 border-[#dfb269] shadow-[0_4px_8px_rgba(0,0,0,0.4)] z-20"
+                                    : "hover:translate-x-2 bg-gradient-to-r from-[#3e2c1c]/40 to-[#22160c]/40 border-[#dfb269]/10 hover:z-10 z-10"
+                                }`}
+                              >
+                                <div className="flex items-center gap-1.5 z-10">
+                                  <span className="text-[10px]">🏷️</span>
+                                  <span className={`text-[10px] font-sans font-bold ${isSubSubActive ? "text-[#dfb269]" : "text-amber-100/70"}`}>
+                                    {subSub}
+                                  </span>
+                                </div>
+
+                                <span className="text-[8px] font-mono font-bold bg-[#dfb269]/15 text-[#dfb269] px-1.5 py-0.2 rounded border border-[#dfb269]/25 z-10">
+                                  {subSubCount + " เล่ม"}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              );
+            })()}
 
           </div>
+        </div>
 
           {/* 7. รายการชั้นหนังสือไม้ 3D พรีเมียม (Grand Library Shelves) */}
           <div className="w-full">
