@@ -108,7 +108,10 @@ export default function BooksPage() {
   }, []);
 
   useEffect(() => {
-    fetchBooks();
+    const timer = setTimeout(() => {
+      fetchBooks();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchBooks]);
 
   async function updateBookStatus(id: string, status: Status) {
@@ -803,7 +806,7 @@ export default function BooksPage() {
                           <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest block">Main Index Journal</span>
                         </div>
                         <p className="text-[11px] leading-relaxed font-serif italic text-stone-600">
-                          "คลังปัญญาส่วนตัวของคุณท่าน จัดเก็บระบบจัดประเภทเชิงลึกอย่างเป็นระเบียบ เพื่อขัดเกลาและขยายพูนพูนสติปัญญาครับกระผม"
+                          {"\"คลังปัญญาส่วนตัวของคุณท่าน จัดเก็บระบบจัดประเภทเชิงลึกอย่างเป็นระเบียบ เพื่อขัดเกลาและขยายพูนพูนสติปัญญาครับกระผม\""}
                         </p>
                         
                         {/* รายการสถิติกระดาษ */}
@@ -828,7 +831,7 @@ export default function BooksPage() {
                           <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest block">Butler Callout</span>
                         </div>
                         <p className="text-[10px] leading-normal text-stone-500 font-medium">
-                          เรียนคุณท่านครับ ที่ชั้นวางหนังสือด้านบนนี้คือ **"สรรหนังสือ"** ของหมวดหมู่หลักทั้งหมดในคลังหนังสือครับ
+                          {"เรียนคุณท่านครับ ที่ชั้นวางหนังสือด้านบนนี้คือ \"สรรหนังสือ\" ของหมวดหมู่หลักทั้งหมดในคลังหนังสือครับ"}
                         </p>
                         <p className="text-[10px] leading-normal text-stone-500 font-medium">
                           ท่านสามารถ **คลิกเลือกสันหนังสือเล่มใดเล่มหนึ่ง** เพื่อหยิบสมุดของหมวดหลักนั้นขึ้นมาเปิดดูรายละเอียดและหมวดหมู่ย่อยบนหน้ากระดาษหนังสือเล่มนี้ได้ทันทีเลยครับกระผม!
@@ -948,7 +951,7 @@ export default function BooksPage() {
                             <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest block">Raphael Guidance</span>
                           </div>
                           <p className="text-[10px] leading-normal text-stone-500 font-medium italic">
-                            "คุณท่านได้ทำการหยิบสมุดบันทึกหมวด **'{activeMain}'** มาเปิดกางแล้วครับ"
+                            {"\"คุณท่านได้ทำการหยิบสมุดบันทึกหมวด '" + activeMain + "' มาเปิดกางแล้วครับ\""}
                           </p>
                           <p className="text-[10px] leading-relaxed text-stone-500 font-medium">
                             ท่านสามารถคลิกเลือก **หมวดหมู่ย่อย (แผ่นป้ายแท็บกระดาษสีเหลือง)** ทางด้านซ้ายมือ เพื่อคัดกรองหนังสือลงลึกถึงดัชนีย่อยสูงสุดและแสดงบนชั้นไม้ทางขวามือได้ทันทีเลยครับกระผม!
@@ -975,7 +978,7 @@ export default function BooksPage() {
                 <span className="text-4xl">📚</span>
                 <p className="text-sm font-extrabold text-stone-700 mt-4">ไม่พบหนังสือในหมวดหมู่ที่ท่านต้องการสำรวจครับ</p>
                 <p className="text-xs text-stone-400 mt-1 max-w-sm mx-auto leading-relaxed">
-                  ท่านสามารถบันทึกหนังสือเล่มใหม่ลงในหมวดหมู่นี้ได้ง่ายๆ หรือเลือก "ทั้งหมดในคลัง" เพื่อชมคอลเลกชันเล่มโปรดทั้งหมดได้ทันทีครับกระผม
+                  {"ท่านสามารถบันทึกหนังสือเล่มใหม่ลงในหมวดหมู่นี้ได้ง่ายๆ หรือเลือก \"ทั้งหมดในคลัง\" เพื่อชมคอลเลกชันเล่มโปรดทั้งหมดได้ทันทีครับกระผม"}
                 </p>
               </div>
             ) : (
