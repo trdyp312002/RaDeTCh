@@ -13,10 +13,17 @@ async function ensureTableExists() {
       description TEXT,
       category TEXT DEFAULT 'ทั่วไป',
       status TEXT DEFAULT 'wishlist' CHECK(status IN ('wishlist', 'bought', 'reading', 'completed')),
+      cover_image TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     )
   `)
+  try {
+    // เพิ่มคอลัมน์ในตารางกรณีที่มีการสร้างตารางไว้ก่อนหน้าแล้ว
+    await db.execute(`ALTER TABLE books ADD COLUMN cover_image TEXT`)
+  } catch (e) {
+    // คอลัมน์อาจจะมีอยู่แล้ว ให้ข้ามข้อผิดพลาดนี้ไป
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -55,7 +62,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await ensureTableExists()
-    const { title, author, description, category, status } = await req.json()
+    const { title, author, description, category, status, cover_image } = await req.json()
 
     if (!title || !author) {
       return NextResponse.json({ error: "Title and Author are required" }, { status: 400 })
@@ -63,14 +70,15 @@ export async function POST(req: NextRequest) {
 
     const id = crypto.randomUUID()
     await db.execute({
-      sql: "INSERT INTO books (id, title, author, description, category, status) VALUES (?, ?, ?, ?, ?, ?)",
+      sql: "INSERT INTO books (id, title, author, description, category, status, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?)",
       args: [
         id, 
         title, 
         author, 
         description ?? null, 
         category ?? "ทั่วไป", 
-        status ?? "wishlist"
+        status ?? "wishlist",
+        cover_image ?? null
       ]
     })
 

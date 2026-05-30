@@ -16,7 +16,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Book not found" }, { status: 404 })
     }
 
-    const { title, author, description, category, status } = updates
+    const { title, author, description, category, status, cover_image } = updates
     
     // หากมีการส่งสถานะมา ให้ตรวจสอบความถูกต้อง
     if (status && !['wishlist', 'bought', 'reading', 'completed'].includes(status)) {
@@ -30,6 +30,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
               description = COALESCE(?, description),
               category = COALESCE(?, category),
               status = COALESCE(?, status),
+              cover_image = COALESCE(?, cover_image),
               updated_at = datetime('now')
             WHERE id = ?`,
       args: [
@@ -38,6 +39,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         description ?? null, 
         category ?? null, 
         status ?? null, 
+        cover_image ?? null,
         id
       ]
     })

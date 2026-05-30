@@ -10,6 +10,7 @@ type Book = {
   description: string | null;
   category: string;
   status: Status;
+  cover_image: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -716,9 +717,9 @@ export default function BooksPage() {
                   const statusCfg = STATUS_CONFIG[book.status];
                   const isUpdating = updatingId === book.id;
                   
-                  // ดึงปกจากหมวดหมู่หลักชั้นที่ 1
+                  // ดึงปกจากฐานข้อมูล (ถ้าไม่มีให้ใช้ปกจากหมวดหมู่หลักชั้นที่ 1)
                   const mainCategoryName = book.category ? book.category.split("/")[0] : "ทั่วไป";
-                  const coverUrl = CATEGORY_COVERS[mainCategoryName] || DEFAULT_COVER;
+                  const coverUrl = book.cover_image || CATEGORY_COVERS[mainCategoryName] || DEFAULT_COVER;
 
                   return (
                     <div 

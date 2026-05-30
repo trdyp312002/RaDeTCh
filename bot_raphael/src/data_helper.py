@@ -257,10 +257,62 @@ class DataHelper:
             print(f"[DataHelper Error] ดึงข้อมูลหนังสือขัดข้อง: {e}")
             return []
 
-    def add_book(self, title, author, description="", category="ทั่วไป", status="wishlist"):
+    def fetch_book_details_from_google(self, title, author=""):
+        """
+        ดึงข้อมูลหนังสือจริงและรูปภาพหน้าปกจริงจาก Google Books API
+        """
+        import requests
+        import urllib.parse
+        
+        query = f"intitle:{title}"
+        if author and author != "ไม่ระบุ":
+            query += f" inauthor:{author}"
+            
+        url = f"https://www.googleapis.com/books/v1/volumes?q={urllib.parse.quote(query)}&maxResults=1"
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                items = data.get("items", [])
+                if items:
+                    volume_info = items[0].get("volumeInfo", {})
+                    real_title = volume_info.get("title")
+                    authors = volume_info.get("authors", [])
+                    real_author = authors[0] if authors else author
+                    desc = volume_info.get("description", "")
+                    
+                    # ดึงลิงก์รูปภาพปก
+                    image_links = volume_info.get("imageLinks", {})
+                    cover_image = image_links.get("thumbnail") or image_links.get("smallThumbnail")
+                    if cover_image and cover_image.startswith("http://"):
+                        cover_image = cover_image.replace("http://", "https://")
+                        
+                    return {
+                        "title": real_title,
+                        "author": real_author,
+                        "description": desc,
+                        "cover_image": cover_image
+                    }
+        except Exception as e:
+            print(f"[DataHelper Error] ดึงข้อมูลจาก Google Books ขัดข้อง: {e}")
+        return None
+
+    def add_book(self, title, author, description="", category="ทั่วไป", status="wishlist", cover_image=None):
         """
         บันทึกข้อมูลหนังสือลงใน SQLite Database ตาราง books ของเว็บไซต์โดยตรง
         """
+        # หากไม่มีรูปปก หรือไม่มีเรื่องย่อ ให้บอทดึงข้อมูลจริงๆ จาก Google Books API เองโดยอัตโนมัติ
+        if not cover_image or not description or description == "":
+            google_data = self.fetch_book_details_from_google(title, author)
+            if google_data:
+                if not cover_image:
+                    cover_image = google_data.get("cover_image")
+                if not description or description == "":
+                    g_desc = google_data.get("description", "")
+                    if len(g_desc) > 300:
+                        g_desc = g_desc[:297] + "..."
+                    description = g_desc
+
         portfolio_db_path = os.path.join(self.data_dir, "portfolio.db")
         try:
             conn = sqlite3.connect(portfolio_db_path)
@@ -275,18 +327,25 @@ class DataHelper:
                     description TEXT,
                     category TEXT DEFAULT 'ทั่วไป',
                     status TEXT DEFAULT 'wishlist' CHECK(status IN ('wishlist', 'bought', 'reading', 'completed')),
+                    cover_image TEXT,
                     created_at TEXT DEFAULT (datetime('now')),
                     updated_at TEXT DEFAULT (datetime('now'))
                 )
             """)
+            
+            # ลองเพิ่มคอลัมน์ในตารางกรณีสร้างฐานข้อมูลไว้ก่อนหน้าแล้ว
+            try:
+                cursor.execute("ALTER TABLE books ADD COLUMN cover_image TEXT")
+            except sqlite3.OperationalError:
+                pass # คอลัมน์มีอยู่แล้ว ข้ามได้เลย
             
             # สุ่ม/สร้าง UUID สำหรับคีย์หลัก
             import uuid
             book_id = str(uuid.uuid4())
             
             cursor.execute(
-                "INSERT INTO books (id, title, author, description, category, status) VALUES (?, ?, ?, ?, ?, ?)",
-                (book_id, title, author, description, category, status)
+                "INSERT INTO books (id, title, author, description, category, status, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (book_id, title, author, description, category, status, cover_image)
             )
             conn.commit()
             conn.close()
