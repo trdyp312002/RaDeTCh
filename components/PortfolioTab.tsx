@@ -240,6 +240,7 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
   }
 
   const handleDeleteTransaction = async (txId: string) => {
+    if (!confirm("Delete this transaction? This cannot be undone.")) return
     try {
       await fetch(`/api/transactions/${txId}`, { method: "DELETE" })
       await fetchHoldings()
