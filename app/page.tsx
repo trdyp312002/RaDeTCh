@@ -75,8 +75,8 @@ export default function HomeDashboard() {
             }
             // Sum all holdings value in THB
             holdings.forEach((h: any) => {
-              const priceStr = quotes[h.symbol] || "0";
-              const price = parseFloat(priceStr.replace(/,/g, '')) || 0;
+              const quote = quotes[h.symbol];
+              const price = quote?.currentPrice || 0;
               const valueUSD = (h.quantity || 0) * price;
               holdingsValueTHB += (valueUSD * thbRate);
             });
