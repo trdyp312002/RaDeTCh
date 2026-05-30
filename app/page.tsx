@@ -128,7 +128,7 @@ export default function HomeDashboard() {
                   </defs>
                   <Tooltip 
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
-                    formatter={(value: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(value)}
+                    formatter={(value: any) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(Number(value))}
                   />
                   <Area type="monotone" dataKey="value" stroke="#4F46E5" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
                 </AreaChart>
