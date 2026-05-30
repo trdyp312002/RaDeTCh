@@ -12,7 +12,7 @@ type FinanceData = Record<string, string[][]>
 
 type DBFinanceItem = {
   id: string
-  category: "cash" | "other_asset" | "liability"
+  category: "cash" | "other_asset" | "bond" | "liability"
   label: string
   amount: number
   currency: string
@@ -91,6 +91,7 @@ export default function FinanceDashboard() {
     "Bitcoin & Store of Wealth",
     "Long-term Portfolio",
     "Short-term Portfolio",
+    "Cash & Safety Net",
     "Monthly Expenses",
     "Personal Financial Statement"
   ], [])
@@ -457,21 +458,28 @@ export default function FinanceDashboard() {
       }
     })
 
-    // Calculate Store of Wealth from liquid assets + other assets in DB (converted from THB to USD)
-    const cashAndAssetsTHB = dbFinanceItems
-      .filter(f => f.category === "cash" || f.category === "other_asset")
+    // Store of Wealth: tangible long-term assets (Gold, Land, Agriculture)
+    const storeOfWealthTHB = dbFinanceItems
+      .filter(f => f.category === "other_asset")
       .reduce((sum, item) => sum + item.amount, 0)
-    const wealthValue = cashAndAssetsTHB / thbRate
+    const storeOfWealthUSD = storeOfWealthTHB / thbRate
+
+    // Safety Net: cash reserves + government bonds
+    const safetyNetTHB = dbFinanceItems
+      .filter(f => f.category === "cash" || f.category === "bond")
+      .reduce((sum, item) => sum + item.amount, 0)
+    const safetyNetUSD = safetyNetTHB / thbRate
 
     // Combined Pie data in USD
     const pieData = [
       { name: "Long-term (US Stock)", value: ltValue },
       { name: "Short-term (Crypto/Assets)", value: stValue },
-      { name: "Bitcoin & Store of Wealth", value: btcVal + wealthValue }
+      { name: "Bitcoin & Store of Wealth", value: btcVal + storeOfWealthUSD },
+      { name: "Cash & Safety Net", value: safetyNetUSD }
     ].filter(d => d.value > 0)
 
-    const totalPortfolioValue = ltValue + stValue + btcVal + wealthValue
-    const totalPortfolioCost = ltCost + stCost + btcCst + wealthValue
+    const totalPortfolioValue = ltValue + stValue + btcVal + storeOfWealthUSD + safetyNetUSD
+    const totalPortfolioCost = ltCost + stCost + btcCst + storeOfWealthUSD + safetyNetUSD
     const totalPnl = totalPortfolioValue - totalPortfolioCost
     const totalPnlPercent = totalPortfolioCost > 0 ? (totalPnl / totalPortfolioCost) * 100 : 0
 
@@ -505,8 +513,16 @@ export default function FinanceDashboard() {
       },
       storeWealth: {
         summary: {
-          totalValue: wealthValue,
-          totalCost: wealthValue,
+          totalValue: storeOfWealthUSD,
+          totalCost: storeOfWealthUSD,
+          pnl: 0,
+          pnlPercent: "0.00%"
+        }
+      },
+      safetyNet: {
+        summary: {
+          totalValue: safetyNetUSD,
+          totalCost: safetyNetUSD,
           pnl: 0,
           pnlPercent: "0.00%"
         }
@@ -522,7 +538,7 @@ export default function FinanceDashboard() {
     const cashAssets = dbFinanceItems.filter(f => f.category === "cash")
     
     // Dynamically calculate BTC and US STOCK amounts from portfolios
-    const dbOtherAssets = dbFinanceItems.filter(f => f.category === "other_asset").map(f => ({ ...f, isLinked: false }))
+    const dbOtherAssets = dbFinanceItems.filter(f => f.category === "other_asset" || f.category === "bond").map(f => ({ ...f, isLinked: false }))
     
     const btcValUSD = cleanNum(parsedBtc.dashboard.portfolioValue)
     const btcValTHB = btcValUSD * thbRate
@@ -639,6 +655,7 @@ export default function FinanceDashboard() {
   const isLongTermTab = activeTab === "Long-term Portfolio"
   const isShortTermTab = activeTab === "Short-term Portfolio"
   const isBitcoinStoreTab = activeTab === "Bitcoin & Store of Wealth"
+  const isSafetyNetTab = activeTab === "Cash & Safety Net"
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -1182,6 +1199,17 @@ export default function FinanceDashboard() {
                         from: "USD" as const
                       },
                       {
+                        tab: "Cash & Safety Net",
+                        emoji: "🛡️",
+                        label: "Cash & Safety Net",
+                        value: masterOverviewData.safetyNet.summary.totalValue,
+                        cost: masterOverviewData.safetyNet.summary.totalValue,
+                        pnl: "Stable",
+                        pnlNum: 0,
+                        color: "bg-emerald-50 text-emerald-700",
+                        from: "USD" as const
+                      },
+                      {
                         tab: "Monthly Expenses",
                         emoji: "💳",
                         label: "Monthly Expenses",
@@ -1267,107 +1295,59 @@ export default function FinanceDashboard() {
                 </div>
               </div>
 
-              {/* Items Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                {/* Cash / Liquid Assets */}
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
-                    <h4 className="text-sm font-bold text-gray-900">💵 Liquid Assets (Cash)</h4>
-                    <span className="text-[10px] text-gray-400 font-semibold font-mono">
-                      <DualCurrencyValue
-                        amount={dbFinanceItems.filter(f => f.category === "cash").reduce((s, f) => s + f.amount, 0) / (fxRates.THB || 35.5)}
-                        from="USD"
-                        inline={true}
-                      />
-                    </span>
+              {/* Store of Wealth Assets: Gold, Land, Agriculture */}
+              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-900">🥇 Store of Wealth Assets</h4>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Gold · Land · Agriculture — สินทรัพย์เก็บมูลค่าระยะยาว</p>
                   </div>
-                  <div className="divide-y divide-gray-50">
-                    {dbFinanceItems.filter(f => f.category === "cash").map(item => (
-                      <div key={item.id} className="flex items-center px-6 py-3.5 group hover:bg-gray-50 transition-colors gap-4">
-                        <input
-                          value={item.label}
-                          onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, label: v} : f)) }}
-                          onBlur={(e) => handleUpdateFinanceItem(item.id, "label", e.target.value)}
-                          className="flex-1 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-semibold text-gray-800 focus:outline-none"
-                        />
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-xs font-mono text-gray-400">฿</span>
-                          <input
-                            type="number"
-                            value={item.amount}
-                            onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, amount: parseFloat(v)||0} : f)) }}
-                            onBlur={(e) => handleUpdateFinanceItem(item.id, "amount", e.target.value)}
-                            className="w-28 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-bold font-mono text-right text-gray-800 focus:outline-none"
-                          />
-                        </div>
-                        <div className="w-8 text-center shrink-0">
-                          {savingState[item.id] === "saving" && <span className="text-[9px] text-indigo-400 animate-pulse">…</span>}
-                          {savingState[item.id] === "saved" && <span className="text-[9px] text-emerald-500 font-bold">✓</span>}
-                          {!savingState[item.id] && (
-                            <button onClick={() => handleDeleteFinanceItem(item.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-xs transition-all" title="Delete">✕</button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => handleAddFinanceItem("cash", "New Cash Item", 0)}
-                    className="w-full text-[10px] text-amber-600 hover:text-amber-800 hover:bg-amber-50 py-3 px-6 text-left font-semibold transition-colors border-t border-gray-50"
-                  >
-                    + Add Cash / Liquid Asset
-                  </button>
+                  <span className="text-[10px] text-gray-400 font-semibold font-mono">
+                    <DualCurrencyValue
+                      amount={masterOverviewData.storeWealth.summary.totalValue}
+                      from="USD"
+                      inline={true}
+                    />
+                  </span>
                 </div>
-
-                {/* Other Assets (Gold, etc.) */}
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
-                    <h4 className="text-sm font-bold text-gray-900">🥇 Other Assets (Gold, etc.)</h4>
-                    <span className="text-[10px] text-gray-400 font-semibold font-mono">
-                      <DualCurrencyValue
-                        amount={dbFinanceItems.filter(f => f.category === "other_asset").reduce((s, f) => s + f.amount, 0) / (fxRates.THB || 35.5)}
-                        from="USD"
-                        inline={true}
+                <div className="divide-y divide-gray-50">
+                  {dbFinanceItems.filter(f => f.category === "other_asset").map(item => (
+                    <div key={item.id} className="flex items-center px-6 py-3.5 group hover:bg-gray-50 transition-colors gap-4">
+                      <input
+                        value={item.label}
+                        onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, label: v} : f)) }}
+                        onBlur={(e) => handleUpdateFinanceItem(item.id, "label", e.target.value)}
+                        className="flex-1 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-semibold text-gray-800 focus:outline-none"
                       />
-                    </span>
-                  </div>
-                  <div className="divide-y divide-gray-50">
-                    {dbFinanceItems.filter(f => f.category === "other_asset").map(item => (
-                      <div key={item.id} className="flex items-center px-6 py-3.5 group hover:bg-gray-50 transition-colors gap-4">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs font-mono text-gray-400">฿</span>
                         <input
-                          value={item.label}
-                          onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, label: v} : f)) }}
-                          onBlur={(e) => handleUpdateFinanceItem(item.id, "label", e.target.value)}
-                          className="flex-1 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-semibold text-gray-800 focus:outline-none"
+                          type="number"
+                          value={item.amount}
+                          onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, amount: parseFloat(v)||0} : f)) }}
+                          onBlur={(e) => handleUpdateFinanceItem(item.id, "amount", e.target.value)}
+                          className="w-28 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-bold font-mono text-right text-gray-800 focus:outline-none"
                         />
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-xs font-mono text-gray-400">฿</span>
-                          <input
-                            type="number"
-                            value={item.amount}
-                            onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, amount: parseFloat(v)||0} : f)) }}
-                            onBlur={(e) => handleUpdateFinanceItem(item.id, "amount", e.target.value)}
-                            className="w-28 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-amber-300 rounded px-2 py-1 text-sm font-bold font-mono text-right text-gray-800 focus:outline-none"
-                          />
-                        </div>
-                        <div className="w-8 text-center shrink-0">
-                          {savingState[item.id] === "saving" && <span className="text-[9px] text-indigo-400 animate-pulse">…</span>}
-                          {savingState[item.id] === "saved" && <span className="text-[9px] text-emerald-500 font-bold">✓</span>}
-                          {!savingState[item.id] && (
-                            <button onClick={() => handleDeleteFinanceItem(item.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-xs transition-all" title="Delete">✕</button>
-                          )}
-                        </div>
                       </div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => handleAddFinanceItem("other_asset", "New Asset", 0)}
-                    className="w-full text-[10px] text-amber-600 hover:text-amber-800 hover:bg-amber-50 py-3 px-6 text-left font-semibold transition-colors border-t border-gray-50"
-                  >
-                    + Add Other Asset
-                  </button>
+                      <div className="w-8 text-center shrink-0">
+                        {savingState[item.id] === "saving" && <span className="text-[9px] text-indigo-400 animate-pulse">…</span>}
+                        {savingState[item.id] === "saved" && <span className="text-[9px] text-emerald-500 font-bold">✓</span>}
+                        {!savingState[item.id] && (
+                          <button onClick={() => handleDeleteFinanceItem(item.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-xs transition-all" title="Delete">✕</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {dbFinanceItems.filter(f => f.category === "other_asset").length === 0 && (
+                    <p className="px-6 py-6 text-xs text-gray-400 text-center">ยังไม่มีรายการ เพิ่ม Gold, Land, หรือ Agriculture</p>
+                  )}
                 </div>
-
+                <button
+                  onClick={() => handleAddFinanceItem("other_asset", "New Asset", 0)}
+                  className="w-full text-[10px] text-amber-600 hover:text-amber-800 hover:bg-amber-50 py-3 px-6 text-left font-semibold transition-colors border-t border-gray-50"
+                >
+                  + Add Store of Wealth Asset
+                </button>
               </div>
             </div>
           </div>
@@ -1378,6 +1358,219 @@ export default function FinanceDashboard() {
         {isShortTermTab && (
           <PortfolioTab portfolio="short_term" displayCurrency={displayCurrency} fxRates={fxRates} />
         )}
+
+        {/* ─── C. CASH & SAFETY NET TAB ─── */}
+        {isSafetyNetTab && (() => {
+          const cashTotal = dbFinanceItems.filter(f => f.category === "cash").reduce((s, f) => s + f.amount, 0)
+          const bondTotal = dbFinanceItems.filter(f => f.category === "bond").reduce((s, f) => s + f.amount, 0)
+          const monthlyExpenses = parsedPfs.totalFixedNum + parsedPfs.totalVariableNum
+          const months6Target = monthlyExpenses * 6
+          const months12Target = monthlyExpenses * 12
+          const progress6 = months6Target > 0 ? Math.min(100, (cashTotal / months6Target) * 100) : 0
+          const progress12 = months12Target > 0 ? Math.min(100, (cashTotal / months12Target) * 100) : 0
+          const coveredMonths = monthlyExpenses > 0 ? cashTotal / monthlyExpenses : 0
+
+          return (
+            <div className="space-y-8 animate-fadeIn">
+
+              {/* Allocation Principle Banner */}
+              <div className="bg-gradient-to-br from-slate-900 to-blue-950 border border-slate-700/50 rounded-3xl p-8 text-white relative overflow-hidden">
+                <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent pointer-events-none" />
+                <p className="text-[10px] uppercase tracking-[0.4em] text-blue-300 font-semibold mb-4">🎯 Savings Allocation Principle</p>
+                <div className="space-y-2.5 text-sm relative">
+                  <div className="flex items-start gap-3">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                    <span className="text-gray-200"><span className="font-bold text-white">50%</span> ของเงินเดือน → เงินออมทั้งหมด</span>
+                  </div>
+                  <div className="flex items-start gap-3 ml-5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-1.5 shrink-0" />
+                    <span className="text-gray-300"><span className="font-bold text-orange-300">40%</span> ของเงินออม → Bitcoin (Store of Wealth)</span>
+                  </div>
+                  <div className="flex items-start gap-3 ml-5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0" />
+                    <span className="text-gray-300"><span className="font-bold text-indigo-300">40%</span> ของเงินออม → Long-term Investment (US Stocks)</span>
+                  </div>
+                  <div className="flex items-start gap-3 ml-5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 mt-1.5 shrink-0" />
+                    <span className="text-gray-300"><span className="font-bold text-violet-300">5%</span> ของเงินออม → Short-term Investment</span>
+                  </div>
+                  <div className="flex items-start gap-3 ml-5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                    <span className="text-gray-300"><span className="font-bold text-emerald-300">5%</span> ของเงินออม → Emergency Fund (Safety Net)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                {/* Emergency Fund + Cash */}
+                <div className="space-y-1">
+                  <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
+                    <div className="px-6 py-5 border-b border-gray-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="text-sm font-bold text-gray-900">🛡️ Emergency Fund &amp; Cash</h4>
+                        <DualCurrencyValue
+                          amount={cashTotal / (fxRates.THB || 35.5)}
+                          from="USD"
+                          inline={true}
+                          className="text-xs font-bold font-mono text-gray-700"
+                        />
+                      </div>
+                      {/* Rule dots */}
+                      <div className="space-y-1.5 mb-4">
+                        <div className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                          <span className="text-[11px] text-gray-500">ควรมีอย่างน้อย <span className="font-bold text-gray-700">6 เดือน</span> ของค่าใช้จ่ายรายเดือน</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                          <span className="text-[11px] text-gray-500">เป้าหมายอุดมคติ <span className="font-bold text-gray-700">12 เดือน</span> เพื่อรองรับเหตุฉุกเฉินระยะยาว</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                          <span className="text-[11px] text-gray-500">เก็บแยก account ต่างหาก — ห้ามแตะถ้าไม่ฉุกเฉินจริงๆ</span>
+                        </div>
+                      </div>
+                      {/* Progress bars */}
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-semibold">
+                            <span className="text-gray-600">ครอบคลุม <span className="font-bold text-gray-900">{coveredMonths.toFixed(1)} เดือน</span></span>
+                            <span className="text-emerald-600">{progress6.toFixed(0)}% of 6-month target</span>
+                          </div>
+                          <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-emerald-500 transition-all duration-700" style={{ width: `${progress6}%` }} />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-semibold">
+                            <span className="text-gray-500">12-month ideal target</span>
+                            <span className="text-blue-600">{progress12.toFixed(0)}% of 12-month target</span>
+                          </div>
+                          <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-blue-500 transition-all duration-700" style={{ width: `${progress12}%` }} />
+                          </div>
+                        </div>
+                        {monthlyExpenses > 0 && (
+                          <p className="text-[10px] text-gray-400 font-mono">
+                            เป้าหมาย 6 เดือน: <DualCurrencyValue amount={months6Target / (fxRates.THB || 35.5)} from="USD" inline={true} className="text-gray-600 font-mono font-semibold text-[10px]" />
+                            {" · "}
+                            12 เดือน: <DualCurrencyValue amount={months12Target / (fxRates.THB || 35.5)} from="USD" inline={true} className="text-gray-600 font-mono font-semibold text-[10px]" />
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="divide-y divide-gray-50">
+                      {dbFinanceItems.filter(f => f.category === "cash").map(item => (
+                        <div key={item.id} className="flex items-center px-6 py-3.5 group hover:bg-gray-50 transition-colors gap-4">
+                          <input
+                            value={item.label}
+                            onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, label: v} : f)) }}
+                            onBlur={(e) => handleUpdateFinanceItem(item.id, "label", e.target.value)}
+                            className="flex-1 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-emerald-300 rounded px-2 py-1 text-sm font-semibold text-gray-800 focus:outline-none"
+                          />
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-xs font-mono text-gray-400">฿</span>
+                            <input
+                              type="number"
+                              value={item.amount}
+                              onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, amount: parseFloat(v)||0} : f)) }}
+                              onBlur={(e) => handleUpdateFinanceItem(item.id, "amount", e.target.value)}
+                              className="w-28 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-emerald-300 rounded px-2 py-1 text-sm font-bold font-mono text-right text-gray-800 focus:outline-none"
+                            />
+                          </div>
+                          <div className="w-8 text-center shrink-0">
+                            {savingState[item.id] === "saving" && <span className="text-[9px] text-indigo-400 animate-pulse">…</span>}
+                            {savingState[item.id] === "saved" && <span className="text-[9px] text-emerald-500 font-bold">✓</span>}
+                            {!savingState[item.id] && (
+                              <button onClick={() => handleDeleteFinanceItem(item.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-xs transition-all" title="Delete">✕</button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleAddFinanceItem("cash", "New Cash Item", 0)}
+                      className="w-full text-[10px] text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 py-3 px-6 text-left font-semibold transition-colors border-t border-gray-50"
+                    >
+                      + Add Emergency Fund / Cash
+                    </button>
+                  </div>
+                </div>
+
+                {/* Government Bonds */}
+                <div className="space-y-1">
+                  <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden">
+                    <div className="px-6 py-5 border-b border-gray-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="text-sm font-bold text-gray-900">📜 Government Bonds (พันธบัตรรัฐบาล)</h4>
+                        <DualCurrencyValue
+                          amount={bondTotal / (fxRates.THB || 35.5)}
+                          from="USD"
+                          inline={true}
+                          className="text-xs font-bold font-mono text-gray-700"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                          <span className="text-[11px] text-gray-500">ความปลอดภัยสูง ผลตอบแทนสม่ำเสมอ เสี่ยงต่ำสุดในกลุ่มสินทรัพย์</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
+                          <span className="text-[11px] text-gray-500">เหมาะสำหรับเงินที่ไม่ต้องการใช้ใน 1–3 ปี</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-1.5 shrink-0" />
+                          <span className="text-[11px] text-gray-500">เสริม Safety Net ร่วมกับ Emergency Fund</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="divide-y divide-gray-50">
+                      {dbFinanceItems.filter(f => f.category === "bond").map(item => (
+                        <div key={item.id} className="flex items-center px-6 py-3.5 group hover:bg-gray-50 transition-colors gap-4">
+                          <input
+                            value={item.label}
+                            onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, label: v} : f)) }}
+                            onBlur={(e) => handleUpdateFinanceItem(item.id, "label", e.target.value)}
+                            className="flex-1 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-blue-300 rounded px-2 py-1 text-sm font-semibold text-gray-800 focus:outline-none"
+                          />
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-xs font-mono text-gray-400">฿</span>
+                            <input
+                              type="number"
+                              value={item.amount}
+                              onChange={(e) => { const v = e.target.value; setDbFinanceItems(prev => prev.map(f => f.id === item.id ? {...f, amount: parseFloat(v)||0} : f)) }}
+                              onBlur={(e) => handleUpdateFinanceItem(item.id, "amount", e.target.value)}
+                              className="w-28 bg-transparent border-0 hover:bg-gray-100 focus:bg-white focus:ring-1 focus:ring-blue-300 rounded px-2 py-1 text-sm font-bold font-mono text-right text-gray-800 focus:outline-none"
+                            />
+                          </div>
+                          <div className="w-8 text-center shrink-0">
+                            {savingState[item.id] === "saving" && <span className="text-[9px] text-indigo-400 animate-pulse">…</span>}
+                            {savingState[item.id] === "saved" && <span className="text-[9px] text-emerald-500 font-bold">✓</span>}
+                            {!savingState[item.id] && (
+                              <button onClick={() => handleDeleteFinanceItem(item.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 text-xs transition-all" title="Delete">✕</button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {dbFinanceItems.filter(f => f.category === "bond").length === 0 && (
+                        <p className="px-6 py-6 text-xs text-gray-400 text-center">ยังไม่มีพันธบัตร — เพิ่มได้เลย</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleAddFinanceItem("bond", "Government Bond", 0)}
+                      className="w-full text-[10px] text-blue-600 hover:text-blue-800 hover:bg-blue-50 py-3 px-6 text-left font-semibold transition-colors border-t border-gray-50"
+                    >
+                      + Add Government Bond
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ─── C. INTERACTIVE EDITABLE MONTHLY EXPENSES TAB ─── */}
         {isExpensesTab && parsedPfs && (
