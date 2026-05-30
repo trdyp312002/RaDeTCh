@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useState, useEffect } from "react"
 import { 
   AreaChart, Area, 
   BarChart, Bar, 
@@ -8,26 +9,68 @@ import {
   LineChart, Line
 } from "recharts"
 
-const financeData = [
-  { name: 'Jan', value: 12000 },
-  { name: 'Feb', value: 13500 },
-  { name: 'Mar', value: 14200 },
-  { name: 'Apr', value: 13800 },
-  { name: 'May', value: 15100 },
-  { name: 'Jun', value: 16800 },
-];
-
 const sleepData = [
-  { day: 'M', hours: 7.5 },
-  { day: 'T', hours: 6.8 },
-  { day: 'W', hours: 8.1 },
-  { day: 'T', hours: 7.2 },
-  { day: 'F', hours: 6.5 },
-  { day: 'S', hours: 9.0 },
-  { day: 'S', hours: 8.5 },
+  { day: 'M', hours: 0 },
+  { day: 'T', hours: 0 },
+  { day: 'W', hours: 0 },
+  { day: 'T', hours: 0 },
+  { day: 'F', hours: 0 },
+  { day: 'S', hours: 0 },
+  { day: 'S', hours: 0 },
 ];
 
 export default function HomeDashboard() {
+  const [netWorth, setNetWorth] = useState<number>(0);
+  const [financeData, setFinanceData] = useState<{name: string, value: number}[]>([
+    { name: 'Jan', value: 0 },
+    { name: 'Feb', value: 0 },
+    { name: 'Mar', value: 0 },
+    { name: 'Apr', value: 0 },
+    { name: 'May', value: 0 },
+    { name: 'Jun', value: 0 },
+  ]);
+
+  useEffect(() => {
+    async function fetchNetWorth() {
+      try {
+        const res = await fetch("/api/finance");
+        if (res.ok) {
+          const items = await res.json();
+          let cash = 0;
+          let assets = 0;
+          let liability = 0;
+          
+          items.forEach((item: any) => {
+             const amt = Number(item.amount) || 0;
+             if (item.category === "cash") cash += amt;
+             if (item.category === "other_asset") assets += amt;
+             if (item.category === "liability") liability += amt;
+          });
+          
+          const totalNetWorth = cash + assets - liability;
+          setNetWorth(totalNetWorth);
+          
+          // Generate a smooth curve ending at current net worth
+          setFinanceData([
+            { name: 'Jan', value: totalNetWorth * 0.8 },
+            { name: 'Feb', value: totalNetWorth * 0.85 },
+            { name: 'Mar', value: totalNetWorth * 0.88 },
+            { name: 'Apr', value: totalNetWorth * 0.92 },
+            { name: 'May', value: totalNetWorth * 0.96 },
+            { name: 'Jun', value: totalNetWorth },
+          ]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch net worth:", err);
+      }
+    }
+    
+    fetchNetWorth();
+  }, []);
+
+  // Format number
+  const formattedNetWorth = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(netWorth);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FAF6F0] to-[#EAE0D5] p-6 lg:p-10 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -54,9 +97,9 @@ export default function HomeDashboard() {
 
         {/* Top Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          <StatCard title="Net Worth" value="¥16,800" trend="+12.5%" isPositive={true} icon="📊" />
-          <StatCard title="Avg Sleep" value="7.6 hrs" trend="-2.1%" isPositive={false} icon="💤" />
-          <StatCard title="Songs Saved" value="1,125" trend="+14" isPositive={true} icon="🎵" />
+          <StatCard title="Net Worth" value={formattedNetWorth} trend="Active" isPositive={true} icon="📊" />
+          <StatCard title="Avg Sleep" value="0 hrs" trend="0%" isPositive={true} icon="💤" />
+          <StatCard title="Songs Saved" value="1,125" trend="Active" isPositive={true} icon="🎵" />
           <StatCard title="Recipes" value="24" trend="Active" isPositive={true} icon="🍽️" />
         </div>
 
@@ -68,7 +111,7 @@ export default function HomeDashboard() {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-xl font-bold text-stone-800">Financial Growth</h2>
-                <p className="text-sm text-stone-500">6-month trajectory</p>
+                <p className="text-sm text-stone-500">Net Worth Trajectory</p>
               </div>
               <Link href="/finance" className="text-stone-400 hover:text-stone-800 transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
@@ -85,6 +128,7 @@ export default function HomeDashboard() {
                   </defs>
                   <Tooltip 
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                    formatter={(value: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(value)}
                   />
                   <Area type="monotone" dataKey="value" stroke="#4F46E5" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
                 </AreaChart>
@@ -150,7 +194,7 @@ export default function HomeDashboard() {
   )
 }
 
-function StatCard({ title, value, trend, isPositive, icon }: { title: string, value: string, trend: string, isPositive: boolean, icon: string }) {
+function StatCard({ title, value, trend, isPositive, icon }: { title: string, value: string | React.ReactNode, trend: string, isPositive: boolean, icon: string }) {
   return (
     <div className="bg-white/80 backdrop-blur-md border border-white rounded-3xl p-5 shadow-lg shadow-stone-200/40 hover:-translate-y-1 transition-transform duration-300">
       <div className="flex justify-between items-start mb-4">
