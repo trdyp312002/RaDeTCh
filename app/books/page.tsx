@@ -221,6 +221,35 @@ export default function BooksPage() {
   const hierarchicalCategories = useMemo(() => {
     const tree: Record<string, { count: number; subs: Record<string, { count: number; subSubs: Record<string, number> }> }> = {};
     
+    // กำหนดหมวดหมู่เริ่มต้นที่จะแสดงบนชั้นหนังสือเสมอ (แม้ยอดหนังสือจะเป็น 0 เพื่อความสวยงามเต็มชั้นตามคำขอของคุณท่าน)
+    const PRESETS = [
+      { main: "การเรียน", sub: "ภาษา", subSub: "ภาษาอังกฤษ" },
+      { main: "การเรียน", sub: "ภาษา", subSub: "ภาษาญี่ปุ่น" },
+      { main: "การเงิน", sub: "การลงทุน", subSub: "หุ้น" },
+      { main: "การเงิน", sub: "การลงทุน", subSub: "คริปโต" },
+      { main: "พัฒนาตนเอง", sub: "จิตวิทยา", subSub: "ความคิด" },
+      { main: "เทคโนโลยี", sub: "เขียนโปรแกรม", subSub: "React" },
+      { main: "นิยาย", sub: "วรรณกรรม", subSub: "" },
+      { main: "ประวัติศาสตร์", sub: "ชีวประวัติ", subSub: "" },
+      { main: "วิทยาศาสตร์", sub: "ดาราศาสตร์", subSub: "" },
+      { main: "ศิลปะ", sub: "การออกแบบ", subSub: "" },
+      { main: "ทั่วไป", sub: "", subSub: "" }
+    ];
+
+    PRESETS.forEach(({ main, sub, subSub }) => {
+      if (!tree[main]) {
+        tree[main] = { count: 0, subs: {} };
+      }
+      if (sub) {
+        if (!tree[main].subs[sub]) {
+          tree[main].subs[sub] = { count: 0, subSubs: {} };
+        }
+        if (subSub && !tree[main].subs[sub].subSubs[subSub]) {
+          tree[main].subs[sub].subSubs[subSub] = 0;
+        }
+      }
+    });
+
     books.forEach((b) => {
       const category = b.category || "ทั่วไป";
       const parts = category.split("/").map((p) => p.trim()).filter(Boolean);
@@ -603,22 +632,22 @@ export default function BooksPage() {
         )}
 
         {/* 6. หมวดหมู่แผ่กว้างแบบสันยาวด้านบน (Horizontal 3D Category Bookshelf & Open Index Journal) */}
-        <div className="w-full space-y-6 select-none mb-12">
+        <div className="w-full space-y-6 select-none mb-8">
             
             {/* 1. ชั้นวางหนังสือหมวดหมู่ 3 มิติ (3D Category Bookshelf) */}
-            <div className="relative bg-gradient-to-b from-[#2e190d] via-[#1c0f08] to-[#0c0502] p-4 rounded-3xl border-4 border-[#3e2413] shadow-[0_20px_40px_rgba(0,0,0,0.65),inset_0_4px_12px_black] overflow-hidden">
+            <div className="relative bg-gradient-to-b from-[#2e190d] via-[#1c0f08] to-[#0c0502] p-3 rounded-3xl border-4 border-[#3e2413] shadow-[0_20px_40px_rgba(0,0,0,0.65),inset_0_4px_12px_black] overflow-hidden">
               {/* ป้ายทองเหลืองของตู้ (Golden Bookshelf Plaque) */}
-              <div className="text-center mb-4">
+              <div className="text-center mb-3">
                 <span className="inline-block text-[9px] font-serif font-black tracking-widest text-[#dfb269]/70 uppercase border-b border-[#dfb269]/25 pb-1">
-                  📚 CATEGORY BOOKSHELF • ชั้นจัดหมวดหมู่
+                  📚 CATEGORY BOOKSHELF • ชั้นจัดหมวดหมู่คลังปัญญา
                 </span>
               </div>
 
               {/* ชั้นแสดงแนวตั้งของสันหนังสือ (Row of 3D Book Spines) */}
-              <div className="flex justify-center items-end h-56 pb-2 px-1 gap-2.5 overflow-x-auto scrollbar-none relative z-10">
+              <div className="flex justify-center items-end h-40 md:h-44 pb-2 px-1 gap-1.5 md:gap-2 overflow-x-auto scrollbar-none relative z-10">
                 
                 {/* ที่กั้นหนังสือทองเหลืองซ้าย (Brass Bookend Left) */}
-                <div className="w-4 h-40 bg-gradient-to-r from-[#dfb269] to-[#8c6527] rounded-l border border-[#5a3b11] shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.4),0_4px_8px_black] shrink-0 hidden md:block" />
+                <div className="w-3 h-28 md:h-32 bg-gradient-to-r from-[#dfb269] to-[#8c6527] rounded-l border border-[#5a3b11] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_3px_6px_black] shrink-0 hidden md:block" />
                 
                 {/* เล่ม 1: สมุดปกทอง Master Book (All Collection) */}
                 {(() => {
@@ -627,17 +656,17 @@ export default function BooksPage() {
                     <div 
                       onClick={() => setFilterCategoryPath("all")}
                       className={`relative cursor-pointer transition-all duration-300 ${
-                        isAllActive ? "-translate-y-6 scale-110 z-30" : "hover:-translate-y-4 hover:z-20 z-10"
+                        isAllActive ? "-translate-y-4 scale-105 z-30" : "hover:-translate-y-2 hover:z-20 z-10"
                       }`}
                       title="หนังสือคลังทั้งหมด"
                     >
                       {/* เล่มหนังสือ 3D */}
-                      <div className="relative w-9 h-36 md:w-11 md:h-44 xl:w-12 xl:h-48 rounded-md transition-all duration-300">
+                      <div className="relative w-6 h-28 md:w-8 md:h-32 xl:w-9 xl:h-36 rounded transition-all duration-300">
                         {/* สันหนังสือ (Spine) */}
-                        <div className={`absolute inset-0 bg-gradient-to-b from-[#d97706] via-[#f59e0b] to-[#b45309] rounded-l-md shadow-[2px_5px_10px_black] border-y-4 border-[#9a5d15] flex flex-col items-center justify-between py-5 px-0.5 text-center`}>
+                        <div className={`absolute inset-0 bg-gradient-to-b from-[#d97706] via-[#f59e0b] to-[#b45309] rounded-l shadow-[2px_4px_8px_black] border-y-[3px] border-[#9a5d15] flex flex-col items-center justify-between py-4 px-0.5 text-center`}>
                           {/* แสงโค้งของสัน */}
-                          <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-white/20 to-transparent pointer-events-none" />
-                          <div className="absolute inset-y-0 right-0 w-1.5 bg-gradient-to-l from-black/45 to-transparent pointer-events-none" />
+                          <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-r from-white/20 to-transparent pointer-events-none" />
+                          <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-l from-black/45 to-transparent pointer-events-none" />
                           
                           {/* ขอบทองสลักลวดลาย */}
                           <div className="w-[85%] h-[1px] bg-[#5c3e16]/30 shrink-0" />
@@ -645,21 +674,21 @@ export default function BooksPage() {
                           {/* ชื่อหนังสือแนวตั้ง */}
                           <span 
                             style={{ writingMode: "vertical-lr" }} 
-                            className="text-[9px] md:text-[10px] font-serif font-black text-[#5c3e16] rotate-180 tracking-widest max-h-[60%] truncate select-none leading-none drop-shadow-[0_0.5px_0_rgba(255,255,255,0.2)]"
+                            className="text-[8px] md:text-[9px] font-serif font-black text-[#5c3e16] rotate-180 tracking-widest max-h-[60%] truncate select-none leading-none drop-shadow-[0_0.5px_0_rgba(255,255,255,0.2)]"
                           >
-                            คลังหนังสือ
+                            คลังทั้งหมด
                           </span>
                           
                           {/* สถิติจำนวนรวม */}
-                          <div className="w-full flex flex-col gap-1 items-center shrink-0">
-                            <span className="text-[7px] font-black bg-[#5c3e16] text-[#dfb269] px-1 py-0.2 rounded font-mono leading-none border border-[#dfb269]/10">
+                          <div className="w-full flex flex-col gap-0.5 items-center shrink-0">
+                            <span className="text-[7px] font-black bg-[#5c3e16] text-[#dfb269] px-0.5 py-0.1 rounded font-mono leading-none border border-[#dfb269]/10 scale-90">
                               {totalCount}
                             </span>
                             <div className="w-[85%] h-[1px] bg-[#5c3e16]/30" />
                           </div>
                         </div>
                         {/* ขอบกระดาษ peeking out ด้านข้างจำลองความหนาปก 3 มิติ */}
-                        <div className="absolute inset-y-1.5 right-[-3px] w-[3px] bg-[#fdfaf2] border-r border-t border-b border-black/20 rounded-r shadow-[2px_2px_4px_rgba(0,0,0,0.4)]" />
+                        <div className="absolute inset-y-1 right-[-2.5px] w-[2.5px] bg-[#fdfaf2] border-r border-t border-b border-black/20 rounded-r shadow-[1px_1px_3px_rgba(0,0,0,0.4)]" />
                       </div>
                     </div>
                   );
@@ -677,6 +706,9 @@ export default function BooksPage() {
                     "พัฒนาตนเอง": "from-[#312e81] via-[#4338ca] to-[#312e81] border-[#1e1b4b]",
                     "เทคโนโลยี": "from-[#1e3a8a] via-[#1d4ed8] to-[#1e3a8a] border-[#172554]",
                     "นิยาย": "from-[#581c87] via-[#7e22ce] to-[#581c87] border-[#3b0764]",
+                    "ประวัติศาสตร์": "from-[#78350f] via-[#a16207] to-[#78350f] border-[#451a03]",
+                    "วิทยาศาสตร์": "from-[#1e1b4b] via-[#312e81] to-[#1e1b4b] border-[#0f0e26]",
+                    "ศิลปะ": "from-[#831843] via-[#9d174d] to-[#831843] border-[#500f27]",
                     "ทั่วไป": "from-[#78350f] via-[#b45309] to-[#78350f] border-[#451a03]",
                   };
                   const spineColor = spineColors[main] || "from-[#451a03] via-[#78350f] to-[#451a03] border-[#291002]";
@@ -693,17 +725,17 @@ export default function BooksPage() {
                         }));
                       }}
                       className={`relative cursor-pointer transition-all duration-300 ${
-                        isMainActive ? "-translate-y-6 scale-110 z-30" : "hover:-translate-y-4 hover:z-20 z-10"
+                        isMainActive ? "-translate-y-4 scale-105 z-30" : "hover:-translate-y-2 hover:z-20 z-10"
                       }`}
                       title={`หมวด: ${main}`}
                     >
                       {/* เล่มหนังสือ 3D */}
-                      <div className="relative w-9 h-36 md:w-11 md:h-44 xl:w-12 xl:h-48 rounded-md transition-all duration-300">
+                      <div className="relative w-6 h-28 md:w-8 md:h-32 xl:w-9 xl:h-36 rounded transition-all duration-300">
                         {/* สันหนังสือ (Spine) */}
-                        <div className={`absolute inset-0 bg-gradient-to-b ${spineColor} rounded-l-md shadow-[2px_5px_10px_black] border-y-4 border-[#dfb269]/25 flex flex-col items-center justify-between py-5 px-0.5 text-center`}>
+                        <div className={`absolute inset-0 bg-gradient-to-b ${spineColor} rounded-l shadow-[2px_4px_8px_black] border-y-[3px] border-[#dfb269]/20 flex flex-col items-center justify-between py-4 px-0.5 text-center`}>
                           {/* แสงเงาสันหนังสือ */}
-                          <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
-                          <div className="absolute inset-y-0 right-0 w-1.5 bg-gradient-to-l from-black/35 to-transparent pointer-events-none" />
+                          <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+                          <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-l from-black/35 to-transparent pointer-events-none" />
                           
                           {/* แถบทองคาดสลักลายที่หัว */}
                           <div className="w-[85%] h-[1px] bg-[#dfb269]/40 shrink-0" />
@@ -711,28 +743,28 @@ export default function BooksPage() {
                           {/* สลักชื่อหมวดแนวตั้ง */}
                           <span 
                             style={{ writingMode: "vertical-lr" }} 
-                            className="text-[9px] md:text-[10px] font-serif font-black text-[#dfb269] rotate-180 tracking-widest max-h-[60%] truncate select-none leading-none drop-shadow-[0_1px_1px_black]"
+                            className="text-[8px] md:text-[9px] font-serif font-black text-[#dfb269] rotate-180 tracking-widest max-h-[60%] truncate select-none leading-none drop-shadow-[0_1px_1px_black]"
                           >
                             {main}
                           </span>
                           
                           {/* ป้ายจำนวนเล่ม และแถบทองล่าง */}
-                          <div className="w-full flex flex-col gap-1 items-center shrink-0">
-                            <span className="text-[7px] font-black bg-black/45 text-amber-200/90 px-1 py-0.2 rounded font-mono leading-none border border-white/5">
+                          <div className="w-full flex flex-col gap-0.5 items-center shrink-0">
+                            <span className="text-[7px] font-black bg-black/45 text-amber-200/90 px-1 py-0.2 rounded font-mono leading-none border border-white/5 scale-90">
                               {mainObj.count}
                             </span>
                             <div className="w-[85%] h-[1px] bg-[#dfb269]/40" />
                           </div>
                         </div>
                         {/* เลียนแบบขอบกระดาษจำลอง 3 มิติ */}
-                        <div className="absolute inset-y-1.5 right-[-3px] w-[3px] bg-[#fdfaf2] border-r border-t border-b border-black/20 rounded-r shadow-[2px_2px_4px_rgba(0,0,0,0.4)]" />
+                        <div className="absolute inset-y-1 right-[-2.5px] w-[2.5px] bg-[#fdfaf2] border-r border-t border-b border-black/20 rounded-r shadow-[1px_1px_3px_rgba(0,0,0,0.4)]" />
                       </div>
                     </div>
                   );
                 })}
 
                 {/* ที่กั้นหนังสือทองเหลืองขวา (Brass Bookend Right) */}
-                <div className="w-4 h-40 bg-gradient-to-l from-[#dfb269] to-[#8c6527] rounded-r border border-[#5a3b11] shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.4),0_4px_8px_black] shrink-0 hidden md:block" />
+                <div className="w-3 h-28 md:h-32 bg-gradient-to-l from-[#dfb269] to-[#8c6527] rounded-r border border-[#5a3b11] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_3px_6px_black] shrink-0 hidden md:block" />
 
               </div>
 
