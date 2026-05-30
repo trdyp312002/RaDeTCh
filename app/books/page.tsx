@@ -67,6 +67,8 @@ export default function BooksPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<"all" | Status>("all");
   const [filterCategoryPath, setFilterCategoryPath] = useState<string>("all"); // เก็บพิกัดหมวดหมู่ลำดับขั้น เช่น "การเรียน" หรือ "การเรียน/ภาษา"
+  const [expandedMainCats, setExpandedMainCats] = useState<Record<string, boolean>>({});
+  const [expandedSubCats, setExpandedSubCats] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -603,13 +605,13 @@ export default function BooksPage() {
         {/* 6. Layout: Sidebar Category Tree + Book List Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           
-          {/* ซ้ายมือ: กล่องนำทางหมวดหมู่ลำดับขั้น (Hierarchical Category Tree Explorer) */}
-          <div className="bg-gradient-to-b from-[#2a170a] to-[#120701] border-2 border-[#593b21]/70 rounded-3xl p-5 shadow-xl text-amber-100">
+          {/* ซ้ายมือ: กล่องนำทางหมวดหมู่ลำดับขั้นแบบพับได้ (Hierarchical Collapsible Category Tree Accordion) */}
+          <div className="bg-gradient-to-b from-[#2a170a] to-[#120701] border-2 border-[#593b21]/70 rounded-3xl p-5 shadow-xl text-amber-100 select-none">
             <h3 className="text-xs font-serif font-extrabold tracking-wider uppercase border-b border-[#593b21]/60 pb-3 block mb-4 text-[#dfb269]">
-              🗂️ ตัวสำรวจหมวดหมู่ (Ledger Directory)
+              🗂️ ตัวสำรวจหมวดหมู่ (Ledger Accordion)
             </h3>
             
-            <div className="space-y-3.5 max-h-[500px] overflow-y-auto pr-1">
+            <div className="space-y-3.5 max-h-[500px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-amber-800/10">
               {/* ปุ่มเลือกทั้งหมด */}
               <button
                 onClick={() => setFilterCategoryPath("all")}
@@ -625,56 +627,99 @@ export default function BooksPage() {
                 </span>
               </button>
 
-              {/* เรนเดอร์คลังหมวดหมู่แบบซ้อน */}
+              {/* เรนเดอร์คลังหมวดหมู่แบบพับได้ */}
               {Object.keys(hierarchicalCategories).map((main) => {
                 const mainObj = hierarchicalCategories[main];
                 const isMainActive = filterCategoryPath === main;
+                const isMainExpanded = !!expandedMainCats[main];
+                const hasSubs = Object.keys(mainObj.subs).length > 0;
                 
                 return (
                   <div key={main} className="space-y-1 bg-black/20 rounded-2xl p-2 border border-[#593b21]/30">
                     
                     {/* หมวดหมู่หลัก Level 1 */}
-                    <button
-                      onClick={() => setFilterCategoryPath(main)}
-                      className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-bold flex items-center justify-between transition-all ${
-                        isMainActive 
-                          ? "bg-[#8c5a32] text-white shadow-inner border border-[#b27949]" 
-                          : "text-amber-200 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <span className="truncate">📂 {main}</span>
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${isMainActive ? "bg-white/20 text-white font-bold" : "bg-white/5 text-amber-200/50"}`}>
-                        {mainObj.count}
-                      </span>
-                    </button>
+                    <div className="flex items-center gap-1">
+                      {hasSubs && (
+                        <button
+                          onClick={() => setExpandedMainCats(prev => ({ ...prev, [main]: !prev[main] }))}
+                          className="w-5 h-5 flex items-center justify-center text-[#dfb269] hover:bg-white/5 rounded transition-all duration-200 shrink-0"
+                          title={isMainExpanded ? "ยับเก็บ" : "ขยายออก"}
+                        >
+                          <span className={`text-[8px] transform transition-transform duration-200 ${isMainExpanded ? "rotate-90 text-[#dfb269]" : "text-amber-100/40"}`}>
+                            ▶
+                          </span>
+                        </button>
+                      )}
+                      {!hasSubs && <div className="w-5 shrink-0" />}
 
-                    {/* หมวดหมู่รอง Level 2 */}
-                    {Object.keys(mainObj.subs).length > 0 && (
-                      <div className="pl-3.5 space-y-1 mt-1 border-l border-[#593b21]/60 ml-3">
+                      <button
+                        onClick={() => {
+                          setFilterCategoryPath(main);
+                          if (hasSubs && !isMainExpanded) {
+                            setExpandedMainCats(prev => ({ ...prev, [main]: true }));
+                          }
+                        }}
+                        className={`flex-1 text-left px-2.5 py-2 rounded-lg text-xs font-bold flex items-center justify-between transition-all truncate ${
+                          isMainActive 
+                            ? "bg-[#8c5a32] text-white shadow-inner border border-[#b27949]" 
+                            : "text-amber-200 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        <span className="truncate">📂 {main}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${isMainActive ? "bg-white/20 text-white font-bold" : "bg-white/5 text-amber-200/50"}`}>
+                          {mainObj.count}
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* หมวดหมู่รอง Level 2 (แสดงผลเมื่อคลิกขยาย) */}
+                    {hasSubs && isMainExpanded && (
+                      <div className="pl-2 space-y-1 mt-1 border-l border-[#593b21]/50 ml-3.5 animate-fadeIn">
                         {Object.keys(mainObj.subs).map((sub) => {
                           const subObj = mainObj.subs[sub];
                           const subPath = `${main}/${sub}`;
                           const isSubActive = filterCategoryPath === subPath;
+                          const isSubExpanded = !!expandedSubCats[subPath];
+                          const hasSubSubs = Object.keys(subObj.subSubs).length > 0;
                           
                           return (
                             <div key={sub} className="space-y-0.5">
-                              <button
-                                onClick={() => setFilterCategoryPath(subPath)}
-                                className={`w-full text-left px-2 py-1 rounded-md text-[11px] font-bold flex items-center justify-between transition-all ${
-                                  isSubActive 
-                                    ? "bg-[#dfb269] text-[#2c1b10] font-black shadow-inner" 
-                                    : "text-amber-100/60 hover:bg-white/5 hover:text-amber-100"
-                                }`}
-                              >
-                                <span className="truncate">↳ {sub}</span>
-                                <span className={`text-[8px] px-1.5 py-0.2 rounded-full ${isSubActive ? "bg-black/10 text-[#2c1b10] font-bold" : "bg-white/5 text-amber-100/40"}`}>
-                                  {subObj.count}
-                                </span>
-                              </button>
+                              <div className="flex items-center gap-1">
+                                {hasSubSubs && (
+                                  <button
+                                    onClick={() => setExpandedSubCats(prev => ({ ...prev, [subPath]: !prev[subPath] }))}
+                                    className="w-4 h-4 flex items-center justify-center text-amber-300 hover:bg-white/5 rounded transition-all duration-200 shrink-0"
+                                  >
+                                    <span className={`text-[7px] transform transition-transform duration-200 ${isSubExpanded ? "rotate-90 text-[#dfb269]" : "text-amber-100/30"}`}>
+                                      ▶
+                                    </span>
+                                  </button>
+                                )}
+                                {!hasSubSubs && <div className="w-4 shrink-0" />}
+
+                                <button
+                                  onClick={() => {
+                                    setFilterCategoryPath(subPath);
+                                    if (hasSubSubs && !isSubExpanded) {
+                                      setExpandedSubCats(prev => ({ ...prev, [subPath]: true }));
+                                    }
+                                  }}
+                                  className={`flex-1 text-left px-2 py-1 rounded-md text-[11px] font-bold flex items-center justify-between transition-all truncate ${
+                                    isSubActive 
+                                      ? "bg-[#dfb269] text-[#2c1b10] font-black shadow-inner" 
+                                      : "text-amber-100/60 hover:bg-white/5 hover:text-amber-100"
+                                  }`}
+                                >
+                                  <span className="truncate">↳ {sub}</span>
+                                  <span className={`text-[8px] px-1.5 py-0.2 rounded-full ${isSubActive ? "bg-black/10 text-[#2c1b10] font-bold" : "bg-white/5 text-amber-100/40"}`}>
+                                    {subObj.count}
+                                  </span>
+                                </button>
+                              </div>
 
                               {/* หมวดหมู่ย่อยสุด Level 3 */}
-                              {Object.keys(subObj.subSubs).length > 0 && (
-                                <div className="pl-3.5 space-y-0.5 border-l border-[#593b21]/40 ml-2.5">
+                              {hasSubSubs && isSubExpanded && (
+                                <div className="pl-3.5 space-y-0.5 border-l border-[#593b21]/30 ml-3 mt-0.5 animate-fadeIn">
                                   {Object.keys(subObj.subSubs).map((subSub) => {
                                     const subSubCount = subObj.subSubs[subSub];
                                     const subSubPath = `${main}/${sub}/${subSub}`;
@@ -684,7 +729,7 @@ export default function BooksPage() {
                                       <button
                                         key={subSub}
                                         onClick={() => setFilterCategoryPath(subSubPath)}
-                                        className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium flex items-center justify-between transition-all ${
+                                        className={`w-full text-left px-2 py-0.5 rounded text-[10px] font-medium flex items-center justify-between transition-all truncate ${
                                           isSubSubActive 
                                             ? "text-[#dfb269] font-black" 
                                             : "text-amber-100/40 hover:text-amber-100"
@@ -702,7 +747,7 @@ export default function BooksPage() {
 
                             </div>
                           );
-                         })}
+                        })}
                       </div>
                     )}
 
@@ -713,7 +758,7 @@ export default function BooksPage() {
             
             {/* คำชี้แนะการค้นหาลำดับขั้น */}
             <p className="text-[10px] text-amber-200/50 leading-normal mt-4 bg-black/30 p-3 rounded-xl border border-[#593b21]/40 font-medium">
-              💡 **เคล็ดลับการสำรวจ:** คลิกหมวดหมู่หลักเพื่อแสดงหนังสือทั้งหมดที่สืบทอดในหมวดย่อยครับคุณท่าน!
+              💡 **คำชี้แนะ:** คลิกปุ่มลูกศรเพื่อขยาย/พับดูหมวดหมู่ย่อยเพิ่มเติมได้ตามความสะดวกเลยครับกระผม!
             </p>
           </div>
 
