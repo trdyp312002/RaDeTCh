@@ -264,16 +264,31 @@ class DataHelper:
         import requests
         import urllib.parse
         
+        api_key = os.getenv("GEMINI_API_KEY")
         query = f"intitle:{title}"
-        if author and author != "ไม่ระบุ":
+        if author and author != "ไม่ระบุ" and author != "ไม่ระบุผู้แต่ง":
             query += f" inauthor:{author}"
             
         url = f"https://www.googleapis.com/books/v1/volumes?q={urllib.parse.quote(query)}&maxResults=1"
+        if api_key:
+            url += f"&key={api_key}"
+            
         try:
             response = requests.get(url, timeout=5)
             if response.status_code == 200:
                 data = response.json()
                 items = data.get("items", [])
+                
+                # หากไม่พบ ลองค้นหาแบบชื่อเดี่ยว
+                if not items:
+                    url_fallback = f"https://www.googleapis.com/books/v1/volumes?q={urllib.parse.quote(title)}&maxResults=1"
+                    if api_key:
+                        url_fallback += f"&key={api_key}"
+                    response = requests.get(url_fallback, timeout=5)
+                    if response.status_code == 200:
+                        data = response.json()
+                        items = data.get("items", [])
+                
                 if items:
                     volume_info = items[0].get("volumeInfo", {})
                     real_title = volume_info.get("title")
