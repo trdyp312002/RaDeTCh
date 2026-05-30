@@ -16,10 +16,10 @@ const sections: Section[] = [
     emoji: "📊",
     tag: "Finance",
     title: "Personal Finance",
-    desc: "Live synchronization with Google Sheets. Tracking Long-term, Short-term, BTC, Store of Wealth, and Personal Financial Statement.",
+    desc: "Tracks holdings, transactions, and net worth across Long-term, Short-term, BTC, Store of Wealth, and Personal Financial Statement. Updated via the Discord slip-scanner bot.",
     stats: [
-      { label: "Source", value: "Google Sheets" },
-      { label: "Sync", value: "Live" },
+      { label: "Source", value: "Turso DB" },
+      { label: "Sync", value: "Discord Bot" },
     ],
     color: "from-indigo-50 to-blue-50",
   },

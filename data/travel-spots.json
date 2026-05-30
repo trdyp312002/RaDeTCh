@@ -6,8 +6,12 @@
       "nameJP": "立山黒部アルペンルート",
       "region": "Tateyama, Toyama",
       "desc": "Japan's greatest mountain sightseeing route crossing the northern Alps at 2,450m. Snow walls up to 20m in spring.",
-      "image": "https://loremflickr.com/800/500/tateyama,mountain,snow,japan",
-      "tags": ["nature", "mountain", "snow"],
+      "image": "https://images.unsplash.com/photo-1542640244-7e672d6cef21?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "nature",
+        "mountain",
+        "snow"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -18,8 +22,12 @@
       "nameJP": "五箇山",
       "region": "Nanto, Toyama",
       "desc": "UNESCO World Heritage gassho-zukuri farmhouses hidden in mountain valleys. Smaller and quieter than Shirakawa-go.",
-      "image": "https://loremflickr.com/800/500/gassho,farmhouse,japan,village",
-      "tags": ["UNESCO", "history", "village"],
+      "image": "https://images.unsplash.com/photo-1490806869553-ee7f48ef1f7f?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "UNESCO",
+        "history",
+        "village"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -30,8 +38,12 @@
       "nameJP": "富山城",
       "region": "Toyama City",
       "desc": "Reconstructed Edo-period castle surrounded by a moat. Now houses a city history museum in its grounds.",
-      "image": "https://loremflickr.com/800/500/japanese,castle,moat,historic",
-      "tags": ["castle", "history", "city"],
+      "image": "https://images.unsplash.com/photo-1590559899731-a3828dfc395d?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "castle",
+        "history",
+        "city"
+      ],
       "status": "visited",
       "visitedDate": "2026-05-16",
       "note": ""
@@ -42,8 +54,12 @@
       "nameJP": "黒部ダム",
       "region": "Tateyama, Toyama",
       "desc": "Japan's largest arch dam at 186m tall. Dramatic water discharge in summer; reached via the Alpine Route.",
-      "image": "https://loremflickr.com/800/500/dam,water,mountains,japan,reservoir",
-      "tags": ["dam", "engineering", "nature"],
+      "image": "https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "dam",
+        "engineering",
+        "nature"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -54,8 +70,12 @@
       "nameJP": "瑞龍寺",
       "region": "Takaoka, Toyama",
       "desc": "National Treasure Zen temple built in the 17th century. One of the finest Edo-period temple complexes in Japan.",
-      "image": "https://loremflickr.com/800/500/zen,temple,japan,architecture,buddhist",
-      "tags": ["temple", "zen", "history"],
+      "image": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "temple",
+        "zen",
+        "history"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -66,8 +86,12 @@
       "nameJP": "富山市ガラス美術館",
       "region": "Toyama City",
       "desc": "Stunning contemporary art museum designed by Kengo Kuma, specializing in glass artworks from Japan and abroad.",
-      "image": "https://loremflickr.com/800/500/glass,art,museum,contemporary,sculpture",
-      "tags": ["museum", "art", "modern"],
+      "image": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "museum",
+        "art",
+        "modern"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -78,8 +102,12 @@
       "nameJP": "宇奈月温泉",
       "region": "Kurobe, Toyama",
       "desc": "Scenic hot spring town at the gateway to Kurobe Gorge. Famous for clear river waters and steam-filled baths.",
-      "image": "https://loremflickr.com/800/500/onsen,hotspring,japan,river,steam",
-      "tags": ["onsen", "nature", "relax"],
+      "image": "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "onsen",
+        "nature",
+        "relax"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -90,10 +118,14 @@
       "nameJP": "氷見市",
       "region": "Himi, Toyama",
       "desc": "Coastal fishing town famous for Himi yellowtail (buri) in winter, fresh seafood markets, and views across Toyama Bay.",
-      "image": "https://loremflickr.com/800/500/fishing,coast,japan,seafood,market",
-      "tags": ["seafood", "coastal", "market"],
-      "status": "not-visited",
-      "visitedDate": null,
+      "image": "https://images.unsplash.com/photo-1534482421-64566f976cfa?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "seafood",
+        "coastal",
+        "market"
+      ],
+      "status": "visited",
+      "visitedDate": "2026-05-30",
       "note": ""
     },
     {
@@ -102,8 +134,12 @@
       "nameJP": "となみ散居村",
       "region": "Tonami, Toyama",
       "desc": "Unique landscape where farmhouses are scattered across the Tonami Plain, each surrounded by windbreak trees. Best from the Sankyoson Viewpoint.",
-      "image": "https://loremflickr.com/800/500/countryside,farmland,japan,rice,village",
-      "tags": ["countryside", "nature", "viewpoint"],
+      "image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "countryside",
+        "nature",
+        "viewpoint"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -114,8 +150,12 @@
       "nameJP": "黒部峡谷鉄道",
       "region": "Kurobe, Toyama",
       "desc": "Open-air trolley train ride through Japan's deepest gorge, past hot springs and dense forest. Operates spring to autumn.",
-      "image": "https://loremflickr.com/800/500/gorge,river,forest,train,japan",
-      "tags": ["train", "gorge", "nature"],
+      "image": "https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "train",
+        "gorge",
+        "nature"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -128,8 +168,12 @@
       "nameJP": "伏見稲荷大社",
       "region": "Kyoto",
       "desc": "Thousands of vermilion torii gates winding up a forested mountain. One of Japan's most iconic spiritual sites.",
-      "image": "https://loremflickr.com/800/500/fushimi,torii,kyoto,shrine,japan",
-      "tags": ["shrine", "kyoto", "hiking"],
+      "image": "https://images.unsplash.com/photo-1601042879364-f3947d3f9c16?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "shrine",
+        "kyoto",
+        "hiking"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -140,8 +184,12 @@
       "nameJP": "奈良公園・東大寺",
       "region": "Nara",
       "desc": "Roam freely with hundreds of sacred deer while exploring Japan's largest bronze Buddha statue.",
-      "image": "https://loremflickr.com/800/500/nara,deer,japan,park,temple",
-      "tags": ["deer", "temple", "historic"],
+      "image": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "deer",
+        "temple",
+        "historic"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -152,8 +200,12 @@
       "nameJP": "道頓堀",
       "region": "Osaka",
       "desc": "Osaka's neon-lit entertainment district along the canal, famous for street food and the giant Glico running man sign.",
-      "image": "https://loremflickr.com/800/500/osaka,dotonbori,neon,night,japan",
-      "tags": ["city", "food", "night"],
+      "image": "https://images.unsplash.com/photo-1590254559677-1ef31994c81a?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "city",
+        "food",
+        "night"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -164,8 +216,12 @@
       "nameJP": "嵐山竹林",
       "region": "Kyoto",
       "desc": "Towering bamboo stalks lining a narrow path in western Kyoto, near Tenryuji temple and Togetsukyo Bridge.",
-      "image": "https://loremflickr.com/800/500/arashiyama,bamboo,kyoto,grove,japan",
-      "tags": ["bamboo", "kyoto", "nature"],
+      "image": "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "bamboo",
+        "kyoto",
+        "nature"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -176,8 +232,12 @@
       "nameJP": "浅草寺",
       "region": "Tokyo",
       "desc": "Tokyo's oldest temple in Asakusa. The approach lined with Nakamise shopping street is a feast for the senses.",
-      "image": "https://loremflickr.com/800/500/sensoji,asakusa,tokyo,temple,lantern",
-      "tags": ["temple", "tokyo", "traditional"],
+      "image": "https://images.unsplash.com/photo-1490806869553-ee7f48ef1f7f?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "temple",
+        "tokyo",
+        "traditional"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -188,8 +248,12 @@
       "nameJP": "富士山",
       "region": "Shizuoka / Yamanashi",
       "desc": "Japan's highest peak and most iconic image. Climb in summer or view from Kawaguchiko for postcard-perfect reflections.",
-      "image": "https://loremflickr.com/800/500/fuji,mountain,japan,lake,reflection",
-      "tags": ["mountain", "UNESCO", "iconic"],
+      "image": "https://images.unsplash.com/photo-1509023464722-18d996393ca8?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "mountain",
+        "UNESCO",
+        "iconic"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -200,8 +264,12 @@
       "nameJP": "広島平和記念公園",
       "region": "Hiroshima",
       "desc": "A moving memorial park with the Atomic Bomb Dome, Peace Museum, and Thousand Paper Cranes — a profound place of reflection.",
-      "image": "https://loremflickr.com/800/500/hiroshima,peace,memorial,japan,park",
-      "tags": ["history", "memorial", "peace"],
+      "image": "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "history",
+        "memorial",
+        "peace"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -212,8 +280,12 @@
       "nameJP": "白川郷",
       "region": "Gifu",
       "desc": "UNESCO-listed historic village with gassho-zukuri thatched farmhouses. Magical in winter snow; easily reached from Toyama.",
-      "image": "https://loremflickr.com/800/500/shirakawa,gassho,farmhouse,snow,japan",
-      "tags": ["UNESCO", "village", "snow"],
+      "image": "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "UNESCO",
+        "village",
+        "snow"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -224,8 +296,12 @@
       "nameJP": "箱根",
       "region": "Kanagawa",
       "desc": "Hot spring resort town with stunning Mt. Fuji views, the Open Air Museum, lake cruises, and mountain railways.",
-      "image": "https://loremflickr.com/800/500/hakone,fuji,onsen,lake,japan",
-      "tags": ["onsen", "fuji-view", "resort"],
+      "image": "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "onsen",
+        "fuji-view",
+        "resort"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -236,8 +312,12 @@
       "nameJP": "兼六園・金沢",
       "region": "Kanazawa, Ishikawa",
       "desc": "One of Japan's Three Great Gardens surrounding Kanazawa Castle. Just 1 hour from Toyama by Shinkansen.",
-      "image": "https://loremflickr.com/800/500/kenroku,garden,kanazawa,japan,castle",
-      "tags": ["garden", "castle", "nearby"],
+      "image": "https://images.unsplash.com/photo-1504618223053-559bdef9dd5a?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "garden",
+        "castle",
+        "nearby"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -250,8 +330,12 @@
       "nameJP": "ホイアン",
       "region": "Hoi An, Vietnam",
       "desc": "UNESCO World Heritage trading port with lantern-lit streets, tailors, and blended Vietnamese-Chinese-Japanese architecture.",
-      "image": "https://loremflickr.com/800/500/hoian,vietnam,lantern,ancient,town",
-      "tags": ["UNESCO", "vietnam", "history"],
+      "image": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "UNESCO",
+        "vietnam",
+        "history"
+      ],
       "status": "visited",
       "visitedDate": null,
       "note": ""
@@ -262,8 +346,12 @@
       "nameJP": "ハノイ",
       "region": "Hanoi, Vietnam",
       "desc": "Vietnam's capital with a maze of streets named after their historic trades, street food, and Hoan Kiem Lake.",
-      "image": "https://loremflickr.com/800/500/hanoi,vietnam,street,oldquarter",
-      "tags": ["vietnam", "city", "street-food"],
+      "image": "https://images.unsplash.com/photo-1509030118278-447e44b20244?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "vietnam",
+        "city",
+        "street-food"
+      ],
       "status": "visited",
       "visitedDate": "2026-05-16",
       "note": ""
@@ -274,8 +362,12 @@
       "nameJP": "ハロン湾",
       "region": "Quang Ninh, Vietnam",
       "desc": "UNESCO World Heritage bay with thousands of limestone karsts and islands rising from emerald-green waters.",
-      "image": "https://loremflickr.com/800/500/halong,bay,vietnam,limestone,sea",
-      "tags": ["UNESCO", "vietnam", "nature"],
+      "image": "https://images.unsplash.com/photo-1528127269322-539801943592?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "UNESCO",
+        "vietnam",
+        "nature"
+      ],
       "status": "visited",
       "visitedDate": null,
       "note": ""
@@ -286,8 +378,12 @@
       "nameJP": "チェンマイ",
       "region": "Chiang Mai, Thailand",
       "desc": "Northern Thailand's cultural capital surrounded by a moat, filled with ancient temples, night markets, and mountain treks.",
-      "image": "https://loremflickr.com/800/500/chiangmai,thailand,temple,night",
-      "tags": ["thailand", "temple", "culture"],
+      "image": "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "thailand",
+        "temple",
+        "culture"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -298,8 +394,12 @@
       "nameJP": "九份",
       "region": "New Taipei, Taiwan",
       "desc": "Hillside gold-mining town with narrow stone stairways and red lanterns overlooking the Pacific — said to have inspired Spirited Away.",
-      "image": "https://loremflickr.com/800/500/jiufen,taiwan,lantern,stairs",
-      "tags": ["taiwan", "historic", "scenic"],
+      "image": "https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "taiwan",
+        "historic",
+        "scenic"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -310,8 +410,12 @@
       "nameJP": "慶州",
       "region": "Gyeongju, South Korea",
       "desc": "The ancient Silla capital, known as a museum without walls — royal tombs, Bulguksa Temple, and the Cheomseongdae observatory.",
-      "image": "https://loremflickr.com/800/500/gyeongju,korea,temple,historic",
-      "tags": ["korea", "UNESCO", "history"],
+      "image": "https://images.unsplash.com/photo-1538669715515-5c3789a7f1e4?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "korea",
+        "UNESCO",
+        "history"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -322,8 +426,12 @@
       "nameJP": "ガーデンズバイザベイ",
       "region": "Singapore",
       "desc": "Futuristic nature park featuring towering Supertrees, the Cloud Forest dome, and spectacular light shows at night.",
-      "image": "https://loremflickr.com/800/500/singapore,gardens,supertree,night",
-      "tags": ["singapore", "modern", "nature"],
+      "image": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "singapore",
+        "modern",
+        "nature"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
@@ -334,8 +442,12 @@
       "nameJP": "オーロラ・アイスランド",
       "region": "Iceland",
       "desc": "The ultimate aurora borealis experience — vast volcanic landscapes, geysers, and curtains of green and purple light across the night sky.",
-      "image": "https://loremflickr.com/800/500/aurora,borealis,iceland,northernlights",
-      "tags": ["aurora", "nature", "bucket-list"],
+      "image": "https://images.unsplash.com/photo-1483347756197-71ef80e95f73?w=800&auto=format&fit=crop&q=80",
+      "tags": [
+        "aurora",
+        "nature",
+        "bucket-list"
+      ],
       "status": "not-visited",
       "visitedDate": null,
       "note": ""

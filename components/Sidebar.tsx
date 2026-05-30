@@ -10,6 +10,7 @@ const navItems = [
   { href: "/menu",    label: "Food",    emoji: "🍜" },
   { href: "/travel",  label: "Travel",  emoji: "✈️" },
   { href: "/music",   label: "Music",   emoji: "🎵" },
+  { href: "/books",   label: "Books",   emoji: "📚" },
 ]
 
 type TravelPick = {

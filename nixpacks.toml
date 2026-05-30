@@ -2,7 +2,10 @@
 nixPkgs = ["python312", "python312Packages.pip"]
 
 [phases.install]
-cmds = ["python3 -m pip install -r bot/requirements.txt"]
+cmds = [
+  "python3 -m pip install -r bot/requirements.txt",
+  "python3 -m pip install -r bot_raphael/requirements.txt"
+]
 
 [start]
-cmd = "cd bot && python3 -u main.py"
+cmd = "bash start.sh"
