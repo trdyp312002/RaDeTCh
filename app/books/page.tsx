@@ -96,7 +96,7 @@ export default function BooksPage() {
   const fetchBooks = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/books");
+      const res = await fetch('/api/books?t=' + Date.now());
       if (res.ok) {
         setBooks(await res.json());
       }

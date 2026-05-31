@@ -69,7 +69,7 @@ export default function MenuPage() {
   const [detail, setDetail] = useState<MenuItem | null>(null);
 
   useEffect(() => {
-    fetch("/api/menu")
+    fetch('/api/menu?t=' + Date.now())
       .then((r) => r.json())
       .then((d) => setAllItems(d.items));
   }, []);

@@ -51,8 +51,8 @@ export default function TravelPage() {
 
   const fetchAll = useCallback(async () => {
     const [spotsRes, recRes] = await Promise.all([
-      fetch("/api/travel/spots"),
-      fetch("/api/travel/recommendation"),
+      fetch('/api/travel/spots?t=' + Date.now()),
+      fetch('/api/travel/recommendation?t=' + Date.now()),
     ]);
     setSpotsData(await spotsRes.json());
     setRec(await recRes.json());

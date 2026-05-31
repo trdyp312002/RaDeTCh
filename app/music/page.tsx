@@ -6,9 +6,7 @@ import playlistData from "@/data/music-playlist.json";
 type Song = { title: string; id: string; duration: number; url: string };
 type Artist = { name: string; songCount: number; songs: Song[] };
 type Language = { id: string; label: string; flag: string; color: string; total: number; artists: Artist[] };
-type QueueItem = Song & { artistName: string };
-
-const data = playlistData as { total: number; generatedAt: string; languages: Language[] };
+type QueueItem = Song & { artistName: string; lang: Language };
 
 const LANG_COLORS: Record<string, string> = {
   japanese: "bg-pink-50 text-pink-700 border-pink-100",
@@ -341,31 +339,41 @@ function MusicPlayer({
   );
 }
 
-// ---- Helpers ----
-function buildQueue(lang: Language): QueueItem[] {
-  return lang.artists.flatMap((a) => a.songs.map((s) => ({ ...s, artistName: a.name })));
-}
-
-const allSongsWithMeta = data.languages.flatMap((l) =>
-  l.artists.flatMap((a) => a.songs.map((s) => ({ ...s, artistName: a.name, lang: l })))
-);
-
 // ---- Page ----
 export default function MusicPage() {
+  const [data, setData] = useState<{ total: number; generatedAt: string; languages: Language[] }>(playlistData as any);
+  
+  useEffect(() => {
+    fetch('/api/music?t=' + Date.now())
+      .then(r => r.json())
+      .then(d => { if(d.languages) setData(d) });
+  }, []);
+
   const [activeLang, setActiveLang] = useState("japanese");
   const [search, setSearch] = useState("");
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const currentLang = data.languages.find((l) => l.id === activeLang)!;
+  const currentLang = data.languages.find((l) => l.id === activeLang) || data.languages[0];
   const activeSongId = queue[currentIndex]?.id ?? null;
 
+  function buildQueue(lang: Language) {
+    if (!lang) return [];
+    return lang.artists.flatMap((a) => a.songs.map((s) => ({ ...s, artistName: a.name, lang })));
+  }
+
+  const allSongsWithMeta = useMemo(() => {
+    if (!data.languages) return [];
+    return data.languages.flatMap((l) => 
+      l.artists.flatMap((a) => a.songs.map((s) => ({ ...s, artistName: a.name, lang: l })))
+    );
+  }, [data]);
+
   function handlePlay(song: Song) {
+    if (!currentLang) return;
     const q = buildQueue(currentLang);
     const idx = q.findIndex((s) => s.id === song.id);
-    // flushSync forces synchronous render so the iframe is inserted while the
-    // user gesture is still active — required for unmuted autoplay in Chrome
     flushSync(() => {
       setQueue(q);
       setCurrentIndex(idx >= 0 ? idx : 0);
@@ -374,6 +382,7 @@ export default function MusicPage() {
   }
 
   function handleRandom() {
+    if (!allSongsWithMeta.length) return;
     const item = allSongsWithMeta[Math.floor(Math.random() * allSongsWithMeta.length)];
     const q = buildQueue(item.lang);
     const idx = q.findIndex((s) => s.id === item.id);
@@ -385,6 +394,7 @@ export default function MusicPage() {
   }
 
   const filteredArtists = useMemo(() => {
+    if (!currentLang) return [];
     if (!search.trim()) return currentLang.artists;
     const q = search.toLowerCase();
     return currentLang.artists
@@ -411,13 +421,13 @@ export default function MusicPage() {
             <span>สุ่มเพลง</span>
           </button>
         </div>
-        <p className="text-gray-400 text-sm">{data.total.toLocaleString()} เพลง — จัดกลุ่มตามภาษาและศิลปิน</p>
+        <p className="text-gray-500 text-sm mt-1">{data?.total || 0} tracks</p>
       </div>
 
       {/* Language Tabs */}
       <div className="max-w-4xl mx-auto px-6 mb-6">
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {data.languages.map((lang) => {
+          {data?.languages?.map((lang) => {
             const active = activeLang === lang.id;
             return (
               <button

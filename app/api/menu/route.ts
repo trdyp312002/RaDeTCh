@@ -4,6 +4,8 @@ import path from "path"
 
 const DATA_FILE = path.join(process.cwd(), "data", "menu.json")
 
+export const dynamic = "force-dynamic";
+
 function readData() {
   return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"))
 }

@@ -5,6 +5,8 @@ import path from "path"
 const DATA_FILE = path.join(process.cwd(), "data", "travel-spots.json")
 const LOGS_DIR = path.join(process.cwd(), "data", "travel-logs")
 
+export const dynamic = "force-dynamic";
+
 type Spot = {
   id: string; name: string; nameJP: string; region: string; desc: string;
   tags: string[]; status: string; visitedDate: string | null; note: string
