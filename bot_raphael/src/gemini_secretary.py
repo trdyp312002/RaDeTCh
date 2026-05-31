@@ -12,48 +12,61 @@ class GeminiSecretary:
         # ใช้ gemini-2.5-flash สำหรับความรวดเร็วและฉลาดในการวิเคราะห์
         self.model = genai.GenerativeModel('gemini-2.5-flash')
 
-    def analyze_book(self, image_bytes):
+
+    def analyze_image(self, image_bytes):
         """
-        วิเคราะห์ภาพถ่ายหน้าปกหนังสือจริงโดยใช้ Multimodal Vision
-        :param image_bytes: bytes ของรูปภาพปกหนังสือ
-        :return: dict รายละเอียดของหนังสือ
+        วิเคราะห์รูปภาพโดยใช้ Multimodal Vision (รองรับหน้าปกหนังสือและข้อมูลสุขภาพ)
         """
         try:
             img = Image.open(io.BytesIO(image_bytes))
             
             prompt = """
-            วิเคราะห์ภาพถ่ายหน้าปกหนังสือจริง (Book Cover Photo)
-            กรุณาแกะและสกัดข้อมูลจากรูปภาพหน้าปกหนังสือนี้ แล้วส่งผลลัพธ์กลับมาในรูปแบบโครงสร้าง JSON เท่านั้น (ห้ามมีข้อความอธิบายใดๆ เพิ่มเติมเด็ดขาด)
-
-            โครงสร้าง JSON ที่ต้องส่งกลับมามีดังนี้:
+            วิเคราะห์รูปภาพนี้ กรุณาระบุว่ารูปภาพนี้คืออะไรระหว่าง:
+            1. หน้าปกหนังสือ (Book Cover)
+            2. ข้อมูลสุขภาพ/การออกกำลังกาย (Health Data เช่น หน้าปัดเครื่องชั่งน้ำหนัก, นาฬิกาสมาร์ทวอทช์, แอปสุขภาพ)
+            
+            ส่งผลลัพธ์กลับมาในรูปแบบ JSON เท่านั้น (ห้ามมีข้อความอธิบายใดๆ เพิ่มเติมเด็ดขาด)
+            
+            หากเป็น 'หน้าปกหนังสือ' ให้ใช้โครงสร้างนี้:
             {
-                "title": "ชื่อหนังสือที่เป็นทางการ (ดึงจากปกหนังสือ หากเป็นภาษาไทยให้ใช้ภาษาไทย หากไม่มีให้ใช้ภาษาอังกฤษ)",
-                "author": "ชื่อผู้เขียน/ผู้แต่ง (หากปรากฏบนปก หากไม่ระบุให้ใส่ 'ไม่ระบุ')",
-                "desc": "เขียนคำโปรย/สรุปแนวคิดหลักหรือความน่าสนใจของหนังสือเล่มนี้สั้นๆ 1-2 ประโยค (ดึงจากปกหน้า/ปกหลัง หรือวิเคราะห์จากชื่อเรื่องเชิงจิตวิทยาหรือสาระ)",
-                "category": "วิเคราะห์และจัดแบ่งหมวดหมู่หนังสือแบบลำดับขั้น 2-3 ระดับ คั่นด้วยเครื่องหมายทับ '/' (เช่น 'การเรียน/ภาษา/ภาษาอังกฤษ', 'การเรียน/ภาษา/ภาษาญี่ปุ่น', 'การเงิน/การลงทุน/หุ้น', 'การเงิน/การลงทุน/คริปโต', 'พัฒนาตนเอง/จิตวิทยา/ความคิด', 'เทคโนโลยี/เขียนโปรแกรม/NextJS') โดยหมวดแรกสุดคือหมวดหลักระดับบนสุด และถัดไปคือหมวดย่อยรองลงมา ให้เลือกหมวดที่สอดคล้องกับเนื้อหาของเล่มที่สุด"
+                "type": "book",
+                "title": "ชื่อหนังสือที่เป็นทางการ",
+                "author": "ชื่อผู้เขียน/ผู้แต่ง",
+                "desc": "คำโปรย/สรุปแนวคิดหลัก 1-2 ประโยค",
+                "category": "หมวดหมู่แบบลำดับขั้น (เช่น การเงิน/การลงทุน/หุ้น)"
+            }
+            
+            หากเป็น 'ข้อมูลสุขภาพ' ให้ใช้โครงสร้างนี้:
+            {
+                "type": "health",
+                "weight": ตัวเลขน้ำหนัก (kg) หรือ null,
+                "sleep_hours": ตัวเลขชั่วโมงการนอน หรือ null,
+                "calories_in": ตัวเลขแคลอรี่ที่กิน หรือ null,
+                "calories_out": ตัวเลขแคลอรี่ที่เผาผลาญ หรือ null,
+                "notes": "สรุปสั้นๆ ว่าในรูปมีข้อมูลอะไรบ้าง"
             }
             """
             
             response = self.model.generate_content([prompt, img])
             text_response = response.text.strip()
             
-            # จัดการตัดส่วนหัวท้ายกรณีครอบ Markdown code block
-            if text_response.startswith("```json"):
-                text_response = text_response.split("```json")[1]
-            elif text_response.startswith("```"):
-                text_response = text_response.split("```")[1]
-                
-            if text_response.endswith("```"):
-                text_response = text_response.rsplit("```", 1)[0]
+            import re
+            match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text_response, re.DOTALL)
+            if match:
+                text_response = match.group(1)
+            else:
+                text_response = text_response.strip('` \n')
+                if text_response.startswith("json"):
+                    text_response = text_response[4:].strip()
                 
             data = json.loads(text_response.strip())
             return data
             
         except Exception as e:
-            print(f"[ERROR] เกิดข้อผิดพลาดในการวิเคราะห์ปกหนังสือด้วย AI: {e}", flush=True)
+            print(f"[ERROR] เกิดข้อผิดพลาดในการวิเคราะห์รูปภาพด้วย AI: {e}", flush=True)
             return {
                 "error": True,
-                "message": f"ไม่สามารถวิเคราะห์ภาพหน้าปกหนังสือได้เนื่องจาก: {str(e)}"
+                "message": f"ไม่สามารถวิเคราะห์รูปภาพได้เนื่องจาก: {str(e)}"
             }
 
     def chat(self, prompt, user_name="นายท่าน", context_info=None):

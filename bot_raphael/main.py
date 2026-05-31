@@ -711,7 +711,7 @@ async def on_message(message):
                         image_bytes = await attachment.read()
                         
                         # วิเคราะห์ข้อมูลปกหนังสือ (Title, Author, Desc, Category) ผ่าน Thread แยก
-                        data = await asyncio.to_thread(secretary.analyze_book, image_bytes)
+                        data = await asyncio.to_thread(secretary.analyze_image, image_bytes)
                         
                         if "error" in data:
                             await loading_msg.edit(content=f"❌ **ขอประทานอภัยครับ แสกนปกหนังสือขัดข้อง:** {data['message']}")
@@ -719,22 +719,45 @@ async def on_message(message):
                             
                         await loading_msg.delete()
                         
-                        # จัดทำ Embed โชว์ผลลัพธ์การแกะตัวหนังสือ
-                        embed = discord.Embed(
-                            title="📖 ตรวจพบหน้าปกหนังสือทางสายตาสำเร็จครับ!",
-                            description="นี่คือรายละเอียดหนังสือที่ราฟาเอลแกะสแกนได้คุณท่านโปรดกดยืนยันเพื่อบันทึกเข้าเว็บครับ:",
-                            color=discord.Color.green()
-                        )
-                        embed.add_field(name="📘 ชื่อหนังสือ", value=f"**{data.get('title')}**", inline=False)
-                        embed.add_field(name="✍️ ผู้แต่ง/ผู้เขียน", value=data.get('author', 'ไม่ระบุ'), inline=True)
-                        embed.add_field(name="📂 หมวดหมู่แนะนำ", value=data.get('category', 'ทั่วไป'), inline=True)
-                        embed.add_field(name="📝 เรื่องย่อสำคัญ", value=data.get('desc', '—'), inline=False)
-                        embed.set_footer(text="ราฟาเอลใช้โมเดลระดับสูง Gemini 2.5 Flash ในการอ่านหน้าปก")
-                        
-                        # มอบปุ่มโต้ตอบ UI ยืนยัน/ยกเลิก
-                        view = ConfirmBookView(data, data_helper, message)
-                        await message.reply(embed=embed, view=view)
-                        return
+                        if data.get('type') == 'health':
+                            # บันทึกข้อมูลสุขภาพ
+                            data_helper.add_health_log(
+                                data.get('weight'),
+                                data.get('sleep_hours'),
+                                data.get('calories_in'),
+                                data.get('calories_out'),
+                                data.get('notes')
+                            )
+                            embed = discord.Embed(
+                                title="❤️ บันทึกข้อมูลสุขภาพเรียบร้อย!",
+                                description="กระผมได้วิเคราะห์และบันทึกข้อมูลสุขภาพของคุณท่านลงในระบบเรียบร้อยแล้วครับ:",
+                                color=discord.Color.pink()
+                            )
+                            if data.get('weight'): embed.add_field(name="⚖️ น้ำหนัก", value=f"{data['weight']} kg", inline=True)
+                            if data.get('sleep_hours'): embed.add_field(name="😴 การนอน", value=f"{data['sleep_hours']} h", inline=True)
+                            if data.get('calories_in'): embed.add_field(name="🍽️ แคลอรี่เข้า", value=f"{data['calories_in']} kcal", inline=True)
+                            if data.get('calories_out'): embed.add_field(name="🔥 แคลอรี่ออก", value=f"{data['calories_out']} kcal", inline=True)
+                            if data.get('notes'): embed.add_field(name="📝 โน้ต", value=data['notes'], inline=False)
+                            embed.set_footer(text="วิเคราะห์รูปภาพสุขภาพอัตโนมัติโดยราฟาเอล")
+                            await message.reply(embed=embed)
+                            return
+                        else:
+                            # สันนิษฐานว่าเป็นหนังสือ
+                            embed = discord.Embed(
+                                title="📖 ตรวจพบหน้าปกหนังสือทางสายตาสำเร็จครับ!",
+                                description="นี่คือรายละเอียดหนังสือที่ราฟาเอลแกะสแกนได้คุณท่านโปรดกดยืนยันเพื่อบันทึกเข้าเว็บครับ:",
+                                color=discord.Color.green()
+                            )
+                            embed.add_field(name="📘 ชื่อหนังสือ", value=f"**{data.get('title')}**", inline=False)
+                            embed.add_field(name="✍️ ผู้แต่ง/ผู้เขียน", value=data.get('author', 'ไม่ระบุ'), inline=True)
+                            embed.add_field(name="📂 หมวดหมู่แนะนำ", value=data.get('category', 'ทั่วไป'), inline=True)
+                            embed.add_field(name="📝 เรื่องย่อสำคัญ", value=data.get('desc', '—'), inline=False)
+                            embed.set_footer(text="ราฟาเอลใช้โมเดลระดับสูง Gemini 2.5 Flash ในการอ่านหน้าปก")
+                            
+                            # มอบปุ่มโต้ตอบ UI ยืนยัน/ยกเลิก
+                            view = ConfirmBookView(data, data_helper, message)
+                            await message.reply(embed=embed, view=view)
+                            return
                     except Exception as e:
                         await loading_msg.edit(content=f"❌ **ขอประทานอภัย เกิดข้อผิดพลาดของระบบบอท:** {str(e)}")
                         return
@@ -848,6 +871,31 @@ async def on_message(message):
 
     # เพื่อให้คำสั่ง Commands อื่นๆ ทำงานได้ปกติ
     await bot.process_commands(message)
+
+
+@bot.group(name="health", invoke_without_command=True)
+async def health_group(ctx):
+    if ctx.invoked_subcommand is None:
+        await ctx.send("กรุณาระบุคำสั่งย่อย เช่น !health log <weight> <sleep> <cal_in> <cal_out> หรือ !health logs")
+
+@health_group.command(name="log")
+async def health_log(ctx, weight: float=None, sleep: float=None, cal_in: float=None, cal_out: float=None):
+    notes = "บันทึกจากราฟาเอล"
+    data_helper.add_health_log(weight, sleep, cal_in, cal_out, notes)
+    await ctx.send(f"ราฟาเอลบันทึกข้อมูลสุขภาพเรียบร้อยแล้วครับเจ้านาย! (น้ำหนัก: {weight}kg, นอน: {sleep}h, แคลอรี่เข้า: {cal_in}, แคลอรี่ออก: {cal_out})")
+
+@health_group.command(name="logs")
+async def health_logs(ctx):
+    logs = data_helper.get_health_logs()
+    if not logs:
+        await ctx.send("ยังไม่มีข้อมูลสุขภาพครับ")
+        return
+    latest = logs[-5:]
+    msg = "ข้อมูลสุขภาพล่าสุด:\\n"
+    for l in latest:
+        msg += f"- {l['date']}: หนัก {l.get('weight', '-')}kg, นอน {l.get('sleep_hours', '-')}h\\n"
+    await ctx.send(msg)
+
 
 # เริ่มรันระบบบอทราฟาเอล
 if __name__ == "__main__":

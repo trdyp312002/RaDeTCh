@@ -16,6 +16,7 @@ class DataHelper:
         self.travel_data = self._load_json("travel-spots.json", {"toyama": [], "japan": [], "world": []})
         self.holiday_data = self._load_json("holidays.json", {"holidays": []})
         self.music_data = self._load_json("music-playlist.json", {"total": 0, "languages": []})
+        self.health_data = self._load_json("health.json", {"logs": []})
 
     def _load_json(self, filename, fallback):
         filepath = os.path.join(self.data_dir, filename)
@@ -431,3 +432,22 @@ class DataHelper:
                 {"time": "22:00 – 22:30", "block": "Pre-sleep prep 🛌", "duration": "30 min", "type": "fixed"},
                 {"time": "22:30", "block": "Sleep 😴", "duration": "8 hours", "type": "sleep"},
             ]
+
+    # --- ส่วนการจัดการสุขภาพ (Health Management) ---
+    def get_health_logs(self):
+        self.health_data = self._load_json("health.json", {"logs": []})
+        return self.health_data.get("logs", [])
+
+    def add_health_log(self, weight=None, sleep_hours=None, calories_in=None, calories_out=None, notes=None):
+        self.health_data = self._load_json("health.json", {"logs": []})
+        new_log = {
+            "id": str(int(datetime.datetime.now().timestamp())),
+            "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "weight": float(weight) if weight else None,
+            "sleep_hours": float(sleep_hours) if sleep_hours else None,
+            "calories_in": float(calories_in) if calories_in else None,
+            "calories_out": float(calories_out) if calories_out else None,
+            "notes": notes or ""
+        }
+        self.health_data["logs"].append(new_log)
+        return self._save_json("health.json", self.health_data)
