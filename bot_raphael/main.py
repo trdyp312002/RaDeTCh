@@ -4,6 +4,7 @@ import config
 from src.todo_db import TodoDB
 from src.data_helper import DataHelper
 from src.gemini_secretary import GeminiSecretary
+from src.garmin_helper import GarminHelper
 import sys
 import asyncio
 import datetime
@@ -27,6 +28,7 @@ bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 # เริ่มต้นตัวช่วยจัดการข้อมูลและฐานข้อมูล
 db = TodoDB()
 data_helper = DataHelper()
+garmin_helper = GarminHelper()
 secretary = GeminiSecretary(config.GEMINI_API_KEY)
 
 # ปุ่มกดสำหรับจัดการตารางงาน Todo ผ่าน UI
@@ -907,6 +909,38 @@ async def health_logs(ctx):
         msg += f"- {l['date']}: หนัก {l.get('weight', '-')}kg, นอน {l.get('sleep_hours', '-')}h\\n"
     await ctx.send(msg)
 
+@health_group.command(name="sync_garmin", description="ซิงก์ข้อมูลสุขภาพวันนี้จาก Garmin Connect อัตโนมัติ")
+async def sync_garmin(ctx):
+    await ctx.send("🔄 กำลังเชื่อมต่อ Garmin Connect เพื่อดึงข้อมูลของวันนี้... รบกวนรอสักครู่ครับเจ้านาย")
+    try:
+        data, msg = await asyncio.to_thread(garmin_helper.fetch_today_data)
+        if not data:
+            await ctx.send(f"❌ ซิงก์ไม่สำเร็จ: {msg}")
+            return
+        
+        # บันทึกลง health.json
+        data_helper.add_health_log(
+            weight=None,
+            sleep_hours=data.get('sleep_hours'),
+            calories_in=data.get('calories_in'),
+            calories_out=data.get('calories_out'),
+            notes=data.get('notes')
+        )
+        
+        # สร้าง Embed Report
+        embed = discord.Embed(
+            title="✅ ซิงก์ข้อมูลจาก Garmin สำเร็จเรียบร้อย!",
+            description="ราฟาเอลดึงข้อมูลและอัปเดตลงเว็บไซต์ให้เรียบร้อยแล้วครับผม",
+            color=discord.Color.green()
+        )
+        if data.get('sleep_hours'): embed.add_field(name="😴 การนอนหลับ", value=f"{data['sleep_hours']} ชม. (Score: {data.get('sleep_score', '-')})", inline=True)
+        if data.get('calories_out'): embed.add_field(name="🔥 เผาผลาญ", value=f"{data['calories_out']} kcal", inline=True)
+        if data.get('steps'): embed.add_field(name="🚶 ก้าวเดิน", value=f"{data['steps']} ก้าว", inline=True)
+        if data.get('resting_heart_rate'): embed.add_field(name="❤️ หัวใจขณะพัก", value=f"{data['resting_heart_rate']} bpm", inline=True)
+        
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"❌ เกิดข้อผิดพลาดระหว่างซิงก์: {e}")
 
 # เริ่มรันระบบบอทราฟาเอล
 if __name__ == "__main__":
