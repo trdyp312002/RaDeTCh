@@ -33,6 +33,14 @@ class DataHelper:
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            # Auto sync to Git in background
+            import subprocess
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            subprocess.Popen(
+                "git add . && git commit -m \"bot: auto update data via Raphael\" && git push",
+                cwd=base_dir, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
             return True
         except Exception as e:
             print(f"[DataHelper Error] ไม่สามารถบันทึกไฟล์ {filename}: {e}")
