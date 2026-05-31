@@ -1,0 +1,50 @@
+{
+  "logs": [
+    {
+      "id": "1",
+      "date": "2026-05-30",
+      "weight": 70.5,
+      "sleep_hours": 7.5,
+      "calories_in": 2100,
+      "calories_out": 2400,
+      "notes": "Feeling good, did 30 mins cardio."
+    },
+    {
+      "id": "1780201292",
+      "date": "2026-05-31 13:21:32",
+      "weight": null,
+      "sleep_hours": 5.22,
+      "calories_in": null,
+      "calories_out": null,
+      "notes": "แสดงคะแนนการนอนหลับ 68, คุณภาพการนอน 'Fair', ระยะเวลาการนอน 5 ชั่วโมง 13 นาที พร้อมกราฟแสดงช่วงเวลาการนอนหลับ นอกจากนี้ยังมีส่วนสำหรับติดตามโภชนาการ แคลอรี่ และมาโคร รวมถึงหัวข้ออัตราการเต้นของหัวใจและนาทีความเข้มข้น"
+    },
+    {
+      "id": "1780202155",
+      "date": "2026-05-31 13:35:55",
+      "weight": null,
+      "sleep_hours": 5.22,
+      "calories_in": null,
+      "calories_out": null,
+      "notes": "ข้อมูลสุขภาพจากแอปพลิเคชัน แสดงคะแนนการนอน (Sleep Score 68), คุณภาพการนอน (Fair Quality), ระยะเวลาการนอน (5 ชั่วโมง 13 นาที) พร้อมกราฟแสดงช่วงเวลาการนอน นอกจากนี้ยังมีส่วนเกี่ยวกับการจัดการโภชนาการ (Nutrition made easy) และข้อมูล Heart Rate กับ Intensity Minutes"
+    },
+    {
+      "id": "1780205890",
+      "date": "2026-05-31 14:38:10",
+      "weight": null,
+      "sleep_hours": 5.22,
+      "calories_in": null,
+      "calories_out": null,
+      "notes": "แสดงข้อมูลคะแนนการนอน (Sleep Score) 68, คุณภาพการนอนระดับปานกลาง (Fair Quality) และระยะเวลาการนอน 5 ชั่วโมง 13 นาที นอกจากนี้ยังมีส่วนของการติดตามโภชนาการ อัตราการเต้นของหัวใจ และนาทีความเข้มข้น"
+    },
+    {
+      "id": "1780212763",
+      "date": "2026-05-31 16:32:43",
+      "weight": null,
+      "sleep_hours": 5.22,
+      "calories_in": null,
+      "calories_out": null,
+      "notes": "แสดงข้อมูล Sleep Score (68), คุณภาพการนอน (Fair Quality), ระยะเวลาการนอน (5h 13m) พร้อมกราฟไทม์ไลน์การนอน นอกจากนี้ยังมีส่วนแนะนำการติดตามโภชนาการ และการแสดงข้อมูล Heart Rate กับ Intensity Minutes",
+      "image_url": "/uploads/health/1780212763_screenshot_20260531_095049_garmin_connect.jpg"
+    }
+  ]
+}
