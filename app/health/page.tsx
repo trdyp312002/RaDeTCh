@@ -15,7 +15,7 @@ export default function HealthDashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/health");
+        const res = await fetch(`/api/health?t=${new Date().getTime()}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           // Sort logs chronologically

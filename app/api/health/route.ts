@@ -4,6 +4,8 @@ import path from "path";
 
 const dataFilePath = path.join(process.cwd(), "data", "health.json");
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const fileContents = await fs.readFile(dataFilePath, "utf8");
