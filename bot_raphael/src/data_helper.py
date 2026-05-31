@@ -438,7 +438,7 @@ class DataHelper:
         self.health_data = self._load_json("health.json", {"logs": []})
         return self.health_data.get("logs", [])
 
-    def add_health_log(self, weight=None, sleep_hours=None, calories_in=None, calories_out=None, notes=None):
+    def add_health_log(self, weight=None, sleep_hours=None, calories_in=None, calories_out=None, notes=None, image_url=None):
         self.health_data = self._load_json("health.json", {"logs": []})
         new_log = {
             "id": str(int(datetime.datetime.now().timestamp())),
@@ -447,7 +447,8 @@ class DataHelper:
             "sleep_hours": float(sleep_hours) if sleep_hours else None,
             "calories_in": float(calories_in) if calories_in else None,
             "calories_out": float(calories_out) if calories_out else None,
-            "notes": notes or ""
+            "notes": notes or "",
+            "image_url": image_url
         }
         self.health_data["logs"].append(new_log)
         return self._save_json("health.json", self.health_data)

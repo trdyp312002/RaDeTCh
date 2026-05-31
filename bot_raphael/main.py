@@ -720,13 +720,24 @@ async def on_message(message):
                         await loading_msg.delete()
                         
                         if data.get('type') == 'health':
+                            # บันทึกรูปภาพลงโฟลเดอร์ public ของ Next.js
+                            import os, time
+                            public_health_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public", "uploads", "health")
+                            os.makedirs(public_health_dir, exist_ok=True)
+                            image_filename = f"{int(time.time())}_{filename}"
+                            image_path = os.path.join(public_health_dir, image_filename)
+                            with open(image_path, "wb") as f:
+                                f.write(image_bytes)
+                            image_url = f"/uploads/health/{image_filename}"
+
                             # บันทึกข้อมูลสุขภาพ
                             data_helper.add_health_log(
                                 data.get('weight'),
                                 data.get('sleep_hours'),
                                 data.get('calories_in'),
                                 data.get('calories_out'),
-                                data.get('notes')
+                                data.get('notes'),
+                                image_url=image_url
                             )
                             embed = discord.Embed(
                                 title="❤️ บันทึกข้อมูลสุขภาพเรียบร้อย!",

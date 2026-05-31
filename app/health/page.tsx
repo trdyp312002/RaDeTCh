@@ -166,6 +166,7 @@ export default function HealthDashboard() {
                   <thead>
                     <tr className="bg-white/5 text-gray-400 text-sm">
                       <th className="p-4 font-medium">Date</th>
+                      <th className="p-4 font-medium">Image</th>
                       <th className="p-4 font-medium">Weight (kg)</th>
                       <th className="p-4 font-medium">Sleep (hrs)</th>
                       <th className="p-4 font-medium">Calories In</th>
@@ -177,16 +178,23 @@ export default function HealthDashboard() {
                     {[...healthData].reverse().map((log: any, idx: number) => (
                       <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors text-gray-300">
                         <td className="p-4">{log.date.split(' ')[0]}</td>
+                        <td className="p-4">
+                          {log.image_url ? (
+                            <a href={log.image_url} target="_blank" rel="noreferrer">
+                              <img src={log.image_url} alt="Health log" className="w-16 h-16 object-cover rounded-xl border border-white/10 hover:opacity-80 transition" />
+                            </a>
+                          ) : '-'}
+                        </td>
                         <td className="p-4 text-pink-400 font-medium">{log.weight || '-'}</td>
                         <td className="p-4 text-indigo-400 font-medium">{log.sleep_hours || '-'}</td>
                         <td className="p-4 text-orange-400">{log.calories_in || '-'}</td>
                         <td className="p-4 text-yellow-400">{log.calories_out || '-'}</td>
-                        <td className="p-4 text-sm text-gray-500">{log.notes || '-'}</td>
+                        <td className="p-4 text-sm text-gray-500 max-w-xs truncate" title={log.notes}>{log.notes || '-'}</td>
                       </tr>
                     ))}
                     {healthData.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-gray-500">
+                        <td colSpan={7} className="p-8 text-center text-gray-500">
                           No health data found. Send some data via Raphael!
                         </td>
                       </tr>
