@@ -20,9 +20,22 @@ export default function HealthDashboard() {
         if (res.ok) {
           const data = await res.json();
           // Sort logs chronologically
-          const sorted = (data.logs || []).sort((a: any, b: any) => 
+          let sorted = (data.logs || []).sort((a: any, b: any) => 
             new Date(a.date).getTime() - new Date(b.date).getTime()
           );
+
+          // Check if we have Garmin data from today in localStorage
+          const savedGarmin = localStorage.getItem('garminSyncToday');
+          if (savedGarmin) {
+            try {
+              const parsed = JSON.parse(savedGarmin);
+              const todayStr = new Date().toISOString().split('T')[0];
+              if (parsed.date.startsWith(todayStr)) {
+                sorted = [...sorted, parsed.data];
+              }
+            } catch (e) {}
+          }
+
           setHealthData(sorted);
         }
       } catch (err) {
@@ -40,8 +53,6 @@ export default function HealthDashboard() {
       const res = await fetch("/api/garmin");
       if (res.ok) {
         const garminData = await res.json();
-        // push today's data to healthData as a temporary local update until they refresh or backend saves it.
-        // Wait, since we are moving away from the bot, we should modify /api/garmin to actually SAVE it to health.json if we can,
         const newLog = {
           id: Date.now().toString(),
           date: new Date().toISOString(),
@@ -55,7 +66,18 @@ export default function HealthDashboard() {
           notes: `Garmin Auto-Sync`,
           image_url: null,
         };
-        setHealthData(prev => [...prev, newLog]);
+
+        // Save to localStorage so it survives page refreshes
+        localStorage.setItem('garminSyncToday', JSON.stringify({
+          date: new Date().toISOString(),
+          data: newLog
+        }));
+
+        setHealthData(prev => {
+          // Remove old auto-syncs if any exist in current state
+          const filtered = prev.filter(p => p.notes !== "Garmin Auto-Sync");
+          return [...filtered, newLog];
+        });
         alert("Synced from Garmin successfully!");
       } else {
         const err = await res.json();
