@@ -6,7 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar
 } from "recharts";
-import { ArrowLeft, Activity, Heart, Moon, Zap, Flame } from "lucide-react";
+import { ArrowLeft, Activity, Heart, Moon, Zap, Flame, Footprints, Star } from "lucide-react";
 
 export default function HealthDashboard() {
   const [healthData, setHealthData] = useState<any[]>([]);
@@ -42,15 +42,17 @@ export default function HealthDashboard() {
         const garminData = await res.json();
         // push today's data to healthData as a temporary local update until they refresh or backend saves it.
         // Wait, since we are moving away from the bot, we should modify /api/garmin to actually SAVE it to health.json if we can,
-        // or just append to state for now!
         const newLog = {
           id: Date.now().toString(),
           date: new Date().toISOString(),
           weight: null,
           sleep_hours: garminData.sleep_hours,
+          sleep_score: garminData.sleep_score,
+          steps: garminData.steps,
+          resting_heart_rate: garminData.resting_heart_rate,
           calories_in: null,
-          calories_out: null, // Garmin connect API might not have calories_out directly in our basic script
-          notes: `Garmin Sync - Score: ${garminData.sleep_score || '-'} | Steps: ${garminData.steps || '-'} | RHR: ${garminData.resting_heart_rate || '-'}`,
+          calories_out: null, 
+          notes: `Garmin Auto-Sync`,
           image_url: null,
         };
         setHealthData(prev => [...prev, newLog]);
@@ -111,34 +113,48 @@ export default function HealthDashboard() {
         ) : (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
               <StatCard 
-                title="Current Weight" 
+                title="Weight" 
                 value={latestLog?.weight ? `${latestLog.weight} kg` : "--"}
-                icon={<Heart className="w-6 h-6 text-pink-400" />}
+                icon={<Heart className="w-5 h-5 text-pink-400" />}
                 color="from-pink-500/20 to-rose-500/5"
                 borderColor="border-pink-500/20"
               />
               <StatCard 
-                title="Last Sleep" 
+                title="Sleep" 
                 value={latestLog?.sleep_hours ? `${latestLog.sleep_hours} h` : "--"}
-                icon={<Moon className="w-6 h-6 text-indigo-400" />}
+                icon={<Moon className="w-5 h-5 text-indigo-400" />}
                 color="from-indigo-500/20 to-blue-500/5"
                 borderColor="border-indigo-500/20"
               />
               <StatCard 
-                title="Calories Intake" 
-                value={latestLog?.calories_in ? `${latestLog.calories_in} kcal` : "--"}
-                icon={<Flame className="w-6 h-6 text-orange-400" />}
-                color="from-orange-500/20 to-red-500/5"
-                borderColor="border-orange-500/20"
+                title="Sleep Score" 
+                value={latestLog?.sleep_score ? `${latestLog.sleep_score}` : "--"}
+                icon={<Star className="w-5 h-5 text-yellow-400" />}
+                color="from-yellow-500/20 to-orange-500/5"
+                borderColor="border-yellow-500/20"
               />
               <StatCard 
-                title="Calories Burned" 
+                title="Steps" 
+                value={latestLog?.steps ? `${latestLog.steps.toLocaleString()}` : "--"}
+                icon={<Footprints className="w-5 h-5 text-green-400" />}
+                color="from-green-500/20 to-emerald-500/5"
+                borderColor="border-green-500/20"
+              />
+              <StatCard 
+                title="Resting HR" 
+                value={latestLog?.resting_heart_rate ? `${latestLog.resting_heart_rate} bpm` : "--"}
+                icon={<Activity className="w-5 h-5 text-red-400" />}
+                color="from-red-500/20 to-rose-500/5"
+                borderColor="border-red-500/20"
+              />
+              <StatCard 
+                title="Cal Burned" 
                 value={latestLog?.calories_out ? `${latestLog.calories_out} kcal` : "--"}
-                icon={<Zap className="w-6 h-6 text-yellow-400" />}
-                color="from-yellow-500/20 to-amber-500/5"
-                borderColor="border-yellow-500/20"
+                icon={<Flame className="w-5 h-5 text-orange-400" />}
+                color="from-orange-500/20 to-red-500/5"
+                borderColor="border-orange-500/20"
               />
             </div>
 
@@ -210,26 +226,32 @@ export default function HealthDashboard() {
                     <tr className="bg-white/5 text-gray-400 text-sm">
                       <th className="p-4 font-medium">Date</th>
                       <th className="p-4 font-medium">Image</th>
-                      <th className="p-4 font-medium">Weight (kg)</th>
-                      <th className="p-4 font-medium">Sleep (hrs)</th>
-                      <th className="p-4 font-medium">Calories In</th>
-                      <th className="p-4 font-medium">Calories Out</th>
+                      <th className="p-4 font-medium">Weight</th>
+                      <th className="p-4 font-medium">Sleep</th>
+                      <th className="p-4 font-medium">Score</th>
+                      <th className="p-4 font-medium">Steps</th>
+                      <th className="p-4 font-medium">RHR</th>
+                      <th className="p-4 font-medium">Cal In</th>
+                      <th className="p-4 font-medium">Cal Out</th>
                       <th className="p-4 font-medium">Notes</th>
                     </tr>
                   </thead>
                   <tbody>
                     {[...healthData].reverse().map((log: any, idx: number) => (
                       <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors text-gray-300">
-                        <td className="p-4">{log.date.split(' ')[0]}</td>
+                        <td className="p-4 whitespace-nowrap">{log.date.split(' ')[0]}</td>
                         <td className="p-4">
                           {log.image_url ? (
                             <a href={log.image_url} target="_blank" rel="noreferrer">
-                              <img src={log.image_url} alt="Health log" className="w-16 h-16 object-cover rounded-xl border border-white/10 hover:opacity-80 transition" />
+                              <img src={log.image_url} alt="Health log" className="w-10 h-10 object-cover rounded-xl border border-white/10 hover:opacity-80 transition" />
                             </a>
                           ) : '-'}
                         </td>
                         <td className="p-4 text-pink-400 font-medium">{log.weight || '-'}</td>
                         <td className="p-4 text-indigo-400 font-medium">{log.sleep_hours || '-'}</td>
+                        <td className="p-4 text-yellow-400 font-medium">{log.sleep_score || '-'}</td>
+                        <td className="p-4 text-green-400 font-medium">{log.steps?.toLocaleString() || '-'}</td>
+                        <td className="p-4 text-red-400 font-medium">{log.resting_heart_rate || '-'}</td>
                         <td className="p-4 text-orange-400">{log.calories_in || '-'}</td>
                         <td className="p-4 text-yellow-400">{log.calories_out || '-'}</td>
                         <td className="p-4 text-sm text-gray-500 max-w-xs truncate" title={log.notes}>{log.notes || '-'}</td>
@@ -237,7 +259,7 @@ export default function HealthDashboard() {
                     ))}
                     {healthData.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="p-8 text-center text-gray-500">
+                        <td colSpan={10} className="p-8 text-center text-gray-500">
                           No health data found. Send some data via Raphael!
                         </td>
                       </tr>
@@ -263,7 +285,7 @@ function StatCard({ title, value, icon, color, borderColor }: { title: string, v
             {icon}
           </div>
         </div>
-        <h2 className="text-3xl font-bold text-white tracking-tight">{value}</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">{value}</h2>
       </div>
       {/* Decorative blurred circle in the background of the card */}
       <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity"></div>
