@@ -11,6 +11,7 @@ import { ArrowLeft, Activity, Heart, Moon, Zap, Flame } from "lucide-react";
 export default function HealthDashboard() {
   const [healthData, setHealthData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -33,6 +34,38 @@ export default function HealthDashboard() {
     fetchData();
   }, []);
 
+  async function syncGarmin() {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/garmin");
+      if (res.ok) {
+        const garminData = await res.json();
+        // push today's data to healthData as a temporary local update until they refresh or backend saves it.
+        // Wait, since we are moving away from the bot, we should modify /api/garmin to actually SAVE it to health.json if we can,
+        // or just append to state for now!
+        const newLog = {
+          id: Date.now().toString(),
+          date: new Date().toISOString(),
+          weight: null,
+          sleep_hours: garminData.sleep_hours,
+          calories_in: null,
+          calories_out: null, // Garmin connect API might not have calories_out directly in our basic script
+          notes: `Garmin Sync - Score: ${garminData.sleep_score || '-'} | Steps: ${garminData.steps || '-'} | RHR: ${garminData.resting_heart_rate || '-'}`,
+          image_url: null,
+        };
+        setHealthData(prev => [...prev, newLog]);
+        alert("Synced from Garmin successfully!");
+      } else {
+        const err = await res.json();
+        alert(`Garmin Sync Error: ${err.error}`);
+      }
+    } catch (err) {
+      alert("Network error during sync.");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   const latestLog = healthData.length > 0 ? healthData[healthData.length - 1] : null;
 
   return (
@@ -52,12 +85,22 @@ export default function HealthDashboard() {
               <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
                 Health Overview
               </h1>
-              <p className="text-gray-400 mt-1">Syncing directly with Raphael 🤖</p>
+              <p className="text-gray-400 mt-1">Real-time Garmin Connect Sync</p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 rounded-full border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
-            <Activity className="w-4 h-4 animate-pulse" />
-            <span className="text-sm font-medium tracking-wider uppercase">Active Tracking</span>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={syncGarmin} 
+              disabled={syncing}
+              className={`flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-xl transition-all border border-blue-500/30 ${syncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Zap className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+              <span className="text-sm font-medium">{syncing ? 'Syncing...' : 'Sync Garmin'}</span>
+            </button>
+            <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 rounded-full border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
+              <Activity className="w-4 h-4 animate-pulse" />
+              <span className="text-sm font-medium tracking-wider uppercase">Active Tracking</span>
+            </div>
           </div>
         </header>
 
