@@ -9,11 +9,14 @@ export async function GET() {
     const password = process.env.GARMIN_PASSWORD;
 
     if (!email || !password) {
+      console.log("Missing credentials");
       return NextResponse.json({ error: "Missing Garmin credentials in .env.local" }, { status: 400 });
     }
+    
+    console.log("Trying to login with", email);
 
-    const client = new GarminConnect();
-    await client.login(email, password);
+    const client = new GarminConnect({ username: email, password: password });
+    await client.login();
 
     const today = new Date();
     
@@ -52,6 +55,6 @@ export async function GET() {
     return NextResponse.json(result);
   } catch (err: any) {
     console.error("Garmin API Error:", err);
-    return NextResponse.json({ error: err.message || "Failed to fetch from Garmin" }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Failed to fetch from Garmin", originalStatus: err.response?.status }, { status: 200 });
   }
 }
