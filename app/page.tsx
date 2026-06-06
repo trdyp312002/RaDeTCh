@@ -89,15 +89,45 @@ export default function HomeDashboard() {
         const totalNetWorth = cash + otherAssets + holdingsValueTHB - liability;
         setNetWorth(totalNetWorth);
         
-        // Generate a smooth curve ending at current net worth
-        setFinanceData([
-          { name: 'Jan', value: totalNetWorth * 0.8 },
-          { name: 'Feb', value: totalNetWorth * 0.85 },
-          { name: 'Mar', value: totalNetWorth * 0.88 },
-          { name: 'Apr', value: totalNetWorth * 0.92 },
-          { name: 'May', value: totalNetWorth * 0.96 },
-          { name: 'Jun', value: totalNetWorth },
-        ]);
+        // Save today's snapshot and fetch real history
+        if (totalNetWorth > 0) {
+          try {
+            // Use en-CA for local YYYY-MM-DD format
+            const dateStr = new Date().toLocaleDateString('en-CA'); 
+
+            await fetch('/api/networth-snapshot', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ date: dateStr, value: totalNetWorth })
+            });
+
+            const histRes = await fetch('/api/networth-snapshot');
+            if (histRes.ok) {
+              const histData = await histRes.json();
+              if (Array.isArray(histData) && histData.length > 0) {
+                let formatted = histData.map((row: any) => {
+                  const [y, m, d] = row.date.split('-');
+                  return { name: `${d}/${m}`, value: row.total_value };
+                });
+                
+                // If only 1 day of data exists, duplicate it so the area chart draws a line
+                if (formatted.length === 1) {
+                  formatted = [
+                    { name: 'Start', value: formatted[0].value },
+                    ...formatted
+                  ];
+                }
+                setFinanceData(formatted);
+                return;
+              }
+            }
+          } catch (e) {
+            console.error("Snapshot error", e);
+          }
+        }
+        
+        // Fallback if no history or error
+        setFinanceData([{ name: 'Today', value: totalNetWorth }]);
         
       } catch (err) {
         console.error("Failed to fetch net worth:", err);
