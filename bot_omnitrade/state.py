@@ -19,9 +19,17 @@ class BotState:
     pnl_history: list = field(default_factory=list)
     strategy_log: list = field(default_factory=list)
     running: bool = False
+    force_agent_run: bool = False
     total_pnl: float = 0.0
     win_count: int = 0
     loss_count: int = 0
-
+    agents_state: dict = field(default_factory=lambda: {
+        "Observer": {"status": "Sleeping", "message": "Zzz..."},
+        "Questioner": {"status": "Sleeping", "message": "Zzz..."},
+        "Advocate": {"status": "Sleeping", "message": "Zzz..."},
+        "Summarizer": {"status": "Sleeping", "message": "Zzz..."},
+        "Executor": {"status": "Sleeping", "message": "Zzz..."},
+        "Supervisor": {"status": "Watching", "message": "Monitoring operation loop..."}
+    })
 
 state = BotState()

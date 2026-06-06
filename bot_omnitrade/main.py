@@ -14,6 +14,7 @@ from routes.trades    import router as trades_router
 from routes.command   import router as command_router
 from routes.positions import router as positions_router
 from routes.webhook   import router as webhook_router
+from routes.agents    import router as agents_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,7 +38,7 @@ app = FastAPI(title="OmniTrade Bot", version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -48,6 +49,7 @@ app.include_router(trades_router,    tags=["trades"])
 app.include_router(command_router,   tags=["command"])
 app.include_router(positions_router, tags=["positions"])
 app.include_router(webhook_router,   tags=["webhook"])
+app.include_router(agents_router,    tags=["agents"])
 
 if __name__ == "__main__":
     import uvicorn

@@ -270,14 +270,6 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
               {cfg.emoji} {cfg.label}
             </p>
             <p className="text-xs text-gray-400 mb-5 max-w-md">{cfg.description}</p>
-            {portfolio === "short_term" && (
-              <div className="mb-6">
-                <a href="/omnitrade" className="inline-flex items-center gap-2 bg-cyan-900/40 hover:bg-cyan-900/60 text-cyan-400 border border-cyan-500/30 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-[0_0_15px_rgba(0,245,255,0.2)]">
-                  <span className="animate-pulse w-2 h-2 rounded-full bg-cyan-400"></span>
-                  Access Omnitrade Trading Bot System
-                </a>
-              </div>
-            )}
             <div className="flex gap-6 flex-wrap">
               <div>
                 <p className="text-[9px] uppercase tracking-widest text-gray-500 mb-0.5">Total Invested</p>

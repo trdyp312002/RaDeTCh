@@ -91,6 +91,7 @@ export default function FinanceDashboard() {
     "Retirement Portfolio",
     "Long-term Portfolio",
     "Short-term Portfolio",
+    "OmniTrade AI Bot",
     "Cash & Safety Net",
     "Monthly Expenses",
     "Personal Financial Statement"
@@ -1283,6 +1284,28 @@ export default function FinanceDashboard() {
         )}
         {isShortTermTab && (
           <PortfolioTab portfolio="short_term" displayCurrency={displayCurrency} fxRates={fxRates} />
+        )}
+
+        {/* ─── D. OMNITRADE AI BOT TAB ─── */}
+        {activeTab === "OmniTrade AI Bot" && (
+          <div className="space-y-8 animate-fadeIn">
+            <div className="bg-gradient-to-br from-cyan-900 to-blue-950 border border-cyan-700/50 rounded-3xl p-6 text-white flex justify-between items-center shadow-lg">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.4em] text-cyan-300 font-semibold mb-1">🤖 AI Trading Agents</p>
+                <h2 className="text-xl font-bold">BAS OMNITRADE HQ</h2>
+              </div>
+              <a href="/omnitrade/agents" target="_blank" rel="noreferrer" className="text-xs bg-cyan-500 hover:bg-cyan-400 text-cyan-950 px-4 py-2 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(0,255,255,0.4)]">
+                Open in Fullscreen ↗
+              </a>
+            </div>
+            <div className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden h-[800px] w-full relative">
+              <iframe 
+                src="/omnitrade/agents" 
+                className="w-full h-full border-0 absolute inset-0"
+                title="OmniTrade AI Agents"
+              />
+            </div>
+          </div>
         )}
 
         {/* ─── C. CASH & SAFETY NET TAB ─── */}

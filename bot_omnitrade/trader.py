@@ -60,10 +60,23 @@ async def _tick():
     state.strategy_log = state.strategy_log[-200:]
     _append_jsonl(_TICK_LOG, log)
 
-    if signal == "buy" and state.position is None:
+    action_to_take = None
+    reason_for_action = signal
+    
+    # Trigger AI validation only when mechanical signal is active to save tokens
+    if signal in ["buy", "sell"] or state.force_agent_run:
+        from agentic_strategy import run_6_agents
+        state.force_agent_run = False
+        pos_str = state.position.side if state.position else None
+        logger.info("Signal '%s' or Force-run detected. Waking up agents...", signal)
+        agent_decision = await run_6_agents(SYMBOL, price, emas, pos_str)
+        action_to_take = agent_decision.get("action")
+        reason_for_action = agent_decision.get("reason", signal)
+    
+    if action_to_take == "buy" and state.position is None:
         await _execute_buy(price)
-    elif signal == "sell" and state.position is not None:
-        await _execute_sell(price, "signal")
+    elif action_to_take == "sell" and state.position is not None:
+        await _execute_sell(price, f"Agent: {reason_for_action}")
     elif state.position and price <= state.position.stop_loss:
         logger.warning("Stop-loss triggered at %.2f", price)
         await _execute_sell(price, "stop_loss")

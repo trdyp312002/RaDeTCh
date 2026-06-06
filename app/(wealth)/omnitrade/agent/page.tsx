@@ -74,6 +74,9 @@ export default function AgentPage() {
         <p className="text-sm" style={{ color: 'var(--text-dim)' }}>
           Browser automation — AI sees, decides, and acts on any website
         </p>
+        <a href="/omnitrade/agents" className="inline-block mt-4 px-4 py-2 bg-blue-500/20 border border-blue-400 text-blue-300 rounded hover:bg-blue-500/40 text-center font-pixel" style={{ fontSize: '10px' }}>
+          → VIEW LIVE AGENT AQUARIUM (CRYPTO BOT)
+        </a>
       </div>
 
       {/* Flow label */}
