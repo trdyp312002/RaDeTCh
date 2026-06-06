@@ -47,7 +47,25 @@ export default function HealthDashboard() {
     fetchData();
   }, []);
 
-  async function syncGarmin() {
+  useEffect(() => {
+    const savedGarmin = localStorage.getItem('garminSyncToday');
+    let shouldSync = true;
+    if (savedGarmin) {
+      try {
+        const parsed = JSON.parse(savedGarmin);
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (parsed.date.startsWith(todayStr)) {
+          shouldSync = false;
+        }
+      } catch (e) {}
+    }
+
+    if (shouldSync) {
+      syncGarmin(true);
+    }
+  }, []);
+
+  async function syncGarmin(isAuto = false) {
     setSyncing(true);
     try {
       const res = await fetch("/api/garmin");
@@ -67,24 +85,36 @@ export default function HealthDashboard() {
           image_url: null,
         };
 
-        // Save to localStorage so it survives page refreshes
+        // Save permanently to the database
+        await fetch("/api/health", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sleep_hours: garminData.sleep_hours,
+            sleep_score: garminData.sleep_score,
+            steps: garminData.steps,
+            resting_heart_rate: garminData.resting_heart_rate,
+            notes: "Garmin Auto-Sync"
+          })
+        });
+
+        // Save to localStorage for quick frontend update logic
         localStorage.setItem('garminSyncToday', JSON.stringify({
           date: new Date().toISOString(),
           data: newLog
         }));
 
         setHealthData(prev => {
-          // Remove old auto-syncs if any exist in current state
           const filtered = prev.filter(p => p.notes !== "Garmin Auto-Sync");
           return [...filtered, newLog];
         });
-        alert("Synced from Garmin successfully!");
+        if (!isAuto) alert("Synced from Garmin successfully!");
       } else {
         const err = await res.json();
-        alert(`Garmin Sync Error: ${err.error}`);
+        if (!isAuto) alert(`Garmin Sync Error: ${err.error}`);
       }
     } catch (err) {
-      alert("Network error during sync.");
+      if (!isAuto) alert("Network error during sync.");
     } finally {
       setSyncing(false);
     }
@@ -113,14 +143,12 @@ export default function HealthDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button 
-              onClick={syncGarmin} 
-              disabled={syncing}
-              className={`flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-xl transition-all border border-blue-500/30 ${syncing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <Zap className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-              <span className="text-sm font-medium">{syncing ? 'Syncing...' : 'Sync Garmin'}</span>
-            </button>
+            {syncing && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-xl border border-blue-500/30">
+                <Zap className="w-4 h-4 animate-spin" />
+                <span className="text-sm font-medium">Auto-Syncing...</span>
+              </div>
+            )}
             <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 rounded-full border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
               <Activity className="w-4 h-4 animate-pulse" />
               <span className="text-sm font-medium tracking-wider uppercase">Active Tracking</span>

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -23,4 +24,234 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* === OMNITRADE THEME CSS === */
+
+
+
+.omnitrade-theme {
+  --bg-dark: #060612;
+  --bg-card: rgba(8, 12, 45, 0.55);
+  --bg-card-hover: rgba(12, 18, 65, 0.70);
+  --border-dim: rgba(70, 90, 180, 0.20);
+  --border-bright: rgba(100, 140, 255, 0.30);
+  --text-primary: #d8e0ff;
+  --text-dim: #5a6890;
+  --cyan: #00d4ff;
+  --magenta: #cc44ff;
+  --yellow: #ffee00;
+  --green: #00ff88;
+  --gold: #ffcc00;
+  --red: #ff4466;
+  --purple-bright: #a060ff;
+  --orange-bright: #ff8833;
+  --glass-border: rgba(120, 160, 255, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+
+
+/* ── Space Background ────────────────────────────────────── */
+.space-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #060612;
+}
+
+.space-stars {
+  position: absolute;
+  inset: 0;
+}
+
+/* Small star dots via box-shadow on 1×1 element */
+.space-stars::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    120px  80px 0 0 rgba(255,255,255,0.85),
+    340px  45px 0 0 rgba(255,255,255,0.65),
+    560px  95px 0 0 rgba(255,255,255,0.90),
+    780px  30px 0 0 rgba(255,255,255,0.70),
+    990px  75px 0 0 rgba(255,255,255,0.80),
+   1200px  55px 0 0 rgba(255,255,255,0.60),
+   1430px  85px 0 0 rgba(255,255,255,0.85),
+   1660px  40px 0 0 rgba(255,255,255,0.70),
+   1870px  70px 0 0 rgba(255,255,255,0.80),
+     80px 200px 0 0 rgba(255,255,255,0.60),
+    290px 240px 0 0 rgba(255,255,255,0.90),
+    510px 185px 0 0 rgba(255,255,255,0.70),
+    730px 215px 0 0 rgba(255,255,255,0.80),
+    950px 195px 0 0 rgba(255,255,255,0.65),
+   1170px 230px 0 0 rgba(255,255,255,0.85),
+   1390px 200px 0 0 rgba(255,255,255,0.70),
+   1610px 220px 0 0 rgba(255,255,255,0.90),
+   1840px 190px 0 0 rgba(255,255,255,0.60),
+    190px 350px 0 0 rgba(255,255,255,0.80),
+    410px 380px 0 0 rgba(255,255,255,0.65),
+    630px 340px 0 0 rgba(255,255,255,0.90),
+    850px 370px 0 0 rgba(255,255,255,0.70),
+   1070px 355px 0 0 rgba(255,255,255,0.85),
+   1290px 385px 0 0 rgba(255,255,255,0.60),
+   1510px 345px 0 0 rgba(255,255,255,0.80),
+   1730px 375px 0 0 rgba(255,255,255,0.70),
+     60px 480px 0 0 rgba(255,255,255,0.90),
+    280px 510px 0 0 rgba(255,255,255,0.65),
+    500px 470px 0 0 rgba(255,255,255,0.80),
+    720px 495px 0 0 rgba(255,255,255,0.70),
+    940px 475px 0 0 rgba(255,255,255,0.85),
+   1160px 505px 0 0 rgba(255,255,255,0.60),
+   1380px 480px 0 0 rgba(255,255,255,0.90),
+   1600px 500px 0 0 rgba(255,255,255,0.70),
+   1820px 485px 0 0 rgba(255,255,255,0.80),
+    150px 620px 0 0 rgba(255,255,255,0.65),
+    370px 640px 0 0 rgba(255,255,255,0.85),
+    590px 610px 0 0 rgba(255,255,255,0.70),
+    810px 635px 0 0 rgba(255,255,255,0.90),
+   1030px 620px 0 0 rgba(255,255,255,0.60),
+   1250px 645px 0 0 rgba(255,255,255,0.80),
+   1470px 615px 0 0 rgba(255,255,255,0.85),
+   1690px 640px 0 0 rgba(255,255,255,0.70),
+     30px 750px 0 0 rgba(255,255,255,0.90),
+    250px 780px 0 0 rgba(255,255,255,0.65),
+    470px 755px 0 0 rgba(255,255,255,0.80),
+    690px 775px 0 0 rgba(255,255,255,0.70),
+    910px 765px 0 0 rgba(255,255,255,0.85),
+   1130px 785px 0 0 rgba(255,255,255,0.60),
+   1350px 750px 0 0 rgba(255,255,255,0.90),
+   1570px 770px 0 0 rgba(255,255,255,0.70),
+   1790px 755px 0 0 rgba(255,255,255,0.80),
+    110px 880px 0 0 rgba(255,255,255,0.65),
+    330px 905px 0 0 rgba(255,255,255,0.85),
+    550px 875px 0 0 rgba(255,255,255,0.70),
+    770px 895px 0 0 rgba(255,255,255,0.90),
+    990px 885px 0 0 rgba(255,255,255,0.60),
+   1210px 910px 0 0 rgba(255,255,255,0.80),
+   1430px 880px 0 0 rgba(255,255,255,0.70),
+   1650px 900px 0 0 rgba(255,255,255,0.85);
+}
+
+/* Glowing stars (2×2, blurred) */
+.space-stars::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(210, 225, 255, 1);
+  box-shadow:
+    260px  130px 3px 1px rgba(200,220,255,0.95),
+    820px  290px 3px 1px rgba(180,210,255,0.90),
+   1440px  160px 3px 1px rgba(210,225,255,0.95),
+   1760px  420px 3px 1px rgba(200,215,255,0.85),
+    490px  550px 3px 1px rgba(180,220,255,0.90),
+   1080px  480px 3px 1px rgba(200,210,255,0.85),
+   1650px  580px 3px 1px rgba(190,220,255,0.90),
+    340px  720px 3px 1px rgba(200,220,255,0.85),
+    900px  800px 3px 1px rgba(210,200,255,0.90),
+   1520px  730px 3px 1px rgba(190,215,255,0.95),
+    170px  940px 3px 1px rgba(200,220,255,0.85),
+    730px  970px 3px 1px rgba(185,210,255,0.90);
+}
+
+/* Nebula cloud overlays */
+.space-nebula {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 900px 650px at 12% 30%,  rgba(80,  20, 200, 0.28) 0%, transparent 65%),
+    radial-gradient(ellipse 700px 550px at 88% 18%,  rgba(0,  130, 200, 0.20) 0%, transparent 65%),
+    radial-gradient(ellipse 600px 450px at 55% 88%,  rgba(200, 55,  10, 0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 400px 300px at 72% 55%,  rgba(60,   0, 160, 0.18) 0%, transparent 60%);
+}
+
+/* ── Glassmorphism ───────────────────────────────────────── */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+}
+
+/* ── Pixel font ──────────────────────────────────────────── */
+.font-pixel {
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* ── Pixel border (hard shadow) ──────────────────────────── */
+.pixel-border {
+  box-shadow: 4px 4px 0 0 currentColor;
+}
+
+/* ── Scanline overlay ────────────────────────────────────── */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+}
+
+/* ── Neon glow text ──────────────────────────────────────── */
+.glow-cyan    { text-shadow: 0 0 12px var(--cyan),          0 0 28px var(--cyan); }
+.glow-green   { text-shadow: 0 0 12px var(--green),         0 0 28px var(--green); }
+.glow-magenta { text-shadow: 0 0 12px var(--magenta),       0 0 28px var(--magenta); }
+.glow-gold    { text-shadow: 0 0 12px var(--gold),          0 0 28px var(--gold); }
+.glow-purple  { text-shadow: 0 0 12px var(--purple-bright), 0 0 28px var(--purple-bright); }
+
+/* ── Blink ───────────────────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.blink { animation: blink 1s step-end infinite; }
+
+/* ── XP bar fill ─────────────────────────────────────────── */
+@keyframes fill-bar {
+  from { width: 0%; }
+  to   { width: var(--bar-width); }
+}
+.animate-fill { animation: fill-bar 1.5s ease-out forwards; }
+
+/* ── Card hover ──────────────────────────────────────────── */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translate(-2px, -2px);
+}
+
+/* ── Retro button ────────────────────────────────────────── */
+.btn-pixel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  border: 2px solid currentColor;
+  box-shadow: 3px 3px 0 currentColor;
+  transition: box-shadow 0.1s, transform 0.1s;
+  cursor: pointer;
+}
+.btn-pixel:active {
+  box-shadow: 0 0 0 currentColor;
+  transform: translate(3px, 3px);
 }

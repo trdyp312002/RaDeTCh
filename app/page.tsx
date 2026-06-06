@@ -211,20 +211,27 @@ export default function HomeDashboard() {
         </div>
 
         {/* Bottom Modules */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-          <ModuleCard 
-            title="Music Library" 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          <ModuleCard
+            title="Music Library"
             desc="1,125 songs across Japanese, Korean, Thai, and others."
             icon="🎧"
             href="/music"
             color="bg-rose-50 border-rose-100 text-rose-900"
           />
-          <ModuleCard 
-            title="Food Menu" 
+          <ModuleCard
+            title="Food Menu"
             desc="Searchable recipe database. 5+ cuisines."
             icon="🍜"
             href="/menu"
             color="bg-orange-50 border-orange-100 text-orange-900"
+          />
+          <ModuleCard
+            title="Agent Office"
+            desc="Live Multi-Agent workspace. Isometric 3D office view."
+            icon="🏢"
+            href="/agents"
+            color="bg-indigo-50 border-indigo-100 text-indigo-900"
           />
         </div>
 

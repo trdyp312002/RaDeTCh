@@ -28,6 +28,9 @@ export async function POST(req: Request) {
       date: new Date().toISOString().replace('T', ' ').substring(0, 19),
       weight: body.weight ? Number(body.weight) : null,
       sleep_hours: body.sleep_hours ? Number(body.sleep_hours) : null,
+      sleep_score: body.sleep_score ? Number(body.sleep_score) : null,
+      steps: body.steps ? Number(body.steps) : null,
+      resting_heart_rate: body.resting_heart_rate ? Number(body.resting_heart_rate) : null,
       calories_in: body.calories_in ? Number(body.calories_in) : null,
       calories_out: body.calories_out ? Number(body.calories_out) : null,
       notes: body.notes || ""

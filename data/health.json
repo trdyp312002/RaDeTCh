@@ -18,6 +18,18 @@
       "calories_out": null,
       "notes": "แสดงข้อมูล Sleep Score (68), คุณภาพการนอน (Fair Quality), ระยะเวลาการนอน (5h 13m) พร้อมกราฟไทม์ไลน์การนอน นอกจากนี้ยังมีส่วนแนะนำการติดตามโภชนาการ และการแสดงข้อมูล Heart Rate กับ Intensity Minutes",
       "image_url": "/uploads/health/1780212763_screenshot_20260531_095049_garmin_connect.jpg"
+    },
+    {
+      "id": "1780740824815",
+      "date": "2026-06-06 10:13:44",
+      "weight": null,
+      "sleep_hours": 3.76,
+      "sleep_score": 50,
+      "steps": null,
+      "resting_heart_rate": 46,
+      "calories_in": null,
+      "calories_out": null,
+      "notes": "Garmin Auto-Sync"
     }
   ]
 }
