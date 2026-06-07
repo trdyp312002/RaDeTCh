@@ -4,20 +4,20 @@ export default function Portal() {
   return (
     <div className="h-screen w-full flex flex-col md:flex-row overflow-hidden absolute inset-0 z-[100]">
       
-      {/* LEFT: Life OS */}
-      <Link 
-        href="/life" 
+      {/* LEFT: Health OS */}
+      <Link
+        href="/health"
         className="flex-1 relative group bg-[#FAF6F0] flex flex-col items-center justify-center overflow-hidden transition-all duration-500 hover:flex-[1.2]"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 to-rose-100/40 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-100/40 to-rose-100/40 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
         <div className="relative z-10 text-center transform group-hover:-translate-y-4 transition-transform duration-500">
-          <div className="w-24 h-24 mx-auto bg-white rounded-full shadow-xl flex items-center justify-center text-4xl mb-6 group-hover:scale-110 transition-transform duration-500 shadow-orange-200/50">
-            ☀️
+          <div className="w-24 h-24 mx-auto bg-white rounded-full shadow-xl flex items-center justify-center text-4xl mb-6 group-hover:scale-110 transition-transform duration-500 shadow-purple-200/50">
+            ❤️
           </div>
-          <p className="text-xs font-bold tracking-[0.3em] uppercase text-stone-400 mb-2">Personal & Daily</p>
-          <h2 className="text-4xl md:text-5xl font-black text-stone-800 tracking-tight">LIFE OS</h2>
+          <p className="text-xs font-bold tracking-[0.3em] uppercase text-stone-400 mb-2">Sleep · Food · Fitness</p>
+          <h2 className="text-4xl md:text-5xl font-black text-stone-800 tracking-tight">HEALTH OS</h2>
           <div className="mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 flex gap-4 justify-center text-stone-400 text-sm">
-            <span>Routine</span> • <span>Travel</span> • <span>Food</span>
+            <span>Sleep</span> • <span>Nutrition</span> • <span>Exercise</span>
           </div>
         </div>
       </Link>
@@ -31,7 +31,7 @@ export default function Portal() {
 
       {/* RIGHT: Wealth OS */}
       <Link 
-        href="/omnitrade" 
+        href="/project-omnitech" 
         className="flex-1 relative group bg-[#050B14] flex flex-col items-center justify-center overflow-hidden transition-all duration-500 hover:flex-[1.2]"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/20 to-blue-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -42,9 +42,9 @@ export default function Portal() {
             🤖
           </div>
           <p className="text-xs font-bold tracking-[0.3em] uppercase text-cyan-500/70 mb-2">Automated Trading Firm</p>
-          <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">WEALTH & AI</h2>
+          <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">WEALTH OS</h2>
           <div className="mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 flex gap-4 justify-center text-cyan-600 text-sm font-mono">
-            <span>OMNITRADE</span> _ <span>FINANCE</span> _ <span>LEDGER</span>
+            <span>TRADING</span> _ <span>FINANCE</span> _ <span>PORTFOLIO</span>
           </div>
         </div>
       </Link>

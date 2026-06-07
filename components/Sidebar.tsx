@@ -5,18 +5,17 @@ import { useState, useEffect } from "react"
 
 const wealthNavItems = [
   { href: "/", label: "Portal", emoji: "🌌" },
-  { href: "/omnitrade", label: "Omnitrade HQ", emoji: "🤖" },
+  { href: "/project-omnitech", label: "Project Omnitech", emoji: "🚀" },
+  { href: "/claw-empire", label: "Claw Empire", emoji: "⚔️" },
   { href: "/finance", label: "Finance", emoji: "💰" },
 ]
 
 const lifeNavItems = [
   { href: "/", label: "Portal", emoji: "🌌" },
-  { href: "/life", label: "Overview", emoji: "🏠" },
+  { href: "/health", label: "Health", emoji: "❤️" },
   { href: "/routine", label: "Routine", emoji: "📋" },
-  { href: "/menu", label: "Food", emoji: "🍜" },
   { href: "/travel", label: "Travel", emoji: "✈️" },
   { href: "/music", label: "Music", emoji: "🎵" },
-  { href: "/exercise", label: "Exercise", emoji: "💪" },
   { href: "/relationships", label: "Relationships", emoji: "🤝" },
 ]
 
@@ -38,7 +37,7 @@ export default function Sidebar() {
       .catch(() => setPick(null))
   }, [])
 
-  const isWealthMode = path.startsWith("/omnitrade") || path.startsWith("/finance")
+  const isWealthMode = path.startsWith("/project-omnitech") || path.startsWith("/claw-empire") || path.startsWith("/finance")
   const isPortal = path === "/"
 
   // Hide completely on the dual-portal home page
@@ -57,7 +56,7 @@ export default function Sidebar() {
         
         <Link href="/" className="block group shrink-0">
           <span className={`text-[9px] uppercase tracking-[0.5em] font-bold block leading-none mb-0.5 transition-colors ${isWealthMode ? "text-cyan-600 group-hover:text-cyan-400" : "text-gray-400 group-hover:text-gray-600"}`}>
-            {isWealthMode ? "Wealth OS" : "Life OS"}
+            {isWealthMode ? "Wealth OS" : "Health OS"}
           </span>
           <span className={`text-lg font-black tracking-tight leading-none ${isWealthMode ? "text-white" : "text-gray-900"}`}>RaDeTCh</span>
         </Link>
