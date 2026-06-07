@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:next\" \"npm run dev:claw\"",
-    "dev:next": "next dev",
+    "dev:next": "next dev -H 0.0.0.0",
     "dev:claw": "cd claw-empire && npm run dev",
     "build": "next build",
     "start": "next start",
