@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 
 const wealthNavItems = [
   { href: "/", label: "Portal", emoji: "🌌" },
-  { href: "/project-omnitech", label: "Project Omnitech", emoji: "🚀" },
+  { href: "/project-omnitech", label: "OmniTrade", emoji: "🚀" },
   { href: "/claw-empire", label: "Claw Empire", emoji: "⚔️" },
   { href: "/finance", label: "Finance", emoji: "💰" },
 ]
