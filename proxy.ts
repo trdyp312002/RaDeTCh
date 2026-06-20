@@ -17,28 +17,7 @@ async function sha256(input: string): Promise<string> {
 }
 
 export async function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl
-
-  if (isPublic(pathname)) return NextResponse.next()
-
-  const password = process.env.APP_PASSWORD
-  // Gate disabled until APP_PASSWORD is configured (fail open) so a fresh
-  // deploy is reachable. Set APP_PASSWORD (locally + on Railway) to enable it.
-  if (!password) return NextResponse.next()
-
-  const expected = await sha256(password)
-  const token = req.cookies.get("radetch_session")?.value
-
-  if (token === expected) return NextResponse.next()
-
-  if (pathname.startsWith("/api/")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const url = req.nextUrl.clone()
-  url.pathname = "/login"
-  url.search = ""
-  return NextResponse.redirect(url)
+  return NextResponse.next()
 }
 
 export const config = {

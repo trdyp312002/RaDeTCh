@@ -1098,6 +1098,42 @@
       "calories_in": null,
       "calories_out": null,
       "notes": "Garmin Auto-Sync"
+    },
+    {
+      "id": "1780919187068",
+      "date": "2026-06-08 11:46:27",
+      "weight": null,
+      "sleep_hours": 6.68,
+      "sleep_score": 80,
+      "steps": null,
+      "resting_heart_rate": 47,
+      "calories_in": null,
+      "calories_out": null,
+      "notes": "Garmin Auto-Sync"
+    },
+    {
+      "id": "sync_2026-06-09_1780956009578",
+      "date": "2026-06-09",
+      "weight": null,
+      "sleep_hours": 4.8,
+      "sleep_score": 63,
+      "steps": null,
+      "resting_heart_rate": 49,
+      "calories_in": null,
+      "calories_out": null,
+      "notes": "Garmin Auto-Sync"
+    },
+    {
+      "id": "sync_2026-06-14_1781388022857",
+      "date": "2026-06-14",
+      "weight": null,
+      "sleep_hours": 6.93,
+      "sleep_score": 84,
+      "steps": null,
+      "resting_heart_rate": 51,
+      "calories_in": null,
+      "calories_out": null,
+      "notes": "Garmin Auto-Sync"
     }
   ]
 }

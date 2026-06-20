@@ -8,10 +8,10 @@ export async function GET(req: NextRequest) {
     const holdingId = new URL(req.url).searchParams.get("holdingId")
     const rowsRes = holdingId
       ? await db.execute({
-          sql: "SELECT * FROM transactions WHERE holding_id = ? ORDER BY date DESC",
+          sql: "SELECT t.*, h.symbol, h.name FROM transactions t LEFT JOIN holdings h ON t.holding_id = h.id WHERE t.holding_id = ? ORDER BY t.date DESC",
           args: [holdingId]
         })
-      : await db.execute("SELECT * FROM transactions ORDER BY date DESC")
+      : await db.execute("SELECT t.*, h.symbol, h.name FROM transactions t LEFT JOIN holdings h ON t.holding_id = h.id ORDER BY t.date DESC")
     return NextResponse.json(rowsRes.rows)
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Internal server error"

@@ -451,6 +451,2841 @@
       "status": "not-visited",
       "visitedDate": null,
       "note": ""
+    },
+    {
+      "id": "world-afghanistan-capital",
+      "name": "Afghanistan Exploration",
+      "nameJP": "Afghanistan",
+      "region": "Capital, Afghanistan",
+      "desc": "Explore the beautiful country of Afghanistan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-albania-capital",
+      "name": "Albania Exploration",
+      "nameJP": "Albania",
+      "region": "Capital, Albania",
+      "desc": "Explore the beautiful country of Albania.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-algeria-capital",
+      "name": "Algeria Exploration",
+      "nameJP": "Algeria",
+      "region": "Capital, Algeria",
+      "desc": "Explore the beautiful country of Algeria.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-andorra-capital",
+      "name": "Andorra Exploration",
+      "nameJP": "Andorra",
+      "region": "Capital, Andorra",
+      "desc": "Explore the beautiful country of Andorra.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-angola-capital",
+      "name": "Angola Exploration",
+      "nameJP": "Angola",
+      "region": "Capital, Angola",
+      "desc": "Explore the beautiful country of Angola.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-antigua-and-barbuda-capital",
+      "name": "Antigua and Barbuda Exploration",
+      "nameJP": "Antigua and Barbuda",
+      "region": "Capital, Antigua and Barbuda",
+      "desc": "Explore the beautiful country of Antigua and Barbuda.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-argentina-capital",
+      "name": "Argentina Exploration",
+      "nameJP": "Argentina",
+      "region": "Capital, Argentina",
+      "desc": "Explore the beautiful country of Argentina.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-armenia-capital",
+      "name": "Armenia Exploration",
+      "nameJP": "Armenia",
+      "region": "Capital, Armenia",
+      "desc": "Explore the beautiful country of Armenia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-australia-capital",
+      "name": "Australia Exploration",
+      "nameJP": "Australia",
+      "region": "Capital, Australia",
+      "desc": "Explore the beautiful country of Australia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-austria-capital",
+      "name": "Austria Exploration",
+      "nameJP": "Austria",
+      "region": "Capital, Austria",
+      "desc": "Explore the beautiful country of Austria.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-azerbaijan-capital",
+      "name": "Azerbaijan Exploration",
+      "nameJP": "Azerbaijan",
+      "region": "Capital, Azerbaijan",
+      "desc": "Explore the beautiful country of Azerbaijan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-bahamas-capital",
+      "name": "Bahamas Exploration",
+      "nameJP": "Bahamas",
+      "region": "Capital, Bahamas",
+      "desc": "Explore the beautiful country of Bahamas.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-bahrain-capital",
+      "name": "Bahrain Exploration",
+      "nameJP": "Bahrain",
+      "region": "Capital, Bahrain",
+      "desc": "Explore the beautiful country of Bahrain.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-bangladesh-capital",
+      "name": "Bangladesh Exploration",
+      "nameJP": "Bangladesh",
+      "region": "Capital, Bangladesh",
+      "desc": "Explore the beautiful country of Bangladesh.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-barbados-capital",
+      "name": "Barbados Exploration",
+      "nameJP": "Barbados",
+      "region": "Capital, Barbados",
+      "desc": "Explore the beautiful country of Barbados.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-belarus-capital",
+      "name": "Belarus Exploration",
+      "nameJP": "Belarus",
+      "region": "Capital, Belarus",
+      "desc": "Explore the beautiful country of Belarus.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-belgium-capital",
+      "name": "Belgium Exploration",
+      "nameJP": "Belgium",
+      "region": "Capital, Belgium",
+      "desc": "Explore the beautiful country of Belgium.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-belize-capital",
+      "name": "Belize Exploration",
+      "nameJP": "Belize",
+      "region": "Capital, Belize",
+      "desc": "Explore the beautiful country of Belize.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-benin-capital",
+      "name": "Benin Exploration",
+      "nameJP": "Benin",
+      "region": "Capital, Benin",
+      "desc": "Explore the beautiful country of Benin.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-bhutan-capital",
+      "name": "Bhutan Exploration",
+      "nameJP": "Bhutan",
+      "region": "Capital, Bhutan",
+      "desc": "Explore the beautiful country of Bhutan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-bolivia-capital",
+      "name": "Bolivia Exploration",
+      "nameJP": "Bolivia",
+      "region": "Capital, Bolivia",
+      "desc": "Explore the beautiful country of Bolivia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-bosnia-and-herzegovina-capital",
+      "name": "Bosnia and Herzegovina Exploration",
+      "nameJP": "Bosnia and Herzegovina",
+      "region": "Capital, Bosnia and Herzegovina",
+      "desc": "Explore the beautiful country of Bosnia and Herzegovina.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-botswana-capital",
+      "name": "Botswana Exploration",
+      "nameJP": "Botswana",
+      "region": "Capital, Botswana",
+      "desc": "Explore the beautiful country of Botswana.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-brazil-capital",
+      "name": "Brazil Exploration",
+      "nameJP": "Brazil",
+      "region": "Capital, Brazil",
+      "desc": "Explore the beautiful country of Brazil.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-brunei-capital",
+      "name": "Brunei Exploration",
+      "nameJP": "Brunei",
+      "region": "Capital, Brunei",
+      "desc": "Explore the beautiful country of Brunei.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-bulgaria-capital",
+      "name": "Bulgaria Exploration",
+      "nameJP": "Bulgaria",
+      "region": "Capital, Bulgaria",
+      "desc": "Explore the beautiful country of Bulgaria.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-burkina-faso-capital",
+      "name": "Burkina Faso Exploration",
+      "nameJP": "Burkina Faso",
+      "region": "Capital, Burkina Faso",
+      "desc": "Explore the beautiful country of Burkina Faso.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-burundi-capital",
+      "name": "Burundi Exploration",
+      "nameJP": "Burundi",
+      "region": "Capital, Burundi",
+      "desc": "Explore the beautiful country of Burundi.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-c-te-d-ivoire-capital",
+      "name": "Côte d'Ivoire Exploration",
+      "nameJP": "Côte d'Ivoire",
+      "region": "Capital, Côte d'Ivoire",
+      "desc": "Explore the beautiful country of Côte d'Ivoire.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-cabo-verde-capital",
+      "name": "Cabo Verde Exploration",
+      "nameJP": "Cabo Verde",
+      "region": "Capital, Cabo Verde",
+      "desc": "Explore the beautiful country of Cabo Verde.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-cambodia-capital",
+      "name": "Cambodia Exploration",
+      "nameJP": "Cambodia",
+      "region": "Capital, Cambodia",
+      "desc": "Explore the beautiful country of Cambodia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-cameroon-capital",
+      "name": "Cameroon Exploration",
+      "nameJP": "Cameroon",
+      "region": "Capital, Cameroon",
+      "desc": "Explore the beautiful country of Cameroon.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-canada-capital",
+      "name": "Canada Exploration",
+      "nameJP": "Canada",
+      "region": "Capital, Canada",
+      "desc": "Explore the beautiful country of Canada.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-central-african-republic-capital",
+      "name": "Central African Republic Exploration",
+      "nameJP": "Central African Republic",
+      "region": "Capital, Central African Republic",
+      "desc": "Explore the beautiful country of Central African Republic.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-chad-capital",
+      "name": "Chad Exploration",
+      "nameJP": "Chad",
+      "region": "Capital, Chad",
+      "desc": "Explore the beautiful country of Chad.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-chile-capital",
+      "name": "Chile Exploration",
+      "nameJP": "Chile",
+      "region": "Capital, Chile",
+      "desc": "Explore the beautiful country of Chile.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-china-capital",
+      "name": "China Exploration",
+      "nameJP": "China",
+      "region": "Capital, China",
+      "desc": "Explore the beautiful country of China.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-colombia-capital",
+      "name": "Colombia Exploration",
+      "nameJP": "Colombia",
+      "region": "Capital, Colombia",
+      "desc": "Explore the beautiful country of Colombia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-comoros-capital",
+      "name": "Comoros Exploration",
+      "nameJP": "Comoros",
+      "region": "Capital, Comoros",
+      "desc": "Explore the beautiful country of Comoros.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-congo--congo-brazzaville--capital",
+      "name": "Congo (Congo-Brazzaville) Exploration",
+      "nameJP": "Congo (Congo-Brazzaville)",
+      "region": "Capital, Congo (Congo-Brazzaville)",
+      "desc": "Explore the beautiful country of Congo (Congo-Brazzaville).",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-costa-rica-capital",
+      "name": "Costa Rica Exploration",
+      "nameJP": "Costa Rica",
+      "region": "Capital, Costa Rica",
+      "desc": "Explore the beautiful country of Costa Rica.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-croatia-capital",
+      "name": "Croatia Exploration",
+      "nameJP": "Croatia",
+      "region": "Capital, Croatia",
+      "desc": "Explore the beautiful country of Croatia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-cuba-capital",
+      "name": "Cuba Exploration",
+      "nameJP": "Cuba",
+      "region": "Capital, Cuba",
+      "desc": "Explore the beautiful country of Cuba.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-cyprus-capital",
+      "name": "Cyprus Exploration",
+      "nameJP": "Cyprus",
+      "region": "Capital, Cyprus",
+      "desc": "Explore the beautiful country of Cyprus.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-czechia-capital",
+      "name": "Czechia Exploration",
+      "nameJP": "Czechia",
+      "region": "Capital, Czechia",
+      "desc": "Explore the beautiful country of Czechia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-democratic-republic-of-the-congo-capital",
+      "name": "Democratic Republic of the Congo Exploration",
+      "nameJP": "Democratic Republic of the Congo",
+      "region": "Capital, Democratic Republic of the Congo",
+      "desc": "Explore the beautiful country of Democratic Republic of the Congo.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-denmark-capital",
+      "name": "Denmark Exploration",
+      "nameJP": "Denmark",
+      "region": "Capital, Denmark",
+      "desc": "Explore the beautiful country of Denmark.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-djibouti-capital",
+      "name": "Djibouti Exploration",
+      "nameJP": "Djibouti",
+      "region": "Capital, Djibouti",
+      "desc": "Explore the beautiful country of Djibouti.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-dominica-capital",
+      "name": "Dominica Exploration",
+      "nameJP": "Dominica",
+      "region": "Capital, Dominica",
+      "desc": "Explore the beautiful country of Dominica.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-dominican-republic-capital",
+      "name": "Dominican Republic Exploration",
+      "nameJP": "Dominican Republic",
+      "region": "Capital, Dominican Republic",
+      "desc": "Explore the beautiful country of Dominican Republic.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-ecuador-capital",
+      "name": "Ecuador Exploration",
+      "nameJP": "Ecuador",
+      "region": "Capital, Ecuador",
+      "desc": "Explore the beautiful country of Ecuador.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-egypt-capital",
+      "name": "Egypt Exploration",
+      "nameJP": "Egypt",
+      "region": "Capital, Egypt",
+      "desc": "Explore the beautiful country of Egypt.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-el-salvador-capital",
+      "name": "El Salvador Exploration",
+      "nameJP": "El Salvador",
+      "region": "Capital, El Salvador",
+      "desc": "Explore the beautiful country of El Salvador.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-equatorial-guinea-capital",
+      "name": "Equatorial Guinea Exploration",
+      "nameJP": "Equatorial Guinea",
+      "region": "Capital, Equatorial Guinea",
+      "desc": "Explore the beautiful country of Equatorial Guinea.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-eritrea-capital",
+      "name": "Eritrea Exploration",
+      "nameJP": "Eritrea",
+      "region": "Capital, Eritrea",
+      "desc": "Explore the beautiful country of Eritrea.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-estonia-capital",
+      "name": "Estonia Exploration",
+      "nameJP": "Estonia",
+      "region": "Capital, Estonia",
+      "desc": "Explore the beautiful country of Estonia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-eswatini-capital",
+      "name": "Eswatini Exploration",
+      "nameJP": "Eswatini",
+      "region": "Capital, Eswatini",
+      "desc": "Explore the beautiful country of Eswatini.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-ethiopia-capital",
+      "name": "Ethiopia Exploration",
+      "nameJP": "Ethiopia",
+      "region": "Capital, Ethiopia",
+      "desc": "Explore the beautiful country of Ethiopia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-fiji-capital",
+      "name": "Fiji Exploration",
+      "nameJP": "Fiji",
+      "region": "Capital, Fiji",
+      "desc": "Explore the beautiful country of Fiji.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-finland-capital",
+      "name": "Finland Exploration",
+      "nameJP": "Finland",
+      "region": "Capital, Finland",
+      "desc": "Explore the beautiful country of Finland.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-france-capital",
+      "name": "France Exploration",
+      "nameJP": "France",
+      "region": "Capital, France",
+      "desc": "Explore the beautiful country of France.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-gabon-capital",
+      "name": "Gabon Exploration",
+      "nameJP": "Gabon",
+      "region": "Capital, Gabon",
+      "desc": "Explore the beautiful country of Gabon.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-gambia-capital",
+      "name": "Gambia Exploration",
+      "nameJP": "Gambia",
+      "region": "Capital, Gambia",
+      "desc": "Explore the beautiful country of Gambia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-georgia-capital",
+      "name": "Georgia Exploration",
+      "nameJP": "Georgia",
+      "region": "Capital, Georgia",
+      "desc": "Explore the beautiful country of Georgia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-germany-capital",
+      "name": "Germany Exploration",
+      "nameJP": "Germany",
+      "region": "Capital, Germany",
+      "desc": "Explore the beautiful country of Germany.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-ghana-capital",
+      "name": "Ghana Exploration",
+      "nameJP": "Ghana",
+      "region": "Capital, Ghana",
+      "desc": "Explore the beautiful country of Ghana.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-greece-capital",
+      "name": "Greece Exploration",
+      "nameJP": "Greece",
+      "region": "Capital, Greece",
+      "desc": "Explore the beautiful country of Greece.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-grenada-capital",
+      "name": "Grenada Exploration",
+      "nameJP": "Grenada",
+      "region": "Capital, Grenada",
+      "desc": "Explore the beautiful country of Grenada.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-guatemala-capital",
+      "name": "Guatemala Exploration",
+      "nameJP": "Guatemala",
+      "region": "Capital, Guatemala",
+      "desc": "Explore the beautiful country of Guatemala.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-guinea-capital",
+      "name": "Guinea Exploration",
+      "nameJP": "Guinea",
+      "region": "Capital, Guinea",
+      "desc": "Explore the beautiful country of Guinea.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-guinea-bissau-capital",
+      "name": "Guinea-Bissau Exploration",
+      "nameJP": "Guinea-Bissau",
+      "region": "Capital, Guinea-Bissau",
+      "desc": "Explore the beautiful country of Guinea-Bissau.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-guyana-capital",
+      "name": "Guyana Exploration",
+      "nameJP": "Guyana",
+      "region": "Capital, Guyana",
+      "desc": "Explore the beautiful country of Guyana.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-haiti-capital",
+      "name": "Haiti Exploration",
+      "nameJP": "Haiti",
+      "region": "Capital, Haiti",
+      "desc": "Explore the beautiful country of Haiti.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-holy-see-capital",
+      "name": "Holy See Exploration",
+      "nameJP": "Holy See",
+      "region": "Capital, Holy See",
+      "desc": "Explore the beautiful country of Holy See.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-honduras-capital",
+      "name": "Honduras Exploration",
+      "nameJP": "Honduras",
+      "region": "Capital, Honduras",
+      "desc": "Explore the beautiful country of Honduras.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-hungary-capital",
+      "name": "Hungary Exploration",
+      "nameJP": "Hungary",
+      "region": "Capital, Hungary",
+      "desc": "Explore the beautiful country of Hungary.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-india-capital",
+      "name": "India Exploration",
+      "nameJP": "India",
+      "region": "Capital, India",
+      "desc": "Explore the beautiful country of India.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-indonesia-capital",
+      "name": "Indonesia Exploration",
+      "nameJP": "Indonesia",
+      "region": "Capital, Indonesia",
+      "desc": "Explore the beautiful country of Indonesia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-iran-capital",
+      "name": "Iran Exploration",
+      "nameJP": "Iran",
+      "region": "Capital, Iran",
+      "desc": "Explore the beautiful country of Iran.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-iraq-capital",
+      "name": "Iraq Exploration",
+      "nameJP": "Iraq",
+      "region": "Capital, Iraq",
+      "desc": "Explore the beautiful country of Iraq.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-ireland-capital",
+      "name": "Ireland Exploration",
+      "nameJP": "Ireland",
+      "region": "Capital, Ireland",
+      "desc": "Explore the beautiful country of Ireland.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-israel-capital",
+      "name": "Israel Exploration",
+      "nameJP": "Israel",
+      "region": "Capital, Israel",
+      "desc": "Explore the beautiful country of Israel.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-italy-capital",
+      "name": "Italy Exploration",
+      "nameJP": "Italy",
+      "region": "Capital, Italy",
+      "desc": "Explore the beautiful country of Italy.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-jamaica-capital",
+      "name": "Jamaica Exploration",
+      "nameJP": "Jamaica",
+      "region": "Capital, Jamaica",
+      "desc": "Explore the beautiful country of Jamaica.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-jordan-capital",
+      "name": "Jordan Exploration",
+      "nameJP": "Jordan",
+      "region": "Capital, Jordan",
+      "desc": "Explore the beautiful country of Jordan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-kazakhstan-capital",
+      "name": "Kazakhstan Exploration",
+      "nameJP": "Kazakhstan",
+      "region": "Capital, Kazakhstan",
+      "desc": "Explore the beautiful country of Kazakhstan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-kenya-capital",
+      "name": "Kenya Exploration",
+      "nameJP": "Kenya",
+      "region": "Capital, Kenya",
+      "desc": "Explore the beautiful country of Kenya.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-kiribati-capital",
+      "name": "Kiribati Exploration",
+      "nameJP": "Kiribati",
+      "region": "Capital, Kiribati",
+      "desc": "Explore the beautiful country of Kiribati.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-kuwait-capital",
+      "name": "Kuwait Exploration",
+      "nameJP": "Kuwait",
+      "region": "Capital, Kuwait",
+      "desc": "Explore the beautiful country of Kuwait.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-kyrgyzstan-capital",
+      "name": "Kyrgyzstan Exploration",
+      "nameJP": "Kyrgyzstan",
+      "region": "Capital, Kyrgyzstan",
+      "desc": "Explore the beautiful country of Kyrgyzstan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-laos-capital",
+      "name": "Laos Exploration",
+      "nameJP": "Laos",
+      "region": "Capital, Laos",
+      "desc": "Explore the beautiful country of Laos.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-latvia-capital",
+      "name": "Latvia Exploration",
+      "nameJP": "Latvia",
+      "region": "Capital, Latvia",
+      "desc": "Explore the beautiful country of Latvia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-lebanon-capital",
+      "name": "Lebanon Exploration",
+      "nameJP": "Lebanon",
+      "region": "Capital, Lebanon",
+      "desc": "Explore the beautiful country of Lebanon.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-lesotho-capital",
+      "name": "Lesotho Exploration",
+      "nameJP": "Lesotho",
+      "region": "Capital, Lesotho",
+      "desc": "Explore the beautiful country of Lesotho.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-liberia-capital",
+      "name": "Liberia Exploration",
+      "nameJP": "Liberia",
+      "region": "Capital, Liberia",
+      "desc": "Explore the beautiful country of Liberia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-libya-capital",
+      "name": "Libya Exploration",
+      "nameJP": "Libya",
+      "region": "Capital, Libya",
+      "desc": "Explore the beautiful country of Libya.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-liechtenstein-capital",
+      "name": "Liechtenstein Exploration",
+      "nameJP": "Liechtenstein",
+      "region": "Capital, Liechtenstein",
+      "desc": "Explore the beautiful country of Liechtenstein.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-lithuania-capital",
+      "name": "Lithuania Exploration",
+      "nameJP": "Lithuania",
+      "region": "Capital, Lithuania",
+      "desc": "Explore the beautiful country of Lithuania.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-luxembourg-capital",
+      "name": "Luxembourg Exploration",
+      "nameJP": "Luxembourg",
+      "region": "Capital, Luxembourg",
+      "desc": "Explore the beautiful country of Luxembourg.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-madagascar-capital",
+      "name": "Madagascar Exploration",
+      "nameJP": "Madagascar",
+      "region": "Capital, Madagascar",
+      "desc": "Explore the beautiful country of Madagascar.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-malawi-capital",
+      "name": "Malawi Exploration",
+      "nameJP": "Malawi",
+      "region": "Capital, Malawi",
+      "desc": "Explore the beautiful country of Malawi.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-malaysia-capital",
+      "name": "Malaysia Exploration",
+      "nameJP": "Malaysia",
+      "region": "Capital, Malaysia",
+      "desc": "Explore the beautiful country of Malaysia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-maldives-capital",
+      "name": "Maldives Exploration",
+      "nameJP": "Maldives",
+      "region": "Capital, Maldives",
+      "desc": "Explore the beautiful country of Maldives.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-mali-capital",
+      "name": "Mali Exploration",
+      "nameJP": "Mali",
+      "region": "Capital, Mali",
+      "desc": "Explore the beautiful country of Mali.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-malta-capital",
+      "name": "Malta Exploration",
+      "nameJP": "Malta",
+      "region": "Capital, Malta",
+      "desc": "Explore the beautiful country of Malta.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-marshall-islands-capital",
+      "name": "Marshall Islands Exploration",
+      "nameJP": "Marshall Islands",
+      "region": "Capital, Marshall Islands",
+      "desc": "Explore the beautiful country of Marshall Islands.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-mauritania-capital",
+      "name": "Mauritania Exploration",
+      "nameJP": "Mauritania",
+      "region": "Capital, Mauritania",
+      "desc": "Explore the beautiful country of Mauritania.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-mauritius-capital",
+      "name": "Mauritius Exploration",
+      "nameJP": "Mauritius",
+      "region": "Capital, Mauritius",
+      "desc": "Explore the beautiful country of Mauritius.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-mexico-capital",
+      "name": "Mexico Exploration",
+      "nameJP": "Mexico",
+      "region": "Capital, Mexico",
+      "desc": "Explore the beautiful country of Mexico.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-micronesia-capital",
+      "name": "Micronesia Exploration",
+      "nameJP": "Micronesia",
+      "region": "Capital, Micronesia",
+      "desc": "Explore the beautiful country of Micronesia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-moldova-capital",
+      "name": "Moldova Exploration",
+      "nameJP": "Moldova",
+      "region": "Capital, Moldova",
+      "desc": "Explore the beautiful country of Moldova.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-monaco-capital",
+      "name": "Monaco Exploration",
+      "nameJP": "Monaco",
+      "region": "Capital, Monaco",
+      "desc": "Explore the beautiful country of Monaco.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-mongolia-capital",
+      "name": "Mongolia Exploration",
+      "nameJP": "Mongolia",
+      "region": "Capital, Mongolia",
+      "desc": "Explore the beautiful country of Mongolia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-montenegro-capital",
+      "name": "Montenegro Exploration",
+      "nameJP": "Montenegro",
+      "region": "Capital, Montenegro",
+      "desc": "Explore the beautiful country of Montenegro.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-morocco-capital",
+      "name": "Morocco Exploration",
+      "nameJP": "Morocco",
+      "region": "Capital, Morocco",
+      "desc": "Explore the beautiful country of Morocco.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-mozambique-capital",
+      "name": "Mozambique Exploration",
+      "nameJP": "Mozambique",
+      "region": "Capital, Mozambique",
+      "desc": "Explore the beautiful country of Mozambique.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-myanmar-capital",
+      "name": "Myanmar Exploration",
+      "nameJP": "Myanmar",
+      "region": "Capital, Myanmar",
+      "desc": "Explore the beautiful country of Myanmar.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-namibia-capital",
+      "name": "Namibia Exploration",
+      "nameJP": "Namibia",
+      "region": "Capital, Namibia",
+      "desc": "Explore the beautiful country of Namibia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-nauru-capital",
+      "name": "Nauru Exploration",
+      "nameJP": "Nauru",
+      "region": "Capital, Nauru",
+      "desc": "Explore the beautiful country of Nauru.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-nepal-capital",
+      "name": "Nepal Exploration",
+      "nameJP": "Nepal",
+      "region": "Capital, Nepal",
+      "desc": "Explore the beautiful country of Nepal.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-netherlands-capital",
+      "name": "Netherlands Exploration",
+      "nameJP": "Netherlands",
+      "region": "Capital, Netherlands",
+      "desc": "Explore the beautiful country of Netherlands.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-new-zealand-capital",
+      "name": "New Zealand Exploration",
+      "nameJP": "New Zealand",
+      "region": "Capital, New Zealand",
+      "desc": "Explore the beautiful country of New Zealand.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-nicaragua-capital",
+      "name": "Nicaragua Exploration",
+      "nameJP": "Nicaragua",
+      "region": "Capital, Nicaragua",
+      "desc": "Explore the beautiful country of Nicaragua.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-niger-capital",
+      "name": "Niger Exploration",
+      "nameJP": "Niger",
+      "region": "Capital, Niger",
+      "desc": "Explore the beautiful country of Niger.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-nigeria-capital",
+      "name": "Nigeria Exploration",
+      "nameJP": "Nigeria",
+      "region": "Capital, Nigeria",
+      "desc": "Explore the beautiful country of Nigeria.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-north-korea-capital",
+      "name": "North Korea Exploration",
+      "nameJP": "North Korea",
+      "region": "Capital, North Korea",
+      "desc": "Explore the beautiful country of North Korea.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-north-macedonia-capital",
+      "name": "North Macedonia Exploration",
+      "nameJP": "North Macedonia",
+      "region": "Capital, North Macedonia",
+      "desc": "Explore the beautiful country of North Macedonia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-norway-capital",
+      "name": "Norway Exploration",
+      "nameJP": "Norway",
+      "region": "Capital, Norway",
+      "desc": "Explore the beautiful country of Norway.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-oman-capital",
+      "name": "Oman Exploration",
+      "nameJP": "Oman",
+      "region": "Capital, Oman",
+      "desc": "Explore the beautiful country of Oman.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-pakistan-capital",
+      "name": "Pakistan Exploration",
+      "nameJP": "Pakistan",
+      "region": "Capital, Pakistan",
+      "desc": "Explore the beautiful country of Pakistan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-palau-capital",
+      "name": "Palau Exploration",
+      "nameJP": "Palau",
+      "region": "Capital, Palau",
+      "desc": "Explore the beautiful country of Palau.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-palestine-capital",
+      "name": "Palestine Exploration",
+      "nameJP": "Palestine",
+      "region": "Capital, Palestine",
+      "desc": "Explore the beautiful country of Palestine.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-panama-capital",
+      "name": "Panama Exploration",
+      "nameJP": "Panama",
+      "region": "Capital, Panama",
+      "desc": "Explore the beautiful country of Panama.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-papua-new-guinea-capital",
+      "name": "Papua New Guinea Exploration",
+      "nameJP": "Papua New Guinea",
+      "region": "Capital, Papua New Guinea",
+      "desc": "Explore the beautiful country of Papua New Guinea.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-paraguay-capital",
+      "name": "Paraguay Exploration",
+      "nameJP": "Paraguay",
+      "region": "Capital, Paraguay",
+      "desc": "Explore the beautiful country of Paraguay.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-peru-capital",
+      "name": "Peru Exploration",
+      "nameJP": "Peru",
+      "region": "Capital, Peru",
+      "desc": "Explore the beautiful country of Peru.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-philippines-capital",
+      "name": "Philippines Exploration",
+      "nameJP": "Philippines",
+      "region": "Capital, Philippines",
+      "desc": "Explore the beautiful country of Philippines.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-poland-capital",
+      "name": "Poland Exploration",
+      "nameJP": "Poland",
+      "region": "Capital, Poland",
+      "desc": "Explore the beautiful country of Poland.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-portugal-capital",
+      "name": "Portugal Exploration",
+      "nameJP": "Portugal",
+      "region": "Capital, Portugal",
+      "desc": "Explore the beautiful country of Portugal.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-qatar-capital",
+      "name": "Qatar Exploration",
+      "nameJP": "Qatar",
+      "region": "Capital, Qatar",
+      "desc": "Explore the beautiful country of Qatar.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-romania-capital",
+      "name": "Romania Exploration",
+      "nameJP": "Romania",
+      "region": "Capital, Romania",
+      "desc": "Explore the beautiful country of Romania.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-russia-capital",
+      "name": "Russia Exploration",
+      "nameJP": "Russia",
+      "region": "Capital, Russia",
+      "desc": "Explore the beautiful country of Russia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-rwanda-capital",
+      "name": "Rwanda Exploration",
+      "nameJP": "Rwanda",
+      "region": "Capital, Rwanda",
+      "desc": "Explore the beautiful country of Rwanda.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-saint-kitts-and-nevis-capital",
+      "name": "Saint Kitts and Nevis Exploration",
+      "nameJP": "Saint Kitts and Nevis",
+      "region": "Capital, Saint Kitts and Nevis",
+      "desc": "Explore the beautiful country of Saint Kitts and Nevis.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-saint-lucia-capital",
+      "name": "Saint Lucia Exploration",
+      "nameJP": "Saint Lucia",
+      "region": "Capital, Saint Lucia",
+      "desc": "Explore the beautiful country of Saint Lucia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-saint-vincent-and-the-grenadines-capital",
+      "name": "Saint Vincent and the Grenadines Exploration",
+      "nameJP": "Saint Vincent and the Grenadines",
+      "region": "Capital, Saint Vincent and the Grenadines",
+      "desc": "Explore the beautiful country of Saint Vincent and the Grenadines.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-samoa-capital",
+      "name": "Samoa Exploration",
+      "nameJP": "Samoa",
+      "region": "Capital, Samoa",
+      "desc": "Explore the beautiful country of Samoa.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-san-marino-capital",
+      "name": "San Marino Exploration",
+      "nameJP": "San Marino",
+      "region": "Capital, San Marino",
+      "desc": "Explore the beautiful country of San Marino.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-sao-tome-and-principe-capital",
+      "name": "Sao Tome and Principe Exploration",
+      "nameJP": "Sao Tome and Principe",
+      "region": "Capital, Sao Tome and Principe",
+      "desc": "Explore the beautiful country of Sao Tome and Principe.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-saudi-arabia-capital",
+      "name": "Saudi Arabia Exploration",
+      "nameJP": "Saudi Arabia",
+      "region": "Capital, Saudi Arabia",
+      "desc": "Explore the beautiful country of Saudi Arabia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-senegal-capital",
+      "name": "Senegal Exploration",
+      "nameJP": "Senegal",
+      "region": "Capital, Senegal",
+      "desc": "Explore the beautiful country of Senegal.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-serbia-capital",
+      "name": "Serbia Exploration",
+      "nameJP": "Serbia",
+      "region": "Capital, Serbia",
+      "desc": "Explore the beautiful country of Serbia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-seychelles-capital",
+      "name": "Seychelles Exploration",
+      "nameJP": "Seychelles",
+      "region": "Capital, Seychelles",
+      "desc": "Explore the beautiful country of Seychelles.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-sierra-leone-capital",
+      "name": "Sierra Leone Exploration",
+      "nameJP": "Sierra Leone",
+      "region": "Capital, Sierra Leone",
+      "desc": "Explore the beautiful country of Sierra Leone.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-slovakia-capital",
+      "name": "Slovakia Exploration",
+      "nameJP": "Slovakia",
+      "region": "Capital, Slovakia",
+      "desc": "Explore the beautiful country of Slovakia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-slovenia-capital",
+      "name": "Slovenia Exploration",
+      "nameJP": "Slovenia",
+      "region": "Capital, Slovenia",
+      "desc": "Explore the beautiful country of Slovenia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-solomon-islands-capital",
+      "name": "Solomon Islands Exploration",
+      "nameJP": "Solomon Islands",
+      "region": "Capital, Solomon Islands",
+      "desc": "Explore the beautiful country of Solomon Islands.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-somalia-capital",
+      "name": "Somalia Exploration",
+      "nameJP": "Somalia",
+      "region": "Capital, Somalia",
+      "desc": "Explore the beautiful country of Somalia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-south-africa-capital",
+      "name": "South Africa Exploration",
+      "nameJP": "South Africa",
+      "region": "Capital, South Africa",
+      "desc": "Explore the beautiful country of South Africa.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-south-sudan-capital",
+      "name": "South Sudan Exploration",
+      "nameJP": "South Sudan",
+      "region": "Capital, South Sudan",
+      "desc": "Explore the beautiful country of South Sudan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-spain-capital",
+      "name": "Spain Exploration",
+      "nameJP": "Spain",
+      "region": "Capital, Spain",
+      "desc": "Explore the beautiful country of Spain.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-sri-lanka-capital",
+      "name": "Sri Lanka Exploration",
+      "nameJP": "Sri Lanka",
+      "region": "Capital, Sri Lanka",
+      "desc": "Explore the beautiful country of Sri Lanka.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-sudan-capital",
+      "name": "Sudan Exploration",
+      "nameJP": "Sudan",
+      "region": "Capital, Sudan",
+      "desc": "Explore the beautiful country of Sudan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-suriname-capital",
+      "name": "Suriname Exploration",
+      "nameJP": "Suriname",
+      "region": "Capital, Suriname",
+      "desc": "Explore the beautiful country of Suriname.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-sweden-capital",
+      "name": "Sweden Exploration",
+      "nameJP": "Sweden",
+      "region": "Capital, Sweden",
+      "desc": "Explore the beautiful country of Sweden.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-switzerland-capital",
+      "name": "Switzerland Exploration",
+      "nameJP": "Switzerland",
+      "region": "Capital, Switzerland",
+      "desc": "Explore the beautiful country of Switzerland.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-syria-capital",
+      "name": "Syria Exploration",
+      "nameJP": "Syria",
+      "region": "Capital, Syria",
+      "desc": "Explore the beautiful country of Syria.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-tajikistan-capital",
+      "name": "Tajikistan Exploration",
+      "nameJP": "Tajikistan",
+      "region": "Capital, Tajikistan",
+      "desc": "Explore the beautiful country of Tajikistan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-tanzania-capital",
+      "name": "Tanzania Exploration",
+      "nameJP": "Tanzania",
+      "region": "Capital, Tanzania",
+      "desc": "Explore the beautiful country of Tanzania.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-timor-leste-capital",
+      "name": "Timor-Leste Exploration",
+      "nameJP": "Timor-Leste",
+      "region": "Capital, Timor-Leste",
+      "desc": "Explore the beautiful country of Timor-Leste.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-togo-capital",
+      "name": "Togo Exploration",
+      "nameJP": "Togo",
+      "region": "Capital, Togo",
+      "desc": "Explore the beautiful country of Togo.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-tonga-capital",
+      "name": "Tonga Exploration",
+      "nameJP": "Tonga",
+      "region": "Capital, Tonga",
+      "desc": "Explore the beautiful country of Tonga.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-trinidad-and-tobago-capital",
+      "name": "Trinidad and Tobago Exploration",
+      "nameJP": "Trinidad and Tobago",
+      "region": "Capital, Trinidad and Tobago",
+      "desc": "Explore the beautiful country of Trinidad and Tobago.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-tunisia-capital",
+      "name": "Tunisia Exploration",
+      "nameJP": "Tunisia",
+      "region": "Capital, Tunisia",
+      "desc": "Explore the beautiful country of Tunisia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-turkey-capital",
+      "name": "Turkey Exploration",
+      "nameJP": "Turkey",
+      "region": "Capital, Turkey",
+      "desc": "Explore the beautiful country of Turkey.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-turkmenistan-capital",
+      "name": "Turkmenistan Exploration",
+      "nameJP": "Turkmenistan",
+      "region": "Capital, Turkmenistan",
+      "desc": "Explore the beautiful country of Turkmenistan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-tuvalu-capital",
+      "name": "Tuvalu Exploration",
+      "nameJP": "Tuvalu",
+      "region": "Capital, Tuvalu",
+      "desc": "Explore the beautiful country of Tuvalu.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-uganda-capital",
+      "name": "Uganda Exploration",
+      "nameJP": "Uganda",
+      "region": "Capital, Uganda",
+      "desc": "Explore the beautiful country of Uganda.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-ukraine-capital",
+      "name": "Ukraine Exploration",
+      "nameJP": "Ukraine",
+      "region": "Capital, Ukraine",
+      "desc": "Explore the beautiful country of Ukraine.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-united-arab-emirates-capital",
+      "name": "United Arab Emirates Exploration",
+      "nameJP": "United Arab Emirates",
+      "region": "Capital, United Arab Emirates",
+      "desc": "Explore the beautiful country of United Arab Emirates.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-united-kingdom-capital",
+      "name": "United Kingdom Exploration",
+      "nameJP": "United Kingdom",
+      "region": "Capital, United Kingdom",
+      "desc": "Explore the beautiful country of United Kingdom.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-united-states-of-america-capital",
+      "name": "United States of America Exploration",
+      "nameJP": "United States of America",
+      "region": "Capital, United States of America",
+      "desc": "Explore the beautiful country of United States of America.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-uruguay-capital",
+      "name": "Uruguay Exploration",
+      "nameJP": "Uruguay",
+      "region": "Capital, Uruguay",
+      "desc": "Explore the beautiful country of Uruguay.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-uzbekistan-capital",
+      "name": "Uzbekistan Exploration",
+      "nameJP": "Uzbekistan",
+      "region": "Capital, Uzbekistan",
+      "desc": "Explore the beautiful country of Uzbekistan.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-vanuatu-capital",
+      "name": "Vanuatu Exploration",
+      "nameJP": "Vanuatu",
+      "region": "Capital, Vanuatu",
+      "desc": "Explore the beautiful country of Vanuatu.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-venezuela-capital",
+      "name": "Venezuela Exploration",
+      "nameJP": "Venezuela",
+      "region": "Capital, Venezuela",
+      "desc": "Explore the beautiful country of Venezuela.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-yemen-capital",
+      "name": "Yemen Exploration",
+      "nameJP": "Yemen",
+      "region": "Capital, Yemen",
+      "desc": "Explore the beautiful country of Yemen.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-zambia-capital",
+      "name": "Zambia Exploration",
+      "nameJP": "Zambia",
+      "region": "Capital, Zambia",
+      "desc": "Explore the beautiful country of Zambia.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
+    },
+    {
+      "id": "world-zimbabwe-capital",
+      "name": "Zimbabwe Exploration",
+      "nameJP": "Zimbabwe",
+      "region": "Capital, Zimbabwe",
+      "desc": "Explore the beautiful country of Zimbabwe.",
+      "image": "",
+      "tags": [
+        "world",
+        "travel"
+      ],
+      "status": "planned",
+      "visitedDate": null,
+      "note": ""
     }
   ]
 }

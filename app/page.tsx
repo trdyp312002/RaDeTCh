@@ -31,7 +31,7 @@ export default function Portal() {
 
       {/* RIGHT: Wealth OS */}
       <Link 
-        href="/project-omnitech" 
+        href="/wealth-os/dashboard" 
         className="flex-1 relative group bg-[#050B14] flex flex-col items-center justify-center overflow-hidden transition-all duration-500 hover:flex-[1.2]"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/20 to-blue-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>

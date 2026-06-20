@@ -12,7 +12,7 @@ async function sha256(input: string): Promise<string> {
 
 // Login: exchange the password for an httpOnly session cookie.
 export async function POST(req: NextRequest) {
-  const password = process.env.APP_PASSWORD
+  const password = process.env.APP_PASSWORD?.trim()
   if (!password) {
     return NextResponse.json(
       { error: "APP_PASSWORD is not configured on the server" },

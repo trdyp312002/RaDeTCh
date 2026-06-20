@@ -41,7 +41,10 @@ yarn-error.log*
 next-env.d.ts
 
 # local sqlite database
-
+*.db
+*.db-shm
+*.db-wal
+data/*.db*
 # python
 __pycache__/
 *.pyc

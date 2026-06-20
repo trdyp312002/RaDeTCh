@@ -1,506 +1,940 @@
 "use client";
-import { useState, useMemo, useRef, useEffect } from "react";
-import { flushSync } from "react-dom";
-import playlistData from "@/data/music-playlist.json";
 
-type Song = { title: string; id: string; duration: number; url: string };
-type Artist = { name: string; songCount: number; songs: Song[] };
-type Language = { id: string; label: string; flag: string; color: string; total: number; artists: Artist[] };
-type QueueItem = Song & { artistName: string; lang: Language };
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  Heart,
+  Repeat,
+  Shuffle,
+  Loader2,
+  ExternalLink,
+  ChevronLeft,
+  Music2,
+  ListMusic,
+  Library,
+} from "lucide-react";
 
-const LANG_COLORS: Record<string, string> = {
-  japanese: "bg-pink-50 text-pink-700 border-pink-100",
-  korean:   "bg-orange-50 text-orange-700 border-orange-100",
-  thai:     "bg-red-50 text-red-700 border-red-100",
-  english:  "bg-blue-50 text-blue-700 border-blue-100",
-};
-
-const LANG_ACTIVE: Record<string, string> = {
-  japanese: "bg-pink-600 text-white border-pink-600",
-  korean:   "bg-orange-500 text-white border-orange-500",
-  thai:     "bg-red-600 text-white border-red-600",
-  english:  "bg-blue-600 text-white border-blue-600",
-};
-
-
-function formatDuration(s: number) {
-  if (!s) return "0:00";
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+// ── Types ──────────────────────────────────────────────────────────────────────
+interface Song {
+  id: string;
+  title: string;
+  url: string;
+  duration: number;
 }
-
-function formatTime(s: number) {
-  const n = Math.floor(s);
-  return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}`;
+interface Artist {
+  name: string;
+  songCount: number;
+  songs: Song[];
 }
-
-// ---- Song Row ----
-function SongRow({
-  song,
-  isActive,
-  isPlaying,
-  onPlay,
-}: {
+interface Language {
+  id: string;
+  label: string;
+  color: string;
+  flag: string;
+  total: number;
+  artists: Artist[];
+}
+interface MusicData {
+  total: number;
+  generatedAt: string;
+  languages: Language[];
+}
+interface YTTrack {
+  videoId: string;
+  title: string;
+  artist: string;
+  album: string;
+  duration: number;
+}
+interface YTPlaylist {
+  id: string;
+  title: string;
+  count: number;
+  thumbnailUrl: string;
+  tracks: YTTrack[];
+}
+interface PlaylistsData {
+  fetchedAt: string;
+  total: number;
+  playlists: YTPlaylist[];
+}
+type RepeatMode = "none" | "all" | "one";
+type ViewMode = "library" | "playlists";
+interface QueueItem {
   song: Song;
-  isActive: boolean;
-  isPlaying: boolean;
-  onPlay: () => void;
-}) {
-  return (
-    <div
-      className={`flex items-center gap-3 px-5 py-2.5 cursor-pointer select-none transition-colors group ${
-        isActive ? "bg-gray-50" : "hover:bg-gray-50"
-      }`}
-      onClick={onPlay}
-    >
-      <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
-        {isActive && isPlaying ? (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-red-500">
-            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-          </svg>
-        ) : isActive ? (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-red-500">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        ) : (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        )}
-      </div>
-      <span className={`text-sm truncate flex-1 transition-colors ${isActive ? "text-gray-900 font-medium" : "text-gray-600 group-hover:text-gray-900"}`}>
-        {song.title}
-      </span>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-[11px] text-gray-300 font-mono">{formatDuration(song.duration)}</span>
-        <a
-          href={song.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
-          aria-label="Open in YouTube Music"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
-          </svg>
-        </a>
-      </div>
-    </div>
-  );
+  artistName: string;
+  color: string;
 }
 
-// ---- Artist Card ----
-function ArtistCard({
-  artist,
-  langId,
-  activeSongId,
-  isPlaying,
-  onPlay,
-}: {
-  artist: Artist;
-  langId: string;
-  activeSongId: string | null;
-  isPlaying: boolean;
-  onPlay: (song: Song) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const hasActive = artist.songs.some((s) => s.id === activeSongId);
-  const colorClass = LANG_COLORS[langId] || "bg-gray-50 text-gray-700 border-gray-100";
-
-  return (
-    <div className={`rounded-2xl border overflow-hidden bg-white transition-all ${hasActive ? "border-gray-200" : "border-gray-100 hover:border-gray-200"}`}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${colorClass}`}>
-            {artist.songCount}
-          </span>
-          <span className="text-sm font-semibold text-gray-900 truncate">{artist.name}</span>
-          {hasActive && <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0 animate-pulse" />}
-        </div>
-        <svg
-          width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
-          className={`flex-shrink-0 text-gray-300 transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          <path strokeLinecap="round" d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="border-t border-gray-50 divide-y divide-gray-50">
-          {artist.songs.map((song) => (
-            <SongRow
-              key={song.id}
-              song={song}
-              isActive={song.id === activeSongId}
-              isPlaying={isPlaying}
-              onPlay={() => onPlay(song)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
+// ── Minimal YouTube IFrame types ───────────────────────────────────────────────
+interface YTPlayer {
+  loadVideoById(id: string): void;
+  playVideo(): void;
+  pauseVideo(): void;
+  seekTo(seconds: number, allowSeekAhead: boolean): void;
+  setVolume(volume: number): void;
+  getCurrentTime(): number;
+  getDuration(): number;
+  getPlayerState(): number;
+  destroy(): void;
+}
+declare global {
+  interface Window {
+    YT: {
+      Player: new (
+        el: string | HTMLElement,
+        opts: object
+      ) => YTPlayer;
+      PlayerState: {
+        ENDED: number;
+        PLAYING: number;
+        PAUSED: number;
+        BUFFERING: number;
+      };
+    };
+    onYouTubeIframeAPIReady: () => void;
+  }
 }
 
-// ---- Music Player ----
-function MusicPlayer({
-  queue,
-  currentIndex,
-  onIndexChange,
-  onClose,
-  onPlayingChange,
-}: {
-  queue: QueueItem[];
-  currentIndex: number;
-  onIndexChange: (i: number) => void;
-  onClose: () => void;
-  onPlayingChange: (playing: boolean) => void;
-}) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [muted, setMuted] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const currentIndexRef = useRef(currentIndex);
-  const queueRef = useRef(queue);
-  const onIndexChangeRef = useRef(onIndexChange);
-  const onPlayingChangeRef = useRef(onPlayingChange);
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const GRAD: Record<string, string> = {
+  pink: "from-pink-600 to-pink-900",
+  orange: "from-orange-500 to-orange-800",
+  red: "from-red-600 to-red-900",
+  blue: "from-blue-600 to-blue-900",
+  purple: "from-purple-600 to-purple-900",
+  violet: "from-violet-600 to-violet-900",
+};
 
-  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
-  useEffect(() => { queueRef.current = queue; }, [queue]);
-  useEffect(() => { onIndexChangeRef.current = onIndexChange; }, [onIndexChange]);
-  useEffect(() => { onPlayingChangeRef.current = onPlayingChange; }, [onPlayingChange]);
+// Assign a gradient color to a playlist by its title
+const PLAYLIST_COLOR_MAP: Record<string, string> = {
+  "ALL SONG":     "from-zinc-600 to-zinc-800",
+  "JAPAN SONG":   "from-pink-600 to-pink-900",
+  "THAI SONG":    "from-red-600 to-red-900",
+  "ENGLISH SONG": "from-blue-600 to-blue-900",
+  "DOWNBEAT":     "from-indigo-600 to-indigo-900",
+  "UPBEAT":       "from-orange-500 to-orange-800",
+  "Anime Movie":  "from-purple-600 to-purple-900",
+  "Cover":        "from-teal-600 to-teal-900",
+};
 
-  const song = queue[currentIndex];
-
-  // Simulated progress ticker + auto-advance
-  useEffect(() => {
-    if (!isPlaying) return;
-    const id = setInterval(() => {
-      setElapsed((e) => {
-        const next = e + 0.5;
-        const dur = queueRef.current[currentIndexRef.current]?.duration ?? 0;
-        if (dur > 0 && next >= dur) {
-          const nextIdx = currentIndexRef.current + 1;
-          if (nextIdx < queueRef.current.length) onIndexChangeRef.current(nextIdx);
-          return 0;
-        }
-        return next;
-      });
-    }, 500);
-    return () => clearInterval(id);
-  }, [isPlaying]);
-
-  // Reset elapsed + notify parent when song changes
-  const prevId = useRef(song?.id);
-  useEffect(() => {
-    if (!song || song.id === prevId.current) return;
-    prevId.current = song.id;
-    setElapsed(0);
-    setIsPlaying(true);
-    onPlayingChangeRef.current(true);
-  }, [song?.id]);
-
-  function cmd(func: string, args: unknown[] = []) {
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ event: "command", func, args }),
-      "https://www.youtube.com"
-    );
-  }
-
-  function togglePlay() {
-    const next = !isPlaying;
-    setIsPlaying(next);
-    onPlayingChangeRef.current(next);
-    cmd(next ? "playVideo" : "pauseVideo");
-  }
-
-  function toggleMute() {
-    const next = !muted;
-    setMuted(next);
-    cmd(next ? "mute" : "unMute");
-    if (!next) cmd("setVolume", [100]);
-  }
-
-  function handleIframeLoad() {
-    // Try early, retry if player wasn't ready yet
-    const unmute = () => { cmd("unMute"); cmd("setVolume", [100]); };
-    setTimeout(unmute, 200);
-    setTimeout(unmute, 800);
-  }
-
-  function seekTo(e: React.MouseEvent<HTMLDivElement>) {
-    const dur = song.duration;
-    if (!dur) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const seconds = ratio * dur;
-    setElapsed(seconds);
-    cmd("seekTo", [seconds, true]);
-  }
-
-  if (!song) return null;
-
-  const dur = song.duration;
-  const progress = dur > 0 ? Math.min(1, elapsed / dur) : 0;
-  // mute=1 guarantees autoplay works; we unmute programmatically via onLoad
-  const embedSrc = `https://www.youtube.com/embed/${song.id}?autoplay=1&mute=1&controls=0&rel=0&playsinline=1&enablejsapi=1&modestbranding=1`;
-
-  return (
-    <div
-      className="fixed bottom-0 left-0 right-0 z-50 bg-[#212121] text-white shadow-2xl border-t border-white/5"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-    >
-      {/* Hidden iframe — key forces remount on song change */}
-      <iframe
-        key={song.id}
-        ref={iframeRef}
-        src={embedSrc}
-        allow="autoplay; encrypted-media"
-        title="music player"
-        onLoad={handleIframeLoad}
-        style={{ position: "fixed", top: -9999, left: -9999, width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
-      />
-
-      {/* Seekbar */}
-      <div className="h-1 bg-gray-700 cursor-pointer group" onClick={seekTo}>
-        <div
-          className="h-full bg-gray-400 group-hover:bg-red-500 transition-colors"
-          style={{ width: `${progress * 100}%` }}
-        />
-      </div>
-
-      <div className="h-16 flex items-center px-4 gap-4">
-        {/* Song info */}
-        <div className="flex items-center gap-3 min-w-0 flex-1 max-w-xs">
-          <img
-            src={`https://img.youtube.com/vi/${song.id}/mqdefault.jpg`}
-            alt=""
-            className="hidden sm:block w-11 h-8 object-cover rounded flex-shrink-0 bg-gray-700"
-          />
-          <div className="min-w-0">
-            <p className="text-[13px] font-medium text-white truncate leading-tight">{song.title}</p>
-            <p className="text-[11px] text-gray-400 truncate leading-tight">{song.artistName}</p>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center gap-5 flex-shrink-0">
-          <button
-            onClick={() => onIndexChange(Math.max(0, currentIndex - 1))}
-            disabled={currentIndex === 0}
-            className="text-gray-400 hover:text-white disabled:opacity-25 transition-colors"
-          >
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" /></svg>
-          </button>
-
-          <button
-            onClick={togglePlay}
-            className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
-          >
-            {isPlaying ? (
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-            ) : (
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style={{ paddingLeft: 2 }}><path d="M8 5v14l11-7z" /></svg>
-            )}
-          </button>
-
-          <button
-            onClick={() => onIndexChange(Math.min(queue.length - 1, currentIndex + 1))}
-            disabled={currentIndex === queue.length - 1}
-            className="text-gray-400 hover:text-white disabled:opacity-25 transition-colors"
-          >
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
-          </button>
-        </div>
-
-        {/* Time + volume + close */}
-        <div className="flex items-center gap-3 flex-shrink-0 ml-auto">
-          <span className="text-[11px] text-gray-500 font-mono tabular-nums hidden sm:block">
-            {formatTime(elapsed)} / {formatTime(dur)}
-          </span>
-          <button onClick={toggleMute} className="text-gray-400 hover:text-white transition-colors" title={muted ? "Unmute" : "Mute"}>
-            {muted ? (
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0 0 17.73 19l2 2L21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/></svg>
-            ) : (
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-            )}
-          </button>
-          <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors">
-            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+function playlistGrad(title: string): string {
+  return PLAYLIST_COLOR_MAP[title] ?? "from-zinc-600 to-zinc-800";
 }
 
-// ---- Page ----
-export default function MusicPage() {
-  const [data, setData] = useState<{ total: number; generatedAt: string; languages: Language[] }>(playlistData as any);
-  
+function fmt(s: number): string {
+  if (!s || isNaN(s)) return "0:00";
+  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+}
+
+// ── Component ──────────────────────────────────────────────────────────────────
+export default function MusicLibrary() {
+  const [viewMode, setViewMode] = useState<ViewMode>("library");
+
+  // Library state
+  const [data, setData] = useState<MusicData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeLang, setActiveLang] = useState("all");
+  const [selectedArtist, setSelectedArtist] = useState<{
+    artist: Artist;
+    color: string;
+  } | null>(null);
+
+  // Playlists state
+  const [playlistsData, setPlaylistsData] = useState<PlaylistsData | null>(null);
+  const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<YTPlaylist | null>(null);
+
+  // Player UI state
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
+  const [currentArtistName, setCurrentArtistName] = useState("");
+  const [currentColor, setCurrentColor] = useState("blue");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>("none");
+  const [volume, setVolume] = useState(80);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  // Refs used inside YT callbacks to avoid stale closures
+  const playerRef = useRef<YTPlayer | null>(null);
+  const queueRef = useRef<QueueItem[]>([]);
+  const queueIdxRef = useRef(0);
+  const repeatRef = useRef<RepeatMode>("none");
+  const shuffleRef = useRef(false);
+  const volumeRef = useRef(80);
+  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const doNextRef = useRef<() => void>(() => {});
+
+  // Keep refs in sync with state
+  repeatRef.current = repeatMode;
+  shuffleRef.current = isShuffle;
+  volumeRef.current = volume;
+
+  // ── Load library data ────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/music?t=' + Date.now())
-      .then(r => r.json())
-      .then(d => { if(d.languages) setData(d) });
+    fetch("/api/music")
+      .then((r) => r.json())
+      .then((d: MusicData) => {
+        setData(d);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
-  const [activeLang, setActiveLang] = useState("japanese");
-  const [search, setSearch] = useState("");
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const [isPlaying, setIsPlaying] = useState(false);
+  // ── Load YouTube Music playlists (lazy, only when switching to that view) ───
+  useEffect(() => {
+    if (viewMode !== "playlists" || playlistsData) return;
+    setPlaylistsLoading(true);
+    fetch("/api/music/playlists")
+      .then((r) => r.json())
+      .then((d: PlaylistsData) => {
+        setPlaylistsData(d);
+        setPlaylistsLoading(false);
+      })
+      .catch(() => setPlaylistsLoading(false));
+  }, [viewMode, playlistsData]);
 
-  const currentLang = data.languages.find((l) => l.id === activeLang) || data.languages[0];
-  const activeSongId = queue[currentIndex]?.id ?? null;
+  // ── Core play function ───────────────────────────────────────────────────────
+  const doPlay = useCallback((item: QueueItem) => {
+    setCurrentSong(item.song);
+    setCurrentArtistName(item.artistName);
+    setCurrentColor(item.color);
+    setCurrentTime(0);
+    setIsBuffering(true);
+    playerRef.current?.loadVideoById(item.song.id);
+    playerRef.current?.setVolume(volumeRef.current);
+  }, []);
 
-  function buildQueue(lang: Language) {
-    if (!lang) return [];
-    return lang.artists.flatMap((a) => a.songs.map((s) => ({ ...s, artistName: a.name, lang })));
-  }
+  // ── Skip next ────────────────────────────────────────────────────────────────
+  const doNext = useCallback(() => {
+    const q = queueRef.current;
+    if (!q.length) return;
+    let idx = queueIdxRef.current;
+    if (repeatRef.current === "one") {
+      // replay same index (do nothing to idx)
+    } else if (shuffleRef.current) {
+      idx = Math.floor(Math.random() * q.length);
+    } else {
+      idx++;
+      if (idx >= q.length) {
+        if (repeatRef.current === "all") idx = 0;
+        else return;
+      }
+    }
+    queueIdxRef.current = idx;
+    doPlay(q[idx]);
+  }, [doPlay]);
 
-  const allSongsWithMeta = useMemo(() => {
-    if (!data.languages) return [];
-    return data.languages.flatMap((l) => 
-      l.artists.flatMap((a) => a.songs.map((s) => ({ ...s, artistName: a.name, lang: l })))
+  // Keep doNextRef current (used inside YT ENDED handler)
+  doNextRef.current = doNext;
+
+  // ── Skip previous ────────────────────────────────────────────────────────────
+  const doPrev = useCallback(() => {
+    const q = queueRef.current;
+    if (!q.length) return;
+    const ct = playerRef.current?.getCurrentTime() ?? 0;
+    if (ct > 3) {
+      playerRef.current?.seekTo(0, true);
+      setCurrentTime(0);
+      return;
+    }
+    let idx = queueIdxRef.current - 1;
+    if (idx < 0) idx = repeatRef.current === "all" ? q.length - 1 : 0;
+    queueIdxRef.current = idx;
+    doPlay(q[idx]);
+  }, [doPlay]);
+
+  // ── Load YouTube IFrame API (once) ───────────────────────────────────────────
+  useEffect(() => {
+    if (document.getElementById("yt-script")) return;
+
+    window.onYouTubeIframeAPIReady = () => {
+      playerRef.current = new window.YT.Player("yt-player", {
+        height: "1",
+        width: "1",
+        videoId: "",
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          rel: 0,
+          origin: window.location.origin,
+        },
+        events: {
+          onStateChange: (e: { data: number }) => {
+            const S = window.YT.PlayerState;
+            if (e.data === S.PLAYING) {
+              setIsPlaying(true);
+              setIsBuffering(false);
+              setDuration(playerRef.current?.getDuration() ?? 0);
+              if (progressRef.current) clearInterval(progressRef.current);
+              progressRef.current = setInterval(() => {
+                setCurrentTime(playerRef.current?.getCurrentTime() ?? 0);
+                setDuration(playerRef.current?.getDuration() ?? 0);
+              }, 500);
+            } else if (e.data === S.PAUSED) {
+              setIsPlaying(false);
+              setIsBuffering(false);
+              if (progressRef.current) clearInterval(progressRef.current);
+            } else if (e.data === S.ENDED) {
+              setIsPlaying(false);
+              if (progressRef.current) clearInterval(progressRef.current);
+              doNextRef.current();
+            } else if (e.data === S.BUFFERING) {
+              setIsBuffering(true);
+            }
+          },
+        },
+      });
+    };
+
+    const script = document.createElement("script");
+    script.id = "yt-script";
+    script.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(script);
+
+    return () => {
+      if (progressRef.current) clearInterval(progressRef.current);
+    };
+  }, []);
+
+  // ── Toggle play / pause ──────────────────────────────────────────────────────
+  const togglePlay = () => {
+    if (!currentSong || !playerRef.current) return;
+    if (isPlaying) playerRef.current.pauseVideo();
+    else playerRef.current.playVideo();
+  };
+
+  // ── Start playing all songs of an artist ────────────────────────────────────
+  const startArtist = (artist: Artist, color: string) => {
+    if (!artist.songs.length) return;
+    const q = artist.songs.map((s) => ({
+      song: s,
+      artistName: artist.name,
+      color,
+    }));
+    queueRef.current = q;
+    queueIdxRef.current = 0;
+    doPlay(q[0]);
+  };
+
+  // ── Start from a specific song index (library) ──────────────────────────────
+  const startFromSong = (artist: Artist, color: string, idx: number) => {
+    const q = artist.songs.map((s) => ({
+      song: s,
+      artistName: artist.name,
+      color,
+    }));
+    queueRef.current = q;
+    queueIdxRef.current = idx;
+    doPlay(q[idx]);
+  };
+
+  // ── Convert a YouTube playlist track to Song + build a queue ────────────────
+  const ytTrackToSong = (t: YTTrack): Song => ({
+    id: t.videoId,
+    title: t.title,
+    url: `https://music.youtube.com/watch?v=${t.videoId}`,
+    duration: t.duration,
+  });
+
+  const startPlaylist = (playlist: YTPlaylist, fromIdx = 0) => {
+    if (!playlist.tracks.length) return;
+    const grad = playlistGrad(playlist.title);
+    const q = playlist.tracks.map((t) => ({
+      song: ytTrackToSong(t),
+      artistName: t.artist,
+      color: grad,
+    }));
+    queueRef.current = q;
+    queueIdxRef.current = fromIdx;
+    doPlay(q[fromIdx]);
+  };
+
+  // ── Progress bar click ───────────────────────────────────────────────────────
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!playerRef.current || !duration) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const t = ((e.clientX - r.left) / r.width) * duration;
+    playerRef.current.seekTo(t, true);
+    setCurrentTime(t);
+  };
+
+  // ── Volume bar click ─────────────────────────────────────────────────────────
+  const handleVolClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const v = Math.round(
+      Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * 100
     );
-  }, [data]);
+    setVolume(v);
+    playerRef.current?.setVolume(v);
+  };
 
-  function handlePlay(song: Song) {
-    if (!currentLang) return;
-    const q = buildQueue(currentLang);
-    const idx = q.findIndex((s) => s.id === song.id);
-    flushSync(() => {
-      setQueue(q);
-      setCurrentIndex(idx >= 0 ? idx : 0);
-      setIsPlaying(true);
-    });
-  }
+  // ── Repeat cycle ─────────────────────────────────────────────────────────────
+  const cycleRepeat = () =>
+    setRepeatMode((m) =>
+      m === "none" ? "all" : m === "all" ? "one" : "none"
+    );
 
-  function handleRandom() {
-    if (!allSongsWithMeta.length) return;
-    const item = allSongsWithMeta[Math.floor(Math.random() * allSongsWithMeta.length)];
-    const q = buildQueue(item.lang);
-    const idx = q.findIndex((s) => s.id === item.id);
-    flushSync(() => {
-      setQueue(q);
-      setCurrentIndex(idx >= 0 ? idx : 0);
-      setIsPlaying(true);
-    });
-  }
+  // ── Filtered display data ────────────────────────────────────────────────────
+  const langs =
+    activeLang === "all"
+      ? (data?.languages ?? [])
+      : (data?.languages.filter((l) => l.id === activeLang) ?? []);
 
-  const filteredArtists = useMemo(() => {
-    if (!currentLang) return [];
-    if (!search.trim()) return currentLang.artists;
-    const q = search.toLowerCase();
-    return currentLang.artists
-      .map((a) => ({
-        ...a,
-        songs: a.songs.filter((s) => s.title.toLowerCase().includes(q)),
-      }))
-      .filter((a) => a.name.toLowerCase().includes(q) || a.songs.length > 0)
-      .map((a) => ({ ...a, songCount: a.songs.length || a.songCount }));
-  }, [currentLang, search]);
+  const artistRows = langs.flatMap((l) =>
+    l.artists.map((a) => ({
+      artist: a,
+      color: l.color,
+      flag: l.flag,
+      langId: l.id,
+    }))
+  );
 
+  const nowGrad = GRAD[currentColor] ?? GRAD.blue;
+  const selGrad = GRAD[selectedArtist?.color ?? "blue"] ?? GRAD.blue;
+  const progressPct =
+    duration > 0 ? `${(currentTime / duration) * 100}%` : "0%";
+
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className={`min-h-screen bg-white ${currentIndex >= 0 ? "pb-24 sm:pb-20" : ""}`}>
-      {/* Header */}
-      <div className="pt-10 pb-8 px-6 max-w-4xl mx-auto">
-        <p className="text-[10px] uppercase tracking-[0.4em] text-gray-400 mb-3">Playlist</p>
-        <div className="flex items-end justify-between gap-4 mb-3">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">Music</h1>
+    <div className="relative min-h-screen w-full bg-zinc-950 text-white pb-28 overflow-x-hidden">
+      {/* Hidden YouTube player (1×1 px – keeps Terms of Service happy) */}
+      <div className="fixed -bottom-10 -right-10 overflow-hidden opacity-0 pointer-events-none w-px h-px">
+        <div id="yt-player" />
+      </div>
+
+      {/* ── Main content ── */}
+      <div className="px-6 py-8 md:px-10">
+        {/* Header */}
+        <div className="flex items-baseline gap-3 mb-6">
+          <h1 className="text-4xl font-bold">Music Library</h1>
+          {data && (
+            <span className="text-zinc-500 text-sm">
+              {data.total.toLocaleString()} songs
+            </span>
+          )}
+        </div>
+
+        {/* View-mode toggle: Library | Playlists */}
+        <div className="flex gap-2 mb-6">
           <button
-            onClick={handleRandom}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-all mb-1"
+            onClick={() => { setViewMode("library"); setSelectedPlaylist(null); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              viewMode === "library"
+                ? "bg-white text-black"
+                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+            }`}
           >
-            <span>🎲</span>
-            <span>สุ่มเพลง</span>
+            <Library size={15} />
+            Library
+          </button>
+          <button
+            onClick={() => { setViewMode("playlists"); setSelectedArtist(null); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              viewMode === "playlists"
+                ? "bg-white text-black"
+                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+            }`}
+          >
+            <ListMusic size={15} />
+            Playlists
+            {playlistsData && (
+              <span className={`text-xs ${viewMode === "playlists" ? "text-zinc-600" : "text-zinc-500"}`}>
+                {playlistsData.total}
+              </span>
+            )}
           </button>
         </div>
-        <p className="text-gray-500 text-sm mt-1">{data?.total || 0} tracks</p>
-      </div>
 
-      {/* Language Tabs */}
-      <div className="max-w-4xl mx-auto px-6 mb-6">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {data?.languages?.map((lang) => {
-            const active = activeLang === lang.id;
-            return (
+        {/* ════════════════════════════════════════════════════════════
+            LIBRARY VIEW
+        ════════════════════════════════════════════════════════════ */}
+        {viewMode === "library" && (
+          <>
+            {/* Language tabs */}
+            <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide">
               <button
-                key={lang.id}
-                onClick={() => { setActiveLang(lang.id); setSearch(""); }}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all border ${
-                  active
-                    ? LANG_ACTIVE[lang.id] || "bg-gray-900 text-white border-gray-900"
-                    : "border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-900 bg-white"
+                onClick={() => {
+                  setActiveLang("all");
+                  setSelectedArtist(null);
+                }}
+                className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeLang === "all"
+                    ? "bg-white text-black"
+                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
                 }`}
               >
-                <span>{lang.flag}</span>
-                <span>{lang.label}</span>
-                <span className={`text-[10px] ${active ? "opacity-70" : "text-gray-400"}`}>{lang.total}</span>
+                All
               </button>
-            );
-          })}
-        </div>
-      </div>
+              {data?.languages.map((l) => (
+                <button
+                  key={l.id}
+                  onClick={() => {
+                    setActiveLang(l.id);
+                    setSelectedArtist(null);
+                  }}
+                  className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center gap-1.5 transition-colors ${
+                    activeLang === l.id
+                      ? "bg-white text-black"
+                      : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                  }`}
+                >
+                  <span>{l.flag}</span>
+                  <span>{l.label}</span>
+                  <span
+                    className={`text-xs ${
+                      activeLang === l.id ? "text-zinc-600" : "text-zinc-500"
+                    }`}
+                  >
+                    {l.total}
+                  </span>
+                </button>
+              ))}
+            </div>
 
-      {/* Search */}
-      <div className="max-w-4xl mx-auto px-6 mb-6">
-        <div className="relative">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={`ค้นหาศิลปินหรือเพลงใน ${currentLang.label}...`}
-            className="w-full border border-gray-200 rounded-2xl px-5 py-3 pr-12 text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-100 focus:border-gray-300 text-sm bg-white"
-          />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300">🔍</span>
-        </div>
-      </div>
+            {loading ? (
+              <div className="flex justify-center py-24">
+                <Loader2 className="animate-spin text-zinc-500" size={32} />
+              </div>
+            ) : selectedArtist ? (
+              /* ── Artist songs view ── */
+              <div>
+                <button
+                  onClick={() => setSelectedArtist(null)}
+                  className="flex items-center gap-1 text-zinc-400 hover:text-white text-sm mb-6 transition-colors"
+                >
+                  <ChevronLeft size={16} /> Back to artists
+                </button>
 
-      {/* Stats */}
-      <div className="max-w-4xl mx-auto px-6 mb-4">
-        <p className="text-sm text-gray-400">
-          <span className="text-gray-900 font-semibold">{filteredArtists.length}</span> ศิลปิน ·{" "}
-          <span className="text-gray-900 font-semibold">{filteredArtists.reduce((n, a) => n + a.songs.length, 0)}</span>{" "}
-          เพลง
-        </p>
-      </div>
+                <div className="flex items-center gap-6 mb-8">
+                  <div
+                    className={`w-28 h-28 rounded-xl bg-gradient-to-br ${selGrad} flex items-center justify-center shadow-2xl flex-shrink-0`}
+                  >
+                    <span className="text-5xl font-bold text-white/40 select-none">
+                      {selectedArtist.artist.name[0]}
+                    </span>
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold">
+                      {selectedArtist.artist.name}
+                    </h2>
+                    <p className="text-zinc-400 text-sm mt-1">
+                      {selectedArtist.artist.songCount} songs
+                    </p>
+                    <button
+                      onClick={() =>
+                        startArtist(selectedArtist.artist, selectedArtist.color)
+                      }
+                      className="mt-3 flex items-center gap-2 bg-green-500 hover:bg-green-400 text-black px-5 py-2 rounded-full text-sm font-bold transition-colors"
+                    >
+                      <Play fill="currentColor" size={14} />
+                      Play All
+                    </button>
+                  </div>
+                </div>
 
-      {/* Artist list */}
-      <div className="max-w-4xl mx-auto px-6 pb-8 space-y-2">
-        {filteredArtists.length === 0 ? (
-          <div className="text-center py-24">
-            <p className="text-5xl mb-4">🎵</p>
-            <p className="text-gray-500 font-medium">ไม่พบผลลัพธ์</p>
-          </div>
-        ) : (
-          filteredArtists.map((artist) => (
-            <ArtistCard
-              key={artist.name}
-              artist={artist}
-              langId={activeLang}
-              activeSongId={activeSongId}
-              isPlaying={isPlaying}
-              onPlay={handlePlay}
-            />
-          ))
+                <div className="space-y-0.5">
+                  {selectedArtist.artist.songs.map((s, i) => {
+                    const active = currentSong?.id === s.id;
+                    return (
+                      <div
+                        key={s.id}
+                        onClick={() =>
+                          startFromSong(selectedArtist.artist, selectedArtist.color, i)
+                        }
+                        className={`flex items-center gap-4 py-3 px-3 rounded-lg group cursor-pointer transition-colors ${
+                          active ? "bg-zinc-800/40" : "hover:bg-zinc-800/40"
+                        }`}
+                      >
+                        <span
+                          className={`w-6 text-center text-sm tabular-nums group-hover:hidden ${
+                            active ? "text-green-400" : "text-zinc-500"
+                          }`}
+                        >
+                          {active && isPlaying ? "▶" : i + 1}
+                        </span>
+                        <Play
+                          fill="currentColor"
+                          size={13}
+                          className="w-6 hidden group-hover:block text-white flex-shrink-0"
+                        />
+                        <p
+                          className={`flex-1 text-sm truncate ${
+                            active ? "text-green-400 font-medium" : "text-white"
+                          }`}
+                        >
+                          {s.title}
+                        </p>
+                        <span className="text-xs text-zinc-500 tabular-nums flex-shrink-0">
+                          {fmt(s.duration)}
+                        </span>
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Open in YouTube Music"
+                          className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-white transition-opacity flex-shrink-0"
+                        >
+                          <ExternalLink size={13} />
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* ── Artists grid ── */
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+                {artistRows.map(({ artist, color, flag }) => (
+                  <div
+                    key={`${artist.name}-${flag}`}
+                    onClick={() => setSelectedArtist({ artist, color })}
+                    className="bg-zinc-900/50 hover:bg-zinc-800 p-4 rounded-xl group cursor-pointer transition-all duration-200"
+                  >
+                    <div
+                      className={`aspect-square w-full rounded-md bg-gradient-to-br ${
+                        GRAD[color] ?? GRAD.blue
+                      } shadow-lg mb-4 relative flex items-center justify-center`}
+                    >
+                      <span className="text-4xl font-bold text-white/30 select-none">
+                        {artist.name[0]}
+                      </span>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 rounded-md transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startArtist(artist, color);
+                          }}
+                          className="bg-green-500 text-black p-3.5 rounded-full hover:scale-105 hover:bg-green-400 transition-all shadow-xl translate-y-2 group-hover:translate-y-0"
+                        >
+                          <Play fill="currentColor" size={20} className="ml-0.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <h3 className="text-sm font-semibold text-white truncate mb-0.5">
+                      {artist.name}
+                    </h3>
+                    <p className="text-xs text-zinc-500">
+                      {artist.songCount} songs · {flag}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ════════════════════════════════════════════════════════════
+            PLAYLISTS VIEW
+        ════════════════════════════════════════════════════════════ */}
+        {viewMode === "playlists" && (
+          <>
+            {playlistsLoading ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-3">
+                <Loader2 className="animate-spin text-zinc-500" size={32} />
+                <p className="text-zinc-600 text-sm">Loading playlists from YouTube Music…</p>
+              </div>
+            ) : !playlistsData || playlistsData.playlists.length === 0 ? (
+              /* No data yet — guide user to run the script */
+              <div className="flex flex-col items-center justify-center py-24 gap-4 text-center max-w-sm mx-auto">
+                <ListMusic size={48} className="text-zinc-700" />
+                <h2 className="text-lg font-semibold text-zinc-300">No playlist data yet</h2>
+                <p className="text-zinc-500 text-sm leading-relaxed">
+                  Run the fetch script once to sync your YouTube Music playlists:
+                </p>
+                <code className="bg-zinc-800 text-green-400 px-4 py-2 rounded-lg text-xs text-left w-full">
+                  cd Projects/youtube-music-organizer<br />
+                  .venv\Scripts\python.exe fetch_for_radetch.py
+                </code>
+                <button
+                  onClick={() => { setPlaylistsData(null); setPlaylistsLoading(true); fetch("/api/music/playlists").then(r => r.json()).then((d: PlaylistsData) => { setPlaylistsData(d); setPlaylistsLoading(false); }).catch(() => setPlaylistsLoading(false)); }}
+                  className="text-zinc-400 hover:text-white text-sm transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : selectedPlaylist ? (
+              /* ── Playlist songs view ── */
+              <div>
+                <button
+                  onClick={() => setSelectedPlaylist(null)}
+                  className="flex items-center gap-1 text-zinc-400 hover:text-white text-sm mb-6 transition-colors"
+                >
+                  <ChevronLeft size={16} /> Back to playlists
+                </button>
+
+                {/* Playlist header */}
+                <div className="flex items-center gap-6 mb-8">
+                  <div
+                    className={`w-28 h-28 rounded-xl flex-shrink-0 shadow-2xl overflow-hidden bg-gradient-to-br ${playlistGrad(selectedPlaylist.title)}`}
+                  >
+                    {selectedPlaylist.thumbnailUrl ? (
+                      <img
+                        src={selectedPlaylist.thumbnailUrl}
+                        alt={selectedPlaylist.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ListMusic size={40} className="text-white/40" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold">{selectedPlaylist.title}</h2>
+                    <p className="text-zinc-400 text-sm mt-1">
+                      {selectedPlaylist.count} songs
+                    </p>
+                    <button
+                      onClick={() => startPlaylist(selectedPlaylist)}
+                      className="mt-3 flex items-center gap-2 bg-green-500 hover:bg-green-400 text-black px-5 py-2 rounded-full text-sm font-bold transition-colors"
+                    >
+                      <Play fill="currentColor" size={14} />
+                      Play All
+                    </button>
+                  </div>
+                </div>
+
+                {/* Track rows */}
+                <div className="space-y-0.5">
+                  {selectedPlaylist.tracks.map((t, i) => {
+                    const active = currentSong?.id === t.videoId;
+                    return (
+                      <div
+                        key={`${t.videoId}-${i}`}
+                        onClick={() => startPlaylist(selectedPlaylist, i)}
+                        className={`flex items-center gap-4 py-3 px-3 rounded-lg group cursor-pointer transition-colors ${
+                          active ? "bg-zinc-800/40" : "hover:bg-zinc-800/40"
+                        }`}
+                      >
+                        <span
+                          className={`w-6 text-center text-sm tabular-nums group-hover:hidden ${
+                            active ? "text-green-400" : "text-zinc-500"
+                          }`}
+                        >
+                          {active && isPlaying ? "▶" : i + 1}
+                        </span>
+                        <Play
+                          fill="currentColor"
+                          size={13}
+                          className="w-6 hidden group-hover:block text-white flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`text-sm truncate ${
+                              active ? "text-green-400 font-medium" : "text-white"
+                            }`}
+                          >
+                            {t.title}
+                          </p>
+                          <p className="text-xs text-zinc-500 truncate mt-0.5">
+                            {t.artist}
+                            {t.album ? ` · ${t.album}` : ""}
+                          </p>
+                        </div>
+                        <span className="text-xs text-zinc-500 tabular-nums flex-shrink-0">
+                          {fmt(t.duration)}
+                        </span>
+                        <a
+                          href={`https://music.youtube.com/watch?v=${t.videoId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Open in YouTube Music"
+                          className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-white transition-opacity flex-shrink-0"
+                        >
+                          <ExternalLink size={13} />
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* ── Playlists grid ── */
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+                {playlistsData.playlists.map((pl) => (
+                  <div
+                    key={pl.id}
+                    onClick={() => setSelectedPlaylist(pl)}
+                    className="bg-zinc-900/50 hover:bg-zinc-800 p-4 rounded-xl group cursor-pointer transition-all duration-200"
+                  >
+                    <div
+                      className={`aspect-square w-full rounded-md shadow-lg mb-4 relative overflow-hidden bg-gradient-to-br ${playlistGrad(pl.title)}`}
+                    >
+                      {pl.thumbnailUrl ? (
+                        <img
+                          src={pl.thumbnailUrl}
+                          alt={pl.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ListMusic size={32} className="text-white/30" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 rounded-md transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startPlaylist(pl);
+                          }}
+                          className="bg-green-500 text-black p-3.5 rounded-full hover:scale-105 hover:bg-green-400 transition-all shadow-xl translate-y-2 group-hover:translate-y-0"
+                        >
+                          <Play fill="currentColor" size={20} className="ml-0.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <h3 className="text-sm font-semibold text-white truncate mb-0.5">
+                      {pl.title}
+                    </h3>
+                    <p className="text-xs text-zinc-500">{pl.count} songs</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Player */}
-      {currentIndex >= 0 && queue.length > 0 && (
-        <MusicPlayer
-          queue={queue}
-          currentIndex={currentIndex}
-          onIndexChange={setCurrentIndex}
-          onClose={() => { setCurrentIndex(-1); setQueue([]); setIsPlaying(false); }}
-          onPlayingChange={setIsPlaying}
-        />
-      )}
+      {/* ── Fixed player bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 h-24 bg-zinc-900/95 backdrop-blur-md border-t border-zinc-800 flex items-center px-4 md:px-6 z-50 shadow-[0_-8px_24px_rgba(0,0,0,0.5)]">
+        {/* Now playing */}
+        <div className="flex items-center w-1/3 min-w-[140px] gap-3">
+          {currentSong ? (
+            <>
+              <div
+                className={`w-[52px] h-[52px] rounded-md flex-shrink-0 bg-gradient-to-br ${nowGrad} flex items-center justify-center shadow-md`}
+              >
+                <Music2 size={18} className="text-white/50" />
+              </div>
+              <div className="overflow-hidden hidden sm:block min-w-0 flex-1">
+                <p className="text-sm font-medium text-white truncate leading-tight">
+                  {currentSong.title}
+                </p>
+                <p className="text-xs text-zinc-400 truncate mt-0.5">
+                  {currentArtistName}
+                </p>
+              </div>
+              <button className="ml-1 text-zinc-500 hover:text-white transition-colors hidden sm:block flex-shrink-0">
+                <Heart size={16} />
+              </button>
+            </>
+          ) : (
+            <p className="text-zinc-600 text-sm hidden sm:block">
+              Nothing playing
+            </p>
+          )}
+        </div>
+
+        {/* Controls + progress */}
+        <div className="flex flex-col items-center flex-1 max-w-[480px] mx-auto gap-0">
+          {/* Buttons row */}
+          <div className="flex items-center gap-4 md:gap-5">
+            <button
+              onClick={() => setIsShuffle((s) => !s)}
+              className={`hidden sm:block transition-colors ${
+                isShuffle
+                  ? "text-green-400"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              <Shuffle size={17} />
+            </button>
+
+            <button
+              onClick={doPrev}
+              className="text-zinc-400 hover:text-white transition-colors"
+            >
+              <SkipBack fill="currentColor" size={19} />
+            </button>
+
+            <button
+              onClick={togglePlay}
+              disabled={!currentSong}
+              className="bg-white text-black rounded-full p-2.5 hover:scale-105 transition-transform disabled:opacity-40"
+            >
+              {isBuffering ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : isPlaying ? (
+                <Pause fill="currentColor" size={20} />
+              ) : (
+                <Play fill="currentColor" size={20} className="ml-0.5" />
+              )}
+            </button>
+
+            <button
+              onClick={doNext}
+              className="text-zinc-400 hover:text-white transition-colors"
+            >
+              <SkipForward fill="currentColor" size={19} />
+            </button>
+
+            <button
+              onClick={cycleRepeat}
+              className={`hidden sm:block relative transition-colors ${
+                repeatMode !== "none"
+                  ? "text-green-400"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              <Repeat size={17} />
+              {repeatMode === "one" && (
+                <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold leading-none">
+                  1
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full mt-2 flex items-center gap-2">
+            <span className="text-[11px] text-zinc-500 tabular-nums w-8 text-right">
+              {fmt(currentTime)}
+            </span>
+            <div
+              className="flex-1 h-1 bg-zinc-700 rounded-full group cursor-pointer"
+              onClick={handleSeek}
+            >
+              <div
+                className="h-full bg-white group-hover:bg-green-500 rounded-full relative transition-colors"
+                style={{ width: progressPct }}
+              >
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 shadow-sm" />
+              </div>
+            </div>
+            <span className="text-[11px] text-zinc-500 tabular-nums w-8">
+              {fmt(duration)}
+            </span>
+          </div>
+        </div>
+
+        {/* Volume */}
+        <div className="flex items-center justify-end w-1/3 min-w-[120px] gap-2 text-zinc-400">
+          <Volume2 size={17} />
+          <div
+            className="w-20 h-1 bg-zinc-700 rounded-full group cursor-pointer hidden md:block"
+            onClick={handleVolClick}
+          >
+            <div
+              className="h-full bg-white group-hover:bg-green-500 rounded-full relative transition-colors"
+              style={{ width: `${volume}%` }}
+            >
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 shadow-sm" />
+            </div>
+          </div>
+          <span className="text-xs tabular-nums text-zinc-600 hidden md:block w-7 text-right">
+            {volume}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

@@ -204,7 +204,7 @@ export default function MenuPage() {
                   {[...selected].map((tag) => (
                     <span
                       key={tag}
-                      className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-full font-medium"
+                      className="flex items-center gap-1.5 bg-slate-100 text-gray-600 text-xs px-3 py-1.5 rounded-full font-medium"
                     >
                       {tag}
                       <button onClick={() => toggle(tag)} className="hover:text-gray-900 font-bold leading-none">×</button>
@@ -262,7 +262,7 @@ export default function MenuPage() {
                   className="text-left rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden bg-white group"
                 >
                   {/* Image / Emoji banner */}
-                  <div className="h-40 relative overflow-hidden bg-gray-50">
+                  <div className="h-40 relative overflow-hidden bg-slate-50">
                     {item.image ? (
                       <Image
                         src={item.image}
@@ -278,7 +278,7 @@ export default function MenuPage() {
                       </div>
                     )}
                     <div className="absolute top-3 left-3">
-                      <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${NAT_COLORS[item.nationality] || "bg-gray-100 text-gray-600"}`}>
+                      <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${NAT_COLORS[item.nationality] || "bg-slate-100 text-gray-600"}`}>
                         {nat.flag} {nat.label}
                       </span>
                     </div>
@@ -299,14 +299,14 @@ export default function MenuPage() {
                         <span
                           key={tag}
                           className={`text-[10px] px-2 py-0.5 rounded-full transition-colors ${
-                            selected.has(tag) ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"
+                            selected.has(tag) ? "bg-gray-900 text-white" : "bg-slate-100 text-gray-400"
                           }`}
                         >
                           {tag}
                         </span>
                       ))}
                       {item.tags.length > 4 && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-50 text-gray-300">+{item.tags.length - 4}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-50 text-gray-300">+{item.tags.length - 4}</span>
                       )}
                     </div>
 
@@ -332,7 +332,7 @@ export default function MenuPage() {
           <div className="min-h-full flex items-start justify-center py-8 px-4">
             <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
               {/* Hero image */}
-              <div className="relative h-56 bg-gray-50">
+              <div className="relative h-56 bg-slate-50">
                 {detail.image ? (
                   <Image src={detail.image} alt={detail.name} fill unoptimized sizes="100vw" className="object-cover" />
                 ) : (
@@ -348,7 +348,7 @@ export default function MenuPage() {
                   {(() => {
                     const nat = getNatLabel(detail.nationality);
                     return (
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${NAT_COLORS[detail.nationality] || "bg-gray-100 text-gray-600"}`}>
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${NAT_COLORS[detail.nationality] || "bg-slate-100 text-gray-600"}`}>
                         {nat.flag} {nat.label}
                       </span>
                     );
@@ -375,7 +375,7 @@ export default function MenuPage() {
                     { label: "แคลอรี่", value: `${detail.calories}` },
                     { label: "จำนวน", value: `${detail.servings} คน` },
                   ].map(({ label, value }) => (
-                    <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
+                    <div key={label} className="bg-slate-50 rounded-xl p-3 text-center">
                       <p className="text-gray-900 font-semibold text-sm">{value}</p>
                       <p className="text-gray-400 text-[10px] mt-0.5">{label}</p>
                     </div>
@@ -418,7 +418,7 @@ export default function MenuPage() {
                 {detail.tags.length > 0 && (
                   <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap gap-1.5">
                     {detail.tags.map((t) => (
-                      <span key={t} className="text-[10px] px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">{t}</span>
+                      <span key={t} className="text-[10px] px-2.5 py-1 rounded-full bg-slate-100 text-gray-500">{t}</span>
                     ))}
                   </div>
                 )}

@@ -147,11 +147,11 @@ export default function HomeDashboard() {
         {/* Header Section */}
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-bold tracking-widest text-stone-500 uppercase mb-2">Personal Overview</p>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-stone-800 tracking-tight">
+            <p className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">Personal Overview</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-slate-800 tracking-tight">
               Dashboard
             </h1>
-            <p className="text-stone-500 mt-2 text-sm md:text-base">
+            <p className="text-slate-400 mt-2 text-sm md:text-base">
               Welcome back, Teeradet. Here's a summary of your life data.
             </p>
           </div>
@@ -179,10 +179,10 @@ export default function HomeDashboard() {
           <div className="lg:col-span-2 bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl p-6 md:p-8 shadow-xl shadow-stone-200/50">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-xl font-bold text-stone-800">Financial Growth</h2>
-                <p className="text-sm text-stone-500">Net Worth Trajectory</p>
+                <h2 className="text-xl font-bold text-slate-800">Financial Growth</h2>
+                <p className="text-sm text-slate-400">Net Worth Trajectory</p>
               </div>
-              <Link href="/finance" className="text-stone-400 hover:text-stone-800 transition-colors">
+              <Link href="/finance" className="text-slate-300 hover:text-slate-800 transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
               </Link>
             </div>
@@ -211,7 +211,7 @@ export default function HomeDashboard() {
             {/* Sleep Tracking */}
             <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl p-6 shadow-xl shadow-stone-200/50">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-stone-800">Sleep Routine</h2>
+                <h2 className="text-lg font-bold text-slate-800">Sleep Routine</h2>
                 <Link href="/routine" className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full hover:bg-indigo-100 transition-colors">Details</Link>
               </div>
               <div className="h-[140px] w-full">
@@ -274,14 +274,14 @@ function StatCard({ title, value, trend, isPositive, icon }: { title: string, va
   return (
     <div className="bg-white/80 backdrop-blur-md border border-white rounded-3xl p-5 shadow-lg shadow-stone-200/40 hover:-translate-y-1 transition-transform duration-300">
       <div className="flex justify-between items-start mb-4">
-        <div className="p-2 bg-stone-100 rounded-xl text-xl">{icon}</div>
+        <div className="p-2 bg-slate-100 rounded-xl text-xl">{icon}</div>
         <span className={`text-xs font-bold px-2 py-1 rounded-full ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {trend}
         </span>
       </div>
       <div>
-        <h3 className="text-stone-500 text-sm font-medium">{title}</h3>
-        <p className="text-2xl font-extrabold text-stone-800 mt-1">{value}</p>
+        <h3 className="text-slate-400 text-sm font-medium">{title}</h3>
+        <p className="text-2xl font-extrabold text-slate-800 mt-1">{value}</p>
       </div>
     </div>
   )
@@ -295,7 +295,7 @@ function ModuleCard({ title, desc, icon, href, color }: { title: string, desc: s
           {icon}
         </div>
         <div>
-          <h3 className="text-xl font-bold mb-1 group-hover:text-stone-900 transition-colors">{title}</h3>
+          <h3 className="text-xl font-bold mb-1 group-hover:text-slate-900 transition-colors">{title}</h3>
           <p className="text-sm opacity-80">{desc}</p>
         </div>
       </div>
