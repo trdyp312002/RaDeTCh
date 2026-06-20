@@ -16,8 +16,6 @@ export interface HealthLog {
   id: string;
   date: string;
   weight: number | null;
-  bmi?: number | null;
-  body_fat?: number | null;
   sleep_hours: number | null;
   sleep_score: number | null;
   steps: number | null;
@@ -72,11 +70,8 @@ export default function HealthDashboard({ logs }: Props) {
   const router = useRouter();
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
-  const [syncingWeight, setSyncingWeight] = useState(false);
-  const [syncWeightMsg, setSyncWeightMsg] = useState<string | null>(null);
 
   const latest = logs[0] ?? null;
-  const latestWeightLog = logs.find((l) => l.weight != null) ?? null;
   const chartData = logs
     .slice(0, 14)
     .reverse()
@@ -101,45 +96,6 @@ export default function HealthDashboard({ logs }: Props) {
 
   const stepsPct =
     latest?.steps != null ? Math.min(Math.round((latest.steps / STEPS_GOAL) * 100), 100) : null;
-
-  async function handleSyncWeight() {
-    setSyncingWeight(true);
-    setSyncWeightMsg(null);
-    try {
-      const vesyncRes = await fetch('/api/vesync');
-      const vesync = await vesyncRes.json();
-
-      if (vesync.error) {
-        setSyncWeightMsg(`❌ ${vesync.error}`);
-        return;
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      const saveRes = await fetch('/api/health', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: today,
-          weight: vesync.weight,
-          bmi: vesync.bmi,
-          body_fat: vesync.body_fat,
-          notes: 'VeSync Auto-Sync',
-        }),
-      });
-
-      if (!saveRes.ok) {
-        setSyncWeightMsg('❌ Failed to save weight');
-        return;
-      }
-
-      setSyncWeightMsg(`✓ ${vesync.weight} kg synced!`);
-      router.refresh();
-    } catch (e: unknown) {
-      setSyncWeightMsg(`❌ ${e instanceof Error ? e.message : 'Unknown error'}`);
-    } finally {
-      setSyncingWeight(false);
-    }
-  }
 
   const latestDate = latest?.date ? String(latest.date).substring(0, 10) : null;
 
@@ -185,67 +141,35 @@ export default function HealthDashboard({ logs }: Props) {
             Health & Vitality
           </h1>
           <p className="text-[15px] text-slate-500">
-            {latestDate ? `Last entry: ${latestDate}` : 'No data yet'} · Garmin + VeSync
+            {latestDate ? `Last entry: ${latestDate}` : 'No data yet'} · Garmin Connect
           </p>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2">
-            {/* VeSync Weight Sync */}
-            <div className="flex flex-col items-end gap-1">
-              <button
-                onClick={handleSyncWeight}
-                disabled={syncingWeight}
-                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-full text-[14px] font-medium transition-colors"
-              >
-                {syncingWeight ? (
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="5" r="3" />
-                    <path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z" />
-                  </svg>
-                )}
-                {syncingWeight ? 'Syncing...' : 'Sync Weight'}
-              </button>
-              {syncWeightMsg && (
-                <span className={`text-[12px] ${syncWeightMsg.startsWith('❌') ? 'text-red-500' : 'text-emerald-600'}`}>
-                  {syncWeightMsg}
-                </span>
-              )}
-            </div>
-
-            {/* Garmin Sync */}
-            <div className="flex flex-col items-end gap-1">
-              <button
-                onClick={handleSync}
-                disabled={syncing}
-                className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-full text-[14px] font-medium transition-colors"
-              >
-                {syncing ? (
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                    <path d="M21 3v5h-5" />
-                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                    <path d="M8 16H3v5" />
-                  </svg>
-                )}
-                {syncing ? 'Syncing...' : 'Sync Garmin'}
-              </button>
-              {syncMsg && (
-                <span className={`text-[12px] ${syncMsg.startsWith('❌') ? 'text-red-500' : 'text-emerald-600'}`}>
-                  {syncMsg}
-                </span>
-              )}
-            </div>
-          </div>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-full text-[14px] font-medium transition-colors"
+          >
+            {syncing ? (
+              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+              </svg>
+            )}
+            {syncing ? 'Syncing...' : 'Sync from Garmin'}
+          </button>
+          {syncMsg && (
+            <span className={`text-[12px] ${syncMsg.startsWith('❌') ? 'text-red-500' : 'text-emerald-600'}`}>
+              {syncMsg}
+            </span>
+          )}
         </div>
       </div>
 
@@ -350,7 +274,7 @@ export default function HealthDashboard({ logs }: Props) {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
         <StatCard
           label="Resting Heart Rate"
           value={latest?.resting_heart_rate != null ? `${latest.resting_heart_rate}` : '—'}
@@ -362,39 +286,12 @@ export default function HealthDashboard({ logs }: Props) {
           }
         />
         <StatCard
-          label="Weight (VeSync)"
-          value={latestWeightLog?.weight != null ? `${latestWeightLog.weight}` : '—'}
-          sub={
-            latestWeightLog?.weight != null
-              ? `kg · ${String(latestWeightLog.date).substring(0, 10)}`
-              : undefined
-          }
+          label="Sleep Hours"
+          value={latest?.sleep_hours != null ? `${latest.sleep_hours.toFixed(1)}` : '—'}
+          sub={latest?.sleep_hours != null ? 'hours' : undefined}
           icon={
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="5" r="3" />
-              <path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z" />
-            </svg>
-          }
-        />
-        <StatCard
-          label="BMI"
-          value={latestWeightLog?.bmi != null ? `${latestWeightLog.bmi}` : '—'}
-          sub={
-            latestWeightLog?.bmi != null
-              ? latestWeightLog.bmi < 18.5 ? 'Underweight'
-              : latestWeightLog.bmi < 25 ? 'Normal'
-              : latestWeightLog.bmi < 30 ? 'Overweight'
-              : 'Obese'
-              : undefined
-          }
-          icon={
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-              <path d="M4 22h16" />
-              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
             </svg>
           }
         />
@@ -509,7 +406,6 @@ export default function HealthDashboard({ logs }: Props) {
                 <th className="pb-3 font-medium text-center">Sleep</th>
                 <th className="pb-3 font-medium text-center">Steps</th>
                 <th className="pb-3 font-medium text-center">Heart Rate</th>
-                <th className="pb-3 font-medium text-center">Weight</th>
                 <th className="pb-3 font-medium text-right">Source</th>
               </tr>
             </thead>
@@ -521,11 +417,7 @@ export default function HealthDashboard({ logs }: Props) {
                   </td>
                   <td className="py-3 text-center">
                     {log.sleep_score != null ? (
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${sleepColor(
-                          log.sleep_score
-                        )}`}
-                      >
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${sleepColor(log.sleep_score)}`}>
                         {log.sleep_score}
                       </span>
                     ) : (
@@ -533,49 +425,17 @@ export default function HealthDashboard({ logs }: Props) {
                     )}
                   </td>
                   <td className="py-3 text-center text-slate-600">
-                    {log.sleep_hours != null ? (
-                      formatSleepHours(log.sleep_hours)
-                    ) : (
-                      <span className="text-slate-300">—</span>
-                    )}
+                    {log.sleep_hours != null ? formatSleepHours(log.sleep_hours) : <span className="text-slate-300">—</span>}
                   </td>
                   <td className="py-3 text-center text-slate-600">
-                    {log.steps != null ? (
-                      log.steps.toLocaleString()
-                    ) : (
-                      <span className="text-slate-300">—</span>
-                    )}
+                    {log.steps != null ? log.steps.toLocaleString() : <span className="text-slate-300">—</span>}
                   </td>
                   <td className="py-3 text-center text-slate-600">
-                    {log.resting_heart_rate != null ? (
-                      `${log.resting_heart_rate} bpm`
-                    ) : (
-                      <span className="text-slate-300">—</span>
-                    )}
-                  </td>
-                  <td className="py-3 text-center text-slate-600">
-                    {log.weight != null ? (
-                      <span>
-                        {log.weight} kg
-                        {log.bmi != null && (
-                          <span className="ml-1 text-[11px] text-slate-400">BMI {log.bmi}</span>
-                        )}
-                      </span>
-                    ) : (
-                      <span className="text-slate-300">—</span>
-                    )}
+                    {log.resting_heart_rate != null ? `${log.resting_heart_rate} bpm` : <span className="text-slate-300">—</span>}
                   </td>
                   <td className="py-3 text-right">
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full border ${
-                      log.notes?.includes('VeSync')
-                        ? 'text-violet-600 bg-violet-50 border-violet-100'
-                        : log.notes?.includes('Garmin')
-                        ? 'text-slate-500 bg-slate-50 border-slate-100'
-                        : 'text-slate-400 bg-slate-50 border-slate-100'
-                    }`}>
-                      {log.notes?.includes('VeSync') ? 'VeSync'
-                        : log.notes?.includes('Garmin') ? 'Garmin'
-                        : log.notes || 'Manual'}
+                    <span className="text-[11px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
+                      {log.notes?.includes('Garmin') ? 'Garmin' : log.notes || 'Manual'}
                     </span>
                   </td>
                 </tr>
