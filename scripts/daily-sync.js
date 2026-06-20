@@ -21,7 +21,9 @@ if (fs.existsSync(envPath)) {
 }
 
 const DATA_FILE = path.join(__dirname, "../data/health.json")
-const PYTHON    = "C:\\Users\\trdyp\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+const PYTHON    = process.platform === "win32"
+  ? "C:\\Users\\trdyp\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+  : "python3"
 const TODAY     = new Date().toLocaleDateString("en-CA") // YYYY-MM-DD
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

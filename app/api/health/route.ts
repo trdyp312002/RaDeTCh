@@ -36,6 +36,8 @@ export async function POST(req: Request) {
 
     const fields = {
       weight:             body.weight             != null ? Number(body.weight)             : undefined,
+      bmi:                body.bmi                != null ? Number(body.bmi)                : undefined,
+      body_fat:           body.body_fat           != null ? Number(body.body_fat)           : undefined,
       sleep_hours:        body.sleep_hours        != null ? Number(body.sleep_hours)        : undefined,
       sleep_score:        body.sleep_score        != null ? Number(body.sleep_score)        : undefined,
       steps:              body.steps              != null ? Number(body.steps)              : undefined,
