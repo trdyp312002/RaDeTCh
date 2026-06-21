@@ -3,6 +3,28 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 
 export const dynamic = "force-dynamic"
 
+const PAGE_CONTEXTS: Record<string, string> = {
+  "/": "Home dashboard — overview of all life areas",
+  "/(life)/dashboard": "Life Dashboard — summary of daily life metrics and goals",
+  "/(life)/health": "Health & Vitality page — Garmin data: sleep score, steps, resting heart rate, sleep hours trends",
+  "/(life)/daily": "Daily Log — logging daily activities, mood, habits",
+  "/(life)/routine": "Routine page — daily routine schedule and habits tracker",
+  "/(life)/books": "Books page — reading list and book progress tracker",
+  "/(life)/travel": "Travel page — visited countries map and travel plans",
+  "/(life)/relationships": "Relationships page — tracking important people and interactions",
+  "/(life)/music": "Music page — music playlists and listening",
+  "/(life)/life": "Life Goals — long-term life vision and major goals",
+  "/(life)/exercise": "Exercise page — workout tracking and fitness goals",
+  "/(life)/menu": "Menu — navigation hub for all life sections",
+  "/(wealth)/finance": "Finance page — net worth, income, expenses, savings tracking",
+  "/(wealth)/claw-empire": "Claw Empire — claw machine business tracking",
+  "/(wealth)/project-omnitech": "Project OmniTech — algorithmic trading project overview",
+  "/wealth-os/dashboard": "Wealth OS Dashboard — investment overview and market data",
+  "/wealth-os/portfolio": "Portfolio page — stock and crypto holdings tracker",
+  "/wealth-os/balance-sheet": "Balance Sheet — assets vs liabilities overview",
+  "/wealth-os/omnitrade": "OmniTrade — live algorithmic trading bot interface",
+}
+
 const SYSTEM = `You are WhyMan, a personal life management AI secretary. You help your master — a Thai person working Mon–Fri 8 AM – 7 PM — optimize their limited free time to achieve their goals.
 
 ## FIXED SCHEDULE
@@ -86,7 +108,7 @@ async function postToDiscord(content: string): Promise<boolean> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, action } = await req.json()
+    const { message, action, page } = await req.json()
 
     const genAI = buildClient()
 
@@ -95,6 +117,23 @@ export async function POST(req: NextRequest) {
         message:
           "⚠️ ยังไม่ได้ตั้งค่า Google AI API Key\n\nกรุณาเพิ่ม GOOGLE_AI_API_KEY ใน .env.local แล้ว restart server\n\nรับ API Key ได้ที่: https://aistudio.google.com/app/apikey",
       })
+    }
+
+    // Page advice action: give specific recommendations for the current page
+    if (action === "page_advice") {
+      const pageLabel = PAGE_CONTEXTS[page] ?? `Page: ${page}`
+      const now = new Date()
+      const dayNames = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัส", "ศุกร์", "เสาร์"]
+      const dow = now.getDay()
+      const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
+      const prompt = `The user just opened: ${pageLabel}
+Current time: ${timeStr}, Day: วัน${dayNames[dow]}
+
+Give 2-3 SHORT, specific, actionable recommendations for what the user should do or check RIGHT NOW on this page. Be direct and practical. Mix Thai/English naturally. Use bullet points (•). Max 4 lines total. No long explanations.`
+
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: SYSTEM })
+      const result = await model.generateContent(prompt)
+      return NextResponse.json({ message: result.response.text() })
     }
 
     // Discord action: generate message + post to webhook
