@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { GarminConnect } from "garmin-connect"
+import { getGarminClient } from "@/lib/garminClient"
 import fs from "fs/promises"
 import path from "path"
 
@@ -14,18 +14,11 @@ function sleep(ms: number) {
 }
 
 export async function POST(req: NextRequest) {
-  const email    = process.env.GARMIN_EMAIL
-  const password = process.env.GARMIN_PASSWORD
-  if (!email || !password) {
-    return NextResponse.json({ error: "Missing Garmin credentials" }, { status: 400 })
-  }
-
   const body = await req.json().catch(() => ({}))
   const days = Math.min(Number(body.days) || 90, 365)
 
   try {
-    const client = new GarminConnect({ username: email, password: password })
-    await client.login()
+    const client = await getGarminClient()
 
     const fileContents = await fs.readFile(dataFilePath, "utf8")
     const data = JSON.parse(fileContents)

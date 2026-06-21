@@ -1,22 +1,11 @@
 import { NextResponse } from "next/server";
-import { GarminConnect } from "garmin-connect";
+import { getGarminClient } from "@/lib/garminClient";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const email = process.env.GARMIN_EMAIL;
-    const password = process.env.GARMIN_PASSWORD;
-
-    if (!email || !password) {
-      console.log("Missing credentials");
-      return NextResponse.json({ error: "Missing Garmin credentials in .env.local" }, { status: 400 });
-    }
-    
-    console.log("Trying to login with", email);
-
-    const client = new GarminConnect({ username: email, password: password });
-    await client.login();
+    const client = await getGarminClient();
 
     const today = new Date();
     

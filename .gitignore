@@ -49,3 +49,6 @@ data/*.db*
 __pycache__/
 *.pyc
 .venv/
+
+# Garmin cached OAuth tokens (auto-generated, contains sensitive data)
+.garmin-tokens.json
