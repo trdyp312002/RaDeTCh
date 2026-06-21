@@ -1,4 +1,5 @@
 import './styles.css';
+import WealthMobileNav from '@/components/WealthMobileNav';
 
 export default function WealthOSLayout({
   children,
@@ -7,7 +8,10 @@ export default function WealthOSLayout({
 }) {
   return (
     <div className="wealth-os-root">
-      {children}
+      <WealthMobileNav />
+      <div className="wealth-os-content">
+        {children}
+      </div>
     </div>
   );
 }

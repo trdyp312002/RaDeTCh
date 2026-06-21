@@ -199,3 +199,37 @@ body {
 .bauhaus-theme .ticker { display: inline-block; animation: ticker 20s linear infinite; font-weight: 700; color: #0f172a; padding: 0.5rem 0; }
 @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-50%, 0, 0); } }
 .bauhaus-theme .bar-chart-col { transition: height 0.5s ease-in-out; }
+
+/* =========================================
+   MOBILE UTILITIES
+   ========================================= */
+/* Safe-area padding for bottom navigation on iOS */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Smooth scrolling on mobile */
+html {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent horizontal scroll globally */
+body {
+  overflow-x: hidden;
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 768px) {
+  a, button {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Material Symbols sizing utility */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  vertical-align: middle;
+}
