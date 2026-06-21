@@ -12,8 +12,8 @@ dotenv.config({ path: ".env.local" })
 
 const APP_URL  = (process.env.WHYMAN_APP_URL ?? "http://localhost:3000").replace(/\/$/, "")
 const PASSWORD = process.env.APP_PASSWORD ?? ""
-// Save to MYWORLD/DATA/diary (shared data folder, 2 levels up from project root)
-const DIARY_DIR = path.join(process.cwd(), "..", "..", "DATA", "diary")
+// Save to BRAIN/06-Diary (Obsidian vault, 2 levels up from project root)
+const DIARY_DIR = path.join(process.cwd(), "..", "..", "06-Diary")
 const INTERVAL_MS = 12 * 60 * 60 * 1000 // sync ทุก 12 ชั่วโมง
 
 type Entry = { date: string; morning: string; afternoon: string; evening: string }
