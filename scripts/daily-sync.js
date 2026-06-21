@@ -1,15 +1,13 @@
 /**
  * daily-sync.js — runs standalone (no Next.js server needed)
- * Syncs today's Garmin + VeSync data directly into data/health.json
+ * Syncs today's Garmin data via Railway API or local file fallback.
  *
  * Usage:  node scripts/daily-sync.js
- * Sched:  registered as Windows Task Scheduler task "RaDeTCh Daily Sync"
  */
 
 const { GarminConnect } = require("garmin-connect")
-const { spawnSync }     = require("child_process")
-const fs                = require("fs")
-const path              = require("path")
+const fs   = require("fs")
+const path = require("path")
 
 // ── Load .env.local ──────────────────────────────────────────────────────────
 const envPath = path.join(__dirname, "../.env.local")
@@ -21,9 +19,6 @@ if (fs.existsSync(envPath)) {
 }
 
 const DATA_FILE = path.join(__dirname, "../data/health.json")
-const PYTHON    = process.platform === "win32"
-  ? "C:\\Users\\trdyp\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
-  : "python3"
 const TODAY     = new Date().toLocaleDateString("en-CA") // YYYY-MM-DD
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -48,20 +43,18 @@ function upsert(data, datePrefix, updates, notes) {
     data.logs.push({
       id: `sync_${datePrefix}_${Date.now()}`,
       date: datePrefix,
-      weight: null, sleep_hours: null, sleep_score: null,
+      sleep_hours: null, sleep_score: null,
       steps: null, resting_heart_rate: null,
-      calories_in: null, calories_out: null,
       notes: notes || "",
       ...updates,
     })
   }
 }
 
-// ── POST health data to Railway API ──────────────────────────────────────────
+// ── POST health data to Railway API (or write local file) ────────────────────
 async function postHealth(dateStr, fields, notes) {
   const appUrl = process.env.WHYMAN_APP_URL
   if (!appUrl) {
-    // Fallback: write to local file when running locally without WHYMAN_APP_URL
     const data = readHealth()
     upsert(data, dateStr, fields, notes)
     writeHealth(data)
@@ -110,41 +103,9 @@ async function syncGarmin() {
   }
 }
 
-// ── VeSync sync ───────────────────────────────────────────────────────────────
-async function syncVeSync() {
-  const email    = process.env.VESYNC_EMAIL
-  const password = process.env.VESYNC_PASSWORD
-  if (!email || !password) { console.log("[VeSync] Missing credentials"); return }
-
-  try {
-    console.log("[VeSync] Running Python script…")
-    const scriptPath = path.join(__dirname, "vesync_weight.py")
-    const proc = spawnSync(PYTHON, [scriptPath], {
-      env: { ...process.env },
-      timeout: 30_000,
-      encoding: "utf8",
-    })
-
-    const raw = (proc.stdout || "").trim()
-    if (!raw) {
-      console.log("[VeSync] No output:", (proc.stderr || "").trim())
-      return
-    }
-
-    const result = JSON.parse(raw)
-    if (result.error) { console.log("[VeSync] Error:", result.error); return }
-
-    await postHealth(TODAY, { weight: result.weight }, "VeSync Auto-Sync")
-    console.log(`[VeSync] OK — weight: ${result.weight} kg`)
-  } catch (e) {
-    console.error("[VeSync] Error:", e.message)
-  }
-}
-
 // ── Main ──────────────────────────────────────────────────────────────────────
 ;(async () => {
   console.log(`\n=== RaDeTCh Daily Sync — ${TODAY} ===`)
   await syncGarmin()
-  await syncVeSync()
   console.log("=== Done ===\n")
 })()
