@@ -3,6 +3,20 @@ import db from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
+async function ensureTable() {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS finance_items (
+      id         TEXT PRIMARY KEY,
+      category   TEXT NOT NULL CHECK(category IN ('cash','other_asset','liability')),
+      label      TEXT NOT NULL,
+      amount     REAL NOT NULL,
+      currency   TEXT NOT NULL DEFAULT 'THB',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `)
+}
+
 const DEFAULT_FINANCE_SEEDS = [
   // cash (Liquid Assets)
   { category: "cash", label: "EMERGENCY FUND", amount: 2060.80, currency: "THB" },
@@ -25,6 +39,7 @@ const DEFAULT_FINANCE_SEEDS = [
 
 export async function GET() {
   try {
+    await ensureTable()
     const countRes = await db.execute("SELECT COUNT(*) as cnt FROM finance_items")
     const count = Number(countRes.rows[0]?.cnt ?? 0)
 
@@ -47,6 +62,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureTable()
     const { category, label, amount, currency } = await req.json()
     if (!category || !label || amount == null) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })

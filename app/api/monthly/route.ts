@@ -3,6 +3,20 @@ import db from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
+async function ensureTable() {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS monthly_items (
+      id         TEXT PRIMARY KEY,
+      type       TEXT NOT NULL CHECK(type IN ('income_fixed','income_variable','expense_fixed','expense_variable')),
+      label      TEXT NOT NULL,
+      amount     REAL NOT NULL,
+      currency   TEXT NOT NULL DEFAULT 'THB',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `)
+}
+
 const DEFAULT_SEEDS = [
   // Income Fixed
   { type: "income_fixed", label: "เงินเดือน", amount: 22668.82, currency: "THB" },
@@ -33,6 +47,7 @@ const DEFAULT_SEEDS = [
 
 export async function GET() {
   try {
+    await ensureTable()
     // Check if table has items
     const countRes = await db.execute("SELECT COUNT(*) as cnt FROM monthly_items")
     const count = Number(countRes.rows[0]?.cnt ?? 0)
@@ -56,6 +71,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureTable()
     const { type, label, amount, currency } = await req.json()
     if (!type || !label || amount == null) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })

@@ -110,6 +110,11 @@ function EditableRow({
   const [editLabel,   setEditLabel]   = useState(label)
   const [editAmount,  setEditAmount]  = useState(String(amount))
   const [editingAmt,  setEditingAmt]  = useState(false)
+
+  // Sync with parent state changes (e.g. after save from another session)
+  useEffect(() => { setEditLabel(label) }, [label])
+  useEffect(() => { if (!editingAmt) setEditAmount(String(amount)) }, [amount, editingAmt])
+
   const displayAmt = convertAmount(amount, currency, displayCurrency)
   const prefix = displayCurrency === "THB" ? "฿" : "$"
 
@@ -190,6 +195,11 @@ function MonthlyRow({ item, savingState, displayCurrency, convertAmount, onUpdat
   const [editLabel,  setEditLabel]  = useState(item.label)
   const [editAmount, setEditAmount] = useState(String(item.amount))
   const [editingAmt, setEditingAmt] = useState(false)
+
+  // Sync with parent state changes
+  useEffect(() => { setEditLabel(item.label) }, [item.label])
+  useEffect(() => { if (!editingAmt) setEditAmount(String(item.amount)) }, [item.amount, editingAmt])
+
   const displayAmt = convertAmount(item.amount, item.currency, displayCurrency)
   const prefix = displayCurrency === "THB" ? "฿" : "$"
 
@@ -264,6 +274,7 @@ export default function FinanceDashboard() {
   const [displayCurrency, setDisplayCurrency] = useState<"THB" | "USD">("THB")
   const [loading,         setLoading]         = useState(true)
   const [networthHistory, setNetworthHistory] = useState<Snapshot[]>([])
+  const [toast,           setToast]           = useState<{ msg: string; ok: boolean } | null>(null)
   const savedTodayRef = useRef(false)
 
   // ── Portfolio section ──
@@ -450,6 +461,11 @@ export default function FinanceDashboard() {
     if (ok) setTimeout(() => setSavingState(prev => { const n = { ...prev }; delete n[id]; return n }), 2000)
   }
 
+  const showToast = (msg: string, ok: boolean) => {
+    setToast({ msg, ok })
+    setTimeout(() => setToast(null), 3000)
+  }
+
   const updateFinance = async (id: string, field: "label" | "amount", value: string) => {
     markSaving(id)
     const t = dbFinanceItems.find(f => f.id === id); if (!t) return
@@ -466,15 +482,18 @@ export default function FinanceDashboard() {
 
   const addFinance = async (category: DBFinanceItem["category"], label: string, amount: number) => {
     const res = await fetch("/api/finance", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category, label, amount, currency: "THB" }) }).catch(console.error)
-    if (!res || !res.ok) return
+      body: JSON.stringify({ category, label, amount, currency: "THB" }) }).catch(() => null)
+    if (!res || !res.ok) { showToast("บันทึกไม่สำเร็จ กรุณาลองใหม่", false); return }
     const item = await res.json()
     setDbFinanceItems(prev => [...prev, item])
+    savedTodayRef.current = false
   }
 
   const deleteFinance = async (id: string) => {
-    await fetch(`/api/finance/${id}`, { method: "DELETE" }).catch(console.error)
+    const res = await fetch(`/api/finance/${id}`, { method: "DELETE" }).catch(() => null)
+    if (!res || !res.ok) { showToast("ลบไม่สำเร็จ กรุณาลองใหม่", false); return }
     setDbFinanceItems(prev => prev.filter(i => i.id !== id))
+    savedTodayRef.current = false
   }
 
   const updateMonthly = async (id: string, field: "label" | "amount", value: string) => {
@@ -493,14 +512,15 @@ export default function FinanceDashboard() {
 
   const addMonthly = async (type: DBMonthlyItem["type"], label: string, amount: number) => {
     const res = await fetch("/api/monthly", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, label, amount, currency: "THB" }) }).catch(console.error)
-    if (!res || !res.ok) return
+      body: JSON.stringify({ type, label, amount, currency: "THB" }) }).catch(() => null)
+    if (!res || !res.ok) { showToast("บันทึกไม่สำเร็จ กรุณาลองใหม่", false); return }
     const item = await res.json()
     setDbMonthlyItems(prev => [...prev, item])
   }
 
   const deleteMonthly = async (id: string) => {
-    await fetch(`/api/monthly/${id}`, { method: "DELETE" }).catch(console.error)
+    const res = await fetch(`/api/monthly/${id}`, { method: "DELETE" }).catch(() => null)
+    if (!res || !res.ok) { showToast("ลบไม่สำเร็จ กรุณาลองใหม่", false); return }
     setDbMonthlyItems(prev => prev.filter(i => i.id !== id))
   }
 
@@ -535,6 +555,12 @@ export default function FinanceDashboard() {
 
   return (
     <div className="bauhaus-theme flex flex-col min-h-screen w-full relative">
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-lg shadow-xl text-sm font-bold text-white transition-all ${toast.ok ? "bg-emerald-600" : "bg-red-500"}`}>
+          {toast.msg}
+        </div>
+      )}
       {/* Ticker Bar */}
       <div className="ticker-wrap border-b-4 border-[var(--color-on-background)] bg-[var(--color-primary-container)] z-30 sticky top-0 hidden md:block">
         <div className="ticker text-lg">
