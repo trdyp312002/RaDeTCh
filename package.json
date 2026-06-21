@@ -4,14 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
+    "dev:all": "concurrently \"next dev -H 0.0.0.0\" \"npx tsx bot/discord-bot.ts\"",
     "build": "next build",
     "start": "next start",
+    "start:all": "concurrently --kill-others-on-fail \"next start\" \"tsx bot/discord-bot.ts\"",
+    "bot": "tsx bot/discord-bot.ts",
     "lint": "eslint"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
+    "@google/generative-ai": "^0.24.1",
     "@libsql/client": "^0.17.3",
     "d3-geo": "^3.1.1",
+    "discord.js": "^14.26.4",
     "dotenv": "^17.4.2",
     "framer-motion": "^12.40.0",
     "garmin-connect": "^1.6.2",
@@ -27,7 +32,8 @@
     "react-leaflet": "^5.0.0",
     "react-simple-maps": "^3.0.0",
     "react-use": "^17.6.0",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "tsx": "^4.22.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

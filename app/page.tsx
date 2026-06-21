@@ -7,6 +7,7 @@ export default function Portal() {
       {/* LEFT: Health OS */}
       <Link
         href="/health"
+        prefetch={false}
         className="flex-1 relative group bg-[#FAF6F0] flex flex-col items-center justify-center overflow-hidden transition-all duration-500 hover:flex-[1.2]"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-purple-100/40 to-rose-100/40 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -31,7 +32,8 @@ export default function Portal() {
 
       {/* RIGHT: Wealth OS */}
       <Link 
-        href="/wealth-os/dashboard" 
+        href="/wealth-os/dashboard"
+        prefetch={false}
         className="flex-1 relative group bg-[#050B14] flex flex-col items-center justify-center overflow-hidden transition-all duration-500 hover:flex-[1.2]"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/20 to-blue-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>

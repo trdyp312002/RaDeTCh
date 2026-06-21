@@ -17,6 +17,26 @@ async function sha256(input: string): Promise<string> {
 }
 
 export async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl
+
+  if (isPublic(pathname)) {
+    return NextResponse.next()
+  }
+
+  const password = process.env.APP_PASSWORD?.trim()
+  if (!password) {
+    return NextResponse.next()
+  }
+
+  const session = req.cookies.get("radetch_session")?.value
+  const expected = await sha256(password)
+
+  if (session !== expected) {
+    const loginUrl = req.nextUrl.clone()
+    loginUrl.pathname = "/login"
+    return NextResponse.redirect(loginUrl)
+  }
+
   return NextResponse.next()
 }
 

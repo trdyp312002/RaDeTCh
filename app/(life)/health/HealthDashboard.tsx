@@ -340,7 +340,7 @@ export default function HealthDashboard({ logs }: Props) {
                     fontSize: 13,
                     boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                   }}
-                  formatter={(v: unknown) => [v, 'Score']}
+                  formatter={(v) => [v as number, 'Score']}
                 />
                 <Area
                   type="monotone"

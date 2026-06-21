@@ -34,24 +34,264 @@ const PALETTE = [
   "#e879f9", "#22d3ee",
 ]
 
-// ─── Mandala layout helpers ───────────────────────────────────────────────────
-//
-// 9×9 grid divided into nine 3×3 blocks.
-// Center block (rows 3-5, cols 3-5):
-//   - (4,4) = main goal
-//   - 8 surrounding cells = sub-goals at positions 0-7
-//
-// Each sub-goal at center-block position p mirrors to the center of its
-// corresponding outer block, whose 8 surrounding cells are that sub-goal's actions.
+// ─── Schedule Types & Constants ───────────────────────────────────────────────
 
-// sub-goal position p → [row, col] in center 3×3 block (3-5,3-5)
+type DayType = "weekday" | "saturday" | "sunday"
+type BlockType = "sleep" | "exercise" | "prepare" | "commute" | "work" | "free" | "winddown" | "meal"
+type TaskCat = "japanese" | "english" | "savings" | "other"
+
+type ScheduleTask = {
+  cat: TaskCat
+  title: string
+  titleEN: string
+  duration: string
+}
+
+type ScheduleBlock = {
+  id: string
+  start: number
+  end: number
+  type: BlockType
+  label: string
+  desc?: string
+  tasks?: ScheduleTask[]
+}
+
+const BLOCK_STYLE: Record<BlockType, { bg: string; border: string; text: string; icon: string }> = {
+  sleep:    { bg: "bg-indigo-950/50",  border: "border-indigo-800/60",  text: "text-indigo-300",  icon: "💤" },
+  exercise: { bg: "bg-emerald-950/50", border: "border-emerald-700/60", text: "text-emerald-300", icon: "🏃" },
+  prepare:  { bg: "bg-stone-800/50",   border: "border-stone-600/60",   text: "text-stone-300",   icon: "🎒" },
+  commute:  { bg: "bg-stone-700/40",   border: "border-stone-500/50",   text: "text-stone-400",   icon: "🚌" },
+  work:     { bg: "bg-blue-950/50",    border: "border-blue-800/60",    text: "text-blue-300",    icon: "💼" },
+  free:     { bg: "bg-violet-950/50",  border: "border-violet-600/60",  text: "text-violet-200",  icon: "⭐" },
+  winddown: { bg: "bg-purple-950/50",  border: "border-purple-800/60",  text: "text-purple-300",  icon: "🌙" },
+  meal:     { bg: "bg-teal-950/50",    border: "border-teal-800/60",    text: "text-teal-300",    icon: "🍚" },
+}
+
+const TASK_CAT_COLOR: Record<TaskCat, string> = {
+  japanese: "#f472b6",
+  english:  "#38bdf8",
+  savings:  "#4ade80",
+  other:    "#a78bfa",
+}
+
+const TASK_CAT_LABEL: Record<TaskCat, string> = {
+  japanese: "🇯🇵 ภาษาญี่ปุ่น",
+  english:  "🇬🇧 ภาษาอังกฤษ",
+  savings:  "💰 การเงิน / ออม",
+  other:    "📌 ทั่วไป",
+}
+
+function fmt(m: number): string {
+  const h = Math.floor(m / 60) % 24
+  const mm = m % 60
+  return `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`
+}
+
+function durStr(start: number, end: number): string {
+  const d = end - start
+  if (d >= 60) {
+    const h = Math.floor(d / 60)
+    const m = d % 60
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+  }
+  return `${d}m`
+}
+
+// ── Task library ──────────────────────────────────────────────────────────────
+
+const T_ANKI:    ScheduleTask = { cat: "japanese", title: "Anki 単語復習", titleEN: "Vocab Flashcards", duration: "20m" }
+const T_GRAM:    ScheduleTask = { cat: "japanese", title: "N3/N2 文法練習", titleEN: "Grammar Practice", duration: "40m" }
+const T_SHADOW:  ScheduleTask = { cat: "japanese", title: "シャドーイング", titleEN: "Shadowing Practice", duration: "20m" }
+const T_JPPOD:   ScheduleTask = { cat: "japanese", title: "日本語ポッドキャスト", titleEN: "Japanese Podcast", duration: "30m" }
+const T_JPWRITE: ScheduleTask = { cat: "japanese", title: "日本語で日記を書く", titleEN: "Japanese Journal", duration: "15m" }
+const T_JPREAD:  ScheduleTask = { cat: "japanese", title: "多読 (Japanese reading)", titleEN: "Extensive Reading JP", duration: "30m" }
+const T_JPMOCK:  ScheduleTask = { cat: "japanese", title: "N3/N2 Mock Test 練習問題", titleEN: "Practice Test", duration: "60m" }
+
+const T_ENVOC:   ScheduleTask = { cat: "english",  title: "English Vocabulary", titleEN: "Vocab Review", duration: "15m" }
+const T_ENWRITE: ScheduleTask = { cat: "english",  title: "English Writing Practice", titleEN: "Essay / Journal", duration: "30m" }
+const T_ENPOD:   ScheduleTask = { cat: "english",  title: "English Podcast / TED Talk", titleEN: "Listening Practice", duration: "25m" }
+const T_ENSPEAK: ScheduleTask = { cat: "english",  title: "Speaking Output Practice", titleEN: "Speaking / Output", duration: "20m" }
+const T_ENREAD:  ScheduleTask = { cat: "english",  title: "อ่านหนังสือ / บทความ EN", titleEN: "English Reading", duration: "30m" }
+
+const T_EXPENSE: ScheduleTask = { cat: "savings",  title: "บันทึกค่าใช้จ่ายวันนี้", titleEN: "Log Daily Expenses", duration: "10m" }
+const T_BUDGET:  ScheduleTask = { cat: "savings",  title: "ทบทวนงบประมาณสัปดาห์", titleEN: "Weekly Budget Review", duration: "20m" }
+const T_INVEST:  ScheduleTask = { cat: "savings",  title: "วิจัยการลงทุน / ETF / หุ้น", titleEN: "Investment Research", duration: "30m" }
+const T_FREAD:   ScheduleTask = { cat: "savings",  title: "อ่านหนังสือการเงิน", titleEN: "Read Finance Book", duration: "20m" }
+const T_NWREVIEW:ScheduleTask = { cat: "savings",  title: "ตรวจสอบ Net Worth", titleEN: "Net Worth Check", duration: "15m" }
+
+const T_PLAN:    ScheduleTask = { cat: "other",    title: "ทบทวนสัปดาห์ / วางแผน", titleEN: "Weekly Review & Plan", duration: "30m" }
+const T_REFLECT: ScheduleTask = { cat: "other",    title: "ทบทวนวัน + เขียน goal", titleEN: "Daily Reflection", duration: "10m" }
+
+// ── Schedules ─────────────────────────────────────────────────────────────────
+
+const WEEKDAY: ScheduleBlock[] = [
+  {
+    id: "exercise", start: 360, end: 390, type: "exercise",
+    label: "ออกกำลังกาย",
+    desc: "วิ่ง / ออกกำลังกาย — ช่วยให้สมองตื่นตัวพร้อมทำงาน",
+  },
+  {
+    id: "prepare", start: 390, end: 420, type: "prepare",
+    label: "เตรียมตัว + ออกจากบ้าน 07:00",
+    desc: "อาบน้ำ แต่งตัว เตรียมของ — ออกประตูไม่เกิน 07:00",
+  },
+  {
+    id: "work", start: 480, end: 1140, type: "work",
+    label: "ทำงาน (จ–ศ  08:00–19:00)",
+    desc: "11 ชั่วโมง — เวลาที่เปลี่ยนแปลงไม่ได้ ใช้ให้คุ้มค่า",
+  },
+  {
+    id: "commute", start: 1140, end: 1170, type: "commute",
+    label: "เดินทางกลับบ้าน",
+    desc: "ฟัง Japanese Podcast ระหว่างทางได้เลย 🎧",
+    tasks: [T_JPPOD, T_ENPOD],
+  },
+  {
+    id: "dinner", start: 1170, end: 1210, type: "meal",
+    label: "อาหารเย็น + พักผ่อนเล็กน้อย",
+    desc: "กิน พัก สั้น ๆ ก่อนเริ่ม session เย็น — ไม่เกิน 40 นาที",
+  },
+  {
+    id: "free-eve", start: 1200, end: 1290, type: "free",
+    label: "⭐ เวลาว่าง — Self-Development (20:00–21:30)",
+    desc: "1.5h — เวลาที่มีค่าที่สุดของวัน ใช้ให้เต็มที่",
+    tasks: [T_ANKI, T_GRAM, T_SHADOW, T_ENVOC, T_ENWRITE, T_EXPENSE, T_REFLECT],
+  },
+  {
+    id: "winddown", start: 1290, end: 1320, type: "winddown",
+    label: "เตรียมนอน + ทบทวนวัน (21:30–22:00)",
+    desc: "วางโทรศัพท์ ไม่ดู social media เขียน reflection สั้น ๆ",
+  },
+  {
+    id: "sleep", start: 1320, end: 1440, type: "sleep",
+    label: "นอนหลับ 22:00",
+    desc: "เป้าหมาย 8 ชั่วโมง → ตื่น 06:00",
+  },
+]
+
+const SATURDAY: ScheduleBlock[] = [
+  {
+    id: "exercise", start: 360, end: 390, type: "exercise",
+    label: "ออกกำลังกาย (วันเสาร์)",
+    desc: "สามารถออกหนักกว่าวันธรรมดาได้ — มีเวลาพักหลังจากนี้",
+  },
+  {
+    id: "breakfast", start: 390, end: 430, type: "meal",
+    label: "อาหารเช้า + เตรียมวันเสาร์",
+    desc: "กิน พักสั้น เตรียม study session เช้า",
+  },
+  {
+    id: "deep-jp", start: 430, end: 720, type: "free",
+    label: "⭐ Deep Focus: ภาษาญี่ปุ่น (07:10–12:00)",
+    desc: "5 ชั่วโมง — ช่วงที่สมองสดที่สุด เน้น Japanese intensive",
+    tasks: [T_GRAM, T_ANKI, T_SHADOW, T_JPREAD, T_JPWRITE, T_JPMOCK],
+  },
+  {
+    id: "lunch", start: 720, end: 780, type: "meal",
+    label: "พักกลางวัน 12:00–13:00",
+    desc: "พัก recharge ก่อน session บ่าย",
+  },
+  {
+    id: "afternoon", start: 780, end: 1020, type: "free",
+    label: "⭐ ช่วงบ่าย: English + Financial (13:00–17:00)",
+    desc: "4 ชั่วโมง — สลับ English skills กับ finance work",
+    tasks: [T_ENWRITE, T_ENREAD, T_ENPOD, T_ENSPEAK, T_INVEST, T_BUDGET, T_FREAD],
+  },
+  {
+    id: "rest", start: 1020, end: 1110, type: "meal",
+    label: "พักผ่อน + กิจกรรมส่วนตัว (17:00–18:30)",
+    desc: "เวลาอิสระ — ดูอนิเมะ เล่นเกม ออกไปข้างนอก",
+  },
+  {
+    id: "review", start: 1110, end: 1200, type: "free",
+    label: "⭐ Review สัปดาห์ + วางแผน (18:30–20:00)",
+    desc: "ทบทวนความก้าวหน้า วางแผนสัปดาห์หน้า ตรวจสอบการเงิน",
+    tasks: [T_PLAN, T_NWREVIEW, T_EXPENSE, T_BUDGET],
+  },
+  {
+    id: "free-eve", start: 1200, end: 1290, type: "free",
+    label: "⭐ ยามค่ำ — เสริม + ผ่อนคลาย (20:00–21:30)",
+    desc: "1.5h เบา ๆ — ดูซีรีส์ญี่ปุ่น ฟัง podcast อ่าน",
+    tasks: [T_ANKI, T_JPWRITE, T_ENVOC, T_FREAD, T_REFLECT],
+  },
+  {
+    id: "winddown", start: 1290, end: 1320, type: "winddown",
+    label: "เตรียมนอน (21:30–22:00)",
+    desc: "Wind down routine — พร้อมสำหรับสัปดาห์ใหม่",
+  },
+  {
+    id: "sleep", start: 1320, end: 1440, type: "sleep",
+    label: "นอนหลับ 22:00",
+    desc: "8 ชั่วโมง → ตื่น 06:00 พักผ่อนให้เต็มที่",
+  },
+]
+
+const SUNDAY: ScheduleBlock[] = [
+  {
+    id: "exercise", start: 360, end: 390, type: "exercise",
+    label: "ออกกำลังกาย (วันอาทิตย์)",
+    desc: "เบา ๆ ได้ — ยืดเหยียด / เดินออกกำลังกาย",
+  },
+  {
+    id: "breakfast", start: 390, end: 430, type: "meal",
+    label: "อาหารเช้า + พักผ่อน",
+    desc: "วันอาทิตย์เป็นวัน recharge — ไม่ต้องรีบ",
+  },
+  {
+    id: "free-am", start: 430, end: 720, type: "free",
+    label: "⭐ ช่วงเช้า: Japanese Study (07:10–12:00)",
+    desc: "5 ชั่วโมง — ทบทวนสิ่งที่เรียนสัปดาห์นี้ ฝึก listening",
+    tasks: [T_ANKI, T_JPPOD, T_SHADOW, T_JPREAD, T_GRAM],
+  },
+  {
+    id: "lunch", start: 720, end: 810, type: "meal",
+    label: "พักกลางวัน (12:00–13:30)",
+    desc: "วันหยุด — พักนานหน่อยได้ ไปกินข้าวข้างนอก",
+  },
+  {
+    id: "free-pm", start: 810, end: 1020, type: "free",
+    label: "⭐ ช่วงบ่าย: English + Side Project (13:30–17:00)",
+    desc: "3.5 ชั่วโมง — English focus + งาน side project / ทักษะใหม่",
+    tasks: [T_ENSPEAK, T_ENWRITE, T_ENREAD, T_ENPOD, T_INVEST],
+  },
+  {
+    id: "rest", start: 1020, end: 1110, type: "meal",
+    label: "พักผ่อน / เวลาครอบครัว (17:00–18:30)",
+    desc: "เวลาส่วนตัว ครอบครัว หรือทำสิ่งที่ชอบ",
+  },
+  {
+    id: "prep-week", start: 1110, end: 1200, type: "free",
+    label: "⭐ เตรียมสัปดาห์ใหม่ (18:30–20:00)",
+    desc: "วางแผน ทบทวน goals ตั้ง intention สำหรับจันทร์",
+    tasks: [T_PLAN, T_NWREVIEW, T_BUDGET, T_REFLECT],
+  },
+  {
+    id: "free-eve", start: 1200, end: 1290, type: "free",
+    label: "⭐ ยามค่ำ — ผ่อนคลาย (20:00–21:30)",
+    desc: "1.5h อ่านหนังสือ ดูอนิเมะ ฟัง podcast เบา ๆ",
+    tasks: [T_ANKI, T_JPWRITE, T_FREAD, T_ENVOC],
+  },
+  {
+    id: "winddown", start: 1290, end: 1320, type: "winddown",
+    label: "เตรียมนอน + mindset จันทร์ (21:30–22:00)",
+    desc: "เตรียม outfit เตรียม bag ทบทวน goal ของสัปดาห์",
+  },
+  {
+    id: "sleep", start: 1320, end: 1440, type: "sleep",
+    label: "นอนหลับ 22:00",
+    desc: "8 ชั่วโมง — พร้อมลุยสัปดาห์ใหม่ 💪",
+  },
+]
+
+// ─── Mandala layout helpers ───────────────────────────────────────────────────
+
 const SG_POS: [number, number][] = [
   [3, 3], [3, 4], [3, 5],
   [4, 3], [4, 5],
   [5, 3], [5, 4], [5, 5],
 ]
 
-// outer block index for sub-goal p (0=TL,1=TC,2=TR,3=ML,4=MR,5=BL,6=BC,7=BR)
 const OUTER_BLOCK_ORIGIN: [number, number][] = [
   [0, 0], [0, 3], [0, 6],
   [3, 0], [3, 6],
@@ -63,7 +303,6 @@ function outerCenter(p: number): [number, number] {
   return [or + 1, oc + 1]
 }
 
-// 8 action positions in outer block p (clockwise from TL, skipping center)
 function actionCells(p: number): [number, number][] {
   const [or, oc] = OUTER_BLOCK_ORIGIN[p]
   return [
@@ -73,7 +312,6 @@ function actionCells(p: number): [number, number][] {
   ]
 }
 
-// Build a 9×9 cell-type map
 type CellType =
   | { kind: "main" }
   | { kind: "subgoal"; sgPos: number }
@@ -209,9 +447,7 @@ function MandalaTab() {
 
   return (
     <div className="flex flex-col xl:flex-row gap-6">
-      {/* Left: grid */}
       <div className="flex-1 min-w-0">
-        {/* Main goal input */}
         <div className="mb-4 flex items-center gap-3">
           {editingMain ? (
             <>
@@ -237,7 +473,6 @@ function MandalaTab() {
           )}
         </div>
 
-        {/* 9×9 grid */}
         <div
           className="grid gap-[2px] w-full"
           style={{ gridTemplateColumns: "repeat(9, minmax(0, 1fr))" }}
@@ -251,7 +486,6 @@ function MandalaTab() {
             Array.from({ length: 9 }).map((_, col) => {
               const cell = CELL_MAP[row][col]
 
-              // ── Main goal cell ─────────────────────────────────────
               if (cell.kind === "main") {
                 return (
                   <div
@@ -266,7 +500,6 @@ function MandalaTab() {
                 )
               }
 
-              // ── Sub-goal cell ──────────────────────────────────────
               if (cell.kind === "subgoal") {
                 const sg = sgByPos[cell.sgPos]
                 const color = sg?.color ?? "#818cf8"
@@ -298,7 +531,6 @@ function MandalaTab() {
                 )
               }
 
-              // ── Action cell ────────────────────────────────────────
               if (cell.kind === "action") {
                 const sg = sgByPos[cell.sgPos]
                 const color = sg?.color ?? "#818cf8"
@@ -354,7 +586,6 @@ function MandalaTab() {
                 )
               }
 
-              // ── Empty (shouldn't happen) ───────────────────────────
               return <div key={`${row}-${col}`} className="aspect-square rounded-sm bg-stone-100/40" />
             })
           )}
@@ -365,7 +596,6 @@ function MandalaTab() {
         )}
       </div>
 
-      {/* Right: progress panel */}
       <div className="xl:w-64 flex-shrink-0 flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-stone-600 uppercase tracking-wider mb-1">Sub-goal Progress</h3>
         {subgoals.map((sg) => {
@@ -387,7 +617,6 @@ function MandalaTab() {
                   style={{ width: `${pct}%`, backgroundColor: sg.color }}
                 />
               </div>
-              {/* Color picker */}
               <div className="flex gap-1 mt-2 flex-wrap">
                 {PALETTE.map((c) => (
                   <button
@@ -544,7 +773,6 @@ function TimelineTab() {
       .finally(() => setLoading(false))
   }, [])
 
-  // Scroll to current year on load
   useEffect(() => {
     if (!loading && scrollRef.current) {
       const el = scrollRef.current.querySelector(`[data-year="${CURRENT_YEAR}"]`)
@@ -581,13 +809,11 @@ function TimelineTab() {
     setEditing(null)
   }
 
-  // Build year range for the timeline ruler
   const allYears = milestones.map((m) => m.year)
   const minYear = Math.min(CURRENT_YEAR - 1, ...allYears)
   const maxYear = Math.max(CURRENT_YEAR + 5, ...allYears)
   const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
 
-  // Nearest upcoming milestone
   const upcoming = [...milestones].filter((m) => m.year >= CURRENT_YEAR).sort((a, b) => a.year - b.year)[0]
 
   if (loading) {
@@ -600,7 +826,6 @@ function TimelineTab() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-stone-800">Life Timeline</h2>
@@ -614,14 +839,11 @@ function TimelineTab() {
         </button>
       </div>
 
-      {/* Timeline ruler */}
       <div className="relative bg-white/60 backdrop-blur-xl rounded-2xl border border-white shadow-sm overflow-hidden">
         <div ref={scrollRef} className="overflow-x-auto pb-4 pt-6 px-6">
           <div className="relative" style={{ minWidth: `${years.length * 80}px` }}>
-            {/* Center line */}
             <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-stone-200 -translate-y-1/2" />
 
-            {/* Milestone cards */}
             {milestones.map((m, idx) => {
               const x = (m.year - minYear) / (maxYear - minYear)
               const isAbove = idx % 2 === 0
@@ -631,7 +853,6 @@ function TimelineTab() {
                   className="absolute transform -translate-x-1/2"
                   style={{ left: `${x * 100}%`, top: isAbove ? 0 : undefined, bottom: isAbove ? undefined : 0 }}
                 >
-                  {/* Connector line */}
                   <div
                     className="absolute left-1/2 w-0.5 -translate-x-1/2"
                     style={{
@@ -657,7 +878,6 @@ function TimelineTab() {
               )
             })}
 
-            {/* Year markers */}
             <div className="flex" style={{ height: "130px", alignItems: "center" }}>
               {years.map((y) => (
                 <div
@@ -686,7 +906,6 @@ function TimelineTab() {
         </div>
       </div>
 
-      {/* Backward Plan section */}
       {upcoming && (
         <div className="bg-white/80 rounded-2xl border border-white shadow-sm p-5">
           <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">
@@ -724,11 +943,10 @@ function TimelineTab() {
         <div className="text-center py-16 text-stone-400">
           <div className="text-4xl mb-3">🗺️</div>
           <div className="text-sm font-medium">ยังไม่มี milestone</div>
-          <div className="text-xs mt-1">กด "+ Add Milestone" เพื่อเริ่มจองอนาคตของคุณ</div>
+          <div className="text-xs mt-1">กด &quot;+ Add Milestone&quot; เพื่อเริ่มจองอนาคตของคุณ</div>
         </div>
       )}
 
-      {/* Modals */}
       {modalOpen && (
         <MilestoneModal onSave={handleAdd} onClose={() => setModalOpen(false)} />
       )}
@@ -753,32 +971,531 @@ function TimelineTab() {
   )
 }
 
+// ─── Schedule Tab ─────────────────────────────────────────────────────────────
+
+function ScheduleTab() {
+  const now = new Date()
+  const dow = now.getDay()
+  const defaultDay: DayType = dow === 6 ? "saturday" : dow === 0 ? "sunday" : "weekday"
+
+  const [dayType, setDayType] = useState<DayType>(defaultDay)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(["free-eve", "deep-jp", "free-am"]))
+
+  const schedule = dayType === "weekday" ? WEEKDAY : dayType === "saturday" ? SATURDAY : SUNDAY
+  const freeBlocks = schedule.filter((b) => b.type === "free")
+  const totalFreeMin = freeBlocks.reduce((s, b) => s + b.end - b.start, 0)
+  const currentMin = now.getHours() * 60 + now.getMinutes()
+
+  const toggle = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const tasksByCat = (cat: TaskCat) =>
+    freeBlocks.flatMap((b) => b.tasks ?? []).filter((t) => t.cat === cat)
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-6">
+      {/* Timeline */}
+      <div className="flex-1 min-w-0">
+        {/* Day selector */}
+        <div className="flex gap-2 mb-5 flex-wrap">
+          {(["weekday", "saturday", "sunday"] as DayType[]).map((d) => (
+            <button
+              key={d}
+              onClick={() => setDayType(d)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                dayType === d
+                  ? "bg-stone-800 text-white shadow-md"
+                  : "bg-white/70 text-stone-500 hover:bg-white hover:text-stone-700 border border-white"
+              }`}
+            >
+              {d === "weekday" ? "จ–ศ 💼" : d === "saturday" ? "เสาร์ 🌅" : "อาทิตย์ 🏖️"}
+            </button>
+          ))}
+          <div className="ml-auto flex items-center gap-2 text-xs text-stone-400">
+            <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+            NOW = {String(now.getHours()).padStart(2, "0")}:{String(now.getMinutes()).padStart(2, "0")}
+          </div>
+        </div>
+
+        {/* Sleep banner */}
+        <div className="mb-4 p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/40 text-xs text-indigo-300 flex items-center gap-3">
+          <span className="text-lg">💤</span>
+          <div>
+            <span className="font-semibold">นอนหลับ</span> 22:00 → ตื่น 06:00
+            <span className="ml-1 font-bold text-indigo-200">(8 ชั่วโมง)</span>
+            <span className="ml-3 text-indigo-400">· เตรียมนอน 21:30</span>
+          </div>
+        </div>
+
+        {/* Blocks */}
+        <div className="flex flex-col gap-2">
+          {schedule.map((block) => {
+            const style = BLOCK_STYLE[block.type]
+            const isNow = dayType === defaultDay && currentMin >= block.start && currentMin < block.end
+            const isFree = block.type === "free"
+            const isExp = expanded.has(block.id)
+            const hasCommuteTask = block.type === "commute" && block.tasks && block.tasks.length > 0
+
+            return (
+              <div
+                key={block.id}
+                className={`rounded-xl border ${style.bg} ${style.border} overflow-hidden transition-all ${
+                  isNow ? "ring-2 ring-yellow-400/70 shadow-lg shadow-yellow-400/10" : ""
+                }`}
+              >
+                <div
+                  className={`flex items-start gap-3 px-4 py-3 ${isFree || hasCommuteTask ? "cursor-pointer select-none" : ""}`}
+                  onClick={isFree || hasCommuteTask ? () => toggle(block.id) : undefined}
+                >
+                  <span className="text-base w-6 text-center flex-shrink-0 mt-0.5">{style.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-sm font-semibold ${style.text}`}>
+                      {block.label}
+                      {isNow && (
+                        <span className="ml-2 text-[10px] bg-yellow-400/20 text-yellow-300 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                          ● NOW
+                        </span>
+                      )}
+                    </div>
+                    {block.desc && (
+                      <div className="text-xs text-stone-500 mt-0.5 leading-relaxed">{block.desc}</div>
+                    )}
+                    <div className="text-[11px] text-stone-600 mt-1">
+                      {fmt(block.start)} – {fmt(block.end)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs text-stone-500 bg-stone-800/40 rounded-full px-2 py-0.5">
+                      {durStr(block.start, block.end)}
+                    </span>
+                    {(isFree || hasCommuteTask) && (
+                      <span className="text-stone-400 text-xs">{isExp ? "▲" : "▼"}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Task list */}
+                {(isFree || hasCommuteTask) && isExp && block.tasks && (
+                  <div className="px-4 pb-4 pt-1 border-t border-white/10">
+                    <div className="text-[10px] text-stone-400 mb-2 font-semibold uppercase tracking-wider">
+                      กิจกรรมแนะนำ
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      {block.tasks.map((t, i) => (
+                        <div key={i} className="flex items-center gap-2.5">
+                          <div
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: TASK_CAT_COLOR[t.cat] }}
+                          />
+                          <span className="text-xs text-stone-300 flex-1">{t.title}</span>
+                          <span
+                            className="text-[10px] font-semibold rounded-full px-2 py-0.5"
+                            style={{ backgroundColor: TASK_CAT_COLOR[t.cat] + "22", color: TASK_CAT_COLOR[t.cat] }}
+                          >
+                            {t.duration}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Sidebar */}
+      <div className="lg:w-72 flex-shrink-0 flex flex-col gap-4">
+        {/* Free time total */}
+        <div className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">เวลาว่างวันนี้</div>
+          <div className="text-3xl font-black text-stone-800">
+            {Math.floor(totalFreeMin / 60)}h{totalFreeMin % 60 > 0 ? ` ${totalFreeMin % 60}m` : ""}
+          </div>
+          <div className="text-xs text-stone-500 mt-1">จาก {freeBlocks.length} ช่วงเวลา</div>
+          {dayType === "weekday" && (
+            <div className="mt-2 text-xs text-stone-400">เวลาว่างทั้งสัปดาห์ ~<strong className="text-stone-600">30h</strong></div>
+          )}
+        </div>
+
+        {/* Per category */}
+        {(["japanese", "english", "savings"] as TaskCat[]).map((cat) => {
+          const tasks = tasksByCat(cat)
+          if (tasks.length === 0) return null
+          const totalMin = tasks.reduce((s, t) => {
+            const n = parseInt(t.duration)
+            return s + (isNaN(n) ? 0 : n)
+          }, 0)
+          return (
+            <div key={cat} className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TASK_CAT_COLOR[cat] }} />
+                <div className="text-xs font-bold text-stone-700">{TASK_CAT_LABEL[cat]}</div>
+                {totalMin > 0 && (
+                  <span className="ml-auto text-xs font-bold" style={{ color: TASK_CAT_COLOR[cat] }}>
+                    {totalMin}m
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {tasks.slice(0, 5).map((t, i) => (
+                  <div key={i} className="flex items-start justify-between gap-2">
+                    <span className="text-xs text-stone-600 leading-tight">{t.title}</span>
+                    <span className="text-[10px] text-stone-400 flex-shrink-0">{t.duration}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+
+        {/* Weekly overview */}
+        <div className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">เวลาว่าง / สัปดาห์</div>
+          <div className="flex flex-col gap-2 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-stone-500">จ–ศ (5 วัน)</span>
+              <div className="flex items-center gap-2">
+                <div className="w-16 h-1.5 rounded-full bg-stone-100 overflow-hidden">
+                  <div className="h-full bg-violet-400 rounded-full" style={{ width: "28%" }} />
+                </div>
+                <span className="font-bold text-violet-600 w-10 text-right">~7.5h</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-stone-500">เสาร์</span>
+              <div className="flex items-center gap-2">
+                <div className="w-16 h-1.5 rounded-full bg-stone-100 overflow-hidden">
+                  <div className="h-full bg-violet-400 rounded-full" style={{ width: "70%" }} />
+                </div>
+                <span className="font-bold text-violet-600 w-10 text-right">~11.8h</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-stone-500">อาทิตย์</span>
+              <div className="flex items-center gap-2">
+                <div className="w-16 h-1.5 rounded-full bg-stone-100 overflow-hidden">
+                  <div className="h-full bg-violet-400 rounded-full" style={{ width: "67%" }} />
+                </div>
+                <span className="font-bold text-violet-600 w-10 text-right">~11.3h</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-stone-100">
+              <span className="font-bold text-stone-700">รวม</span>
+              <span className="font-black text-stone-800">~30.6h / week</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="bg-white/80 rounded-2xl p-4 shadow-sm border border-white">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Legend</div>
+          <div className="flex flex-col gap-1.5">
+            {(Object.entries(BLOCK_STYLE) as [BlockType, typeof BLOCK_STYLE[BlockType]][])
+              .filter(([k]) => k !== "sleep" && k !== "commute")
+              .map(([type, s]) => (
+                <div key={type} className="flex items-center gap-2">
+                  <span className="text-sm">{s.icon}</span>
+                  <span className="text-xs text-stone-500 capitalize">{type}</span>
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Secretary Tab ────────────────────────────────────────────────────────────
+
+type ChatMsg = { role: "user" | "assistant"; content: string; ts: string }
+
+function SecretaryTab() {
+  const [messages, setMessages] = useState<ChatMsg[]>([])
+  const [input, setInput] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [discordLoading, setDiscordLoading] = useState(false)
+  const [discordStatus, setDiscordStatus] = useState<"" | "ok" | "err" | "nokey">("")
+  const [discordPreview, setDiscordPreview] = useState("")
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  const nowStr = () =>
+    new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
+
+  useEffect(() => {
+    const now = new Date()
+    const hour = now.getHours()
+    const dow = now.getDay()
+    const greeting =
+      hour < 7 ? "おはようございます！ 🌅" :
+      hour < 12 ? "สวัสดีตอนเช้า！ おはよう！ 🌤️" :
+      hour < 17 ? "สวัสดีตอนบ่าย！ こんにちは！ ☀️" :
+      "สวัสดีตอนเย็น！ こんばんは！ 🌆"
+    const dayContext = dow === 0 || dow === 6
+      ? "วันนี้เป็นวันหยุด มีเวลาเยอะมาก!"
+      : "วันนี้เป็นวันทำงาน เตรียมพร้อมใช้เวลาว่างยามเย็นให้คุ้มค่า"
+    callSecretary(`${greeting} ${dayContext} ช่วยสรุปแผนและแนะนำสิ่งที่ควรทำวันนี้ให้หน่อยนะ`)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  const callSecretary = async (text: string, silent = false) => {
+    if (!text.trim() || loading) return
+    if (!silent) {
+      setMessages((p) => [...p, { role: "user", content: text, ts: nowStr() }])
+    }
+    setInput("")
+    setLoading(true)
+    try {
+      const r = await fetch("/api/life-secretary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      })
+      const d = await r.json()
+      setMessages((p) => [
+        ...p,
+        { role: "assistant", content: d.message ?? d.error ?? "ไม่มีคำตอบ", ts: nowStr() },
+      ])
+    } catch {
+      setMessages((p) => [
+        ...p,
+        { role: "assistant", content: "❌ ไม่สามารถเชื่อมต่อได้", ts: nowStr() },
+      ])
+    }
+    setLoading(false)
+  }
+
+  const sendDiscord = async () => {
+    setDiscordLoading(true)
+    setDiscordStatus("")
+    setDiscordPreview("")
+    try {
+      const r = await fetch("/api/life-secretary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "discord" }),
+      })
+      const d = await r.json()
+      setDiscordPreview(d.preview ?? "")
+      if (d.ok) {
+        setDiscordStatus("ok")
+        setMessages((p) => [
+          ...p,
+          { role: "assistant", content: "✅ ส่งแจ้งเตือน Discord แล้ว! ตรวจสอบ channel ของคุณได้เลย 📣", ts: nowStr() },
+        ])
+      } else {
+        setDiscordStatus("nokey")
+      }
+    } catch {
+      setDiscordStatus("err")
+    }
+    setDiscordLoading(false)
+    setTimeout(() => setDiscordStatus(""), 4000)
+  }
+
+  const QUICK = [
+    "📅 วางแผนสัปดาห์นี้ให้หน่อย",
+    "🇯🇵 ควรเรียนภาษาญี่ปุ่นอะไรวันนี้?",
+    "💰 แนะนำการประหยัดเงินและลงทุน",
+    "⏰ สร้าง evening routine 2.5 ชั่วโมงให้หน่อย",
+    "💪 ช่วยให้กำลังใจ + คำคมญี่ปุ่น",
+    "🗒️ สรุปสิ่งที่ควรทำในช่วง weekend",
+  ]
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-300px)] min-h-[520px]">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-bold text-stone-800 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-stone-800 text-white text-sm flex items-center justify-center font-bold">W</span>
+            WhyMan
+          </h2>
+          <p className="text-xs text-stone-400 mt-0.5 ml-10">
+            Personal Life Secretary · 🇯🇵 ญี่ปุ่น · 🇬🇧 อังกฤษ · 💰 การเงิน
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={sendDiscord}
+            disabled={discordLoading}
+            title="ส่ง daily briefing ไป Discord"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm ${
+              discordStatus === "ok"
+                ? "bg-emerald-500 text-white"
+                : discordStatus === "err" || discordStatus === "nokey"
+                ? "bg-red-500 text-white"
+                : "bg-[#5865F2] text-white hover:bg-[#4752c4]"
+            }`}
+          >
+            {discordLoading ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                กำลังส่ง…
+              </>
+            ) : discordStatus === "ok" ? (
+              "✅ ส่งแล้ว!"
+            ) : discordStatus === "nokey" ? (
+              "⚠️ ตั้งค่า Webhook"
+            ) : (
+              <><span>📣</span> Discord</>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Discord no-key warning */}
+      {discordStatus === "nokey" && discordPreview && (
+        <div className="mb-3 p-3 rounded-xl bg-amber-950/40 border border-amber-700/50 text-xs text-amber-300">
+          <div className="font-bold mb-1">⚠️ ยังไม่ได้ตั้งค่า DISCORD_WEBHOOK_URL (WhyMan preview)</div>
+          <div className="text-amber-400 mb-1">เพิ่มใน .env.local แล้ว restart server — ตัวอย่างข้อความที่จะส่ง:</div>
+          <pre className="whitespace-pre-wrap text-[10px] text-amber-200 mt-1 max-h-24 overflow-y-auto leading-relaxed">
+            {discordPreview.slice(0, 300)}…
+          </pre>
+        </div>
+      )}
+
+      {/* Quick actions */}
+      <div className="flex gap-2 mb-3 overflow-x-auto pb-1 flex-shrink-0">
+        {QUICK.map((a, i) => (
+          <button
+            key={i}
+            onClick={() => callSecretary(a)}
+            disabled={loading}
+            className="flex-shrink-0 px-3 py-1.5 bg-white/70 border border-stone-200 text-stone-600 text-xs rounded-full hover:bg-white hover:border-indigo-300 hover:text-indigo-600 transition-all disabled:opacity-40"
+          >
+            {a}
+          </button>
+        ))}
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-3">
+        {messages.length === 0 && !loading && (
+          <div className="flex items-center justify-center h-full text-stone-400 text-sm">
+            <div className="text-center">
+              <div className="text-3xl mb-2 font-black">W</div>
+              <div>กำลังโหลด briefing แรก…</div>
+            </div>
+          </div>
+        )}
+        {messages.map((m, i) => (
+          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            {m.role === "assistant" && (
+              <div className="w-7 h-7 rounded-full bg-stone-800 text-white text-xs flex items-center justify-center flex-shrink-0 mr-2 mt-0.5 font-bold">
+                W
+              </div>
+            )}
+            <div
+              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                m.role === "user"
+                  ? "bg-stone-800 text-white rounded-tr-sm"
+                  : "bg-white border border-stone-100 shadow-sm text-stone-700 rounded-tl-sm"
+              }`}
+            >
+              <div className="whitespace-pre-wrap">{m.content}</div>
+              <div className="text-[10px] mt-1.5 opacity-50">{m.ts}</div>
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="w-7 h-7 rounded-full bg-stone-800 text-white text-xs flex items-center justify-center flex-shrink-0 mr-2 mt-0.5 font-bold">
+              W
+            </div>
+            <div className="bg-white border border-stone-100 shadow-sm rounded-2xl rounded-tl-sm px-4 py-3">
+              <div className="flex gap-1 items-center">
+                <span className="w-1.5 h-1.5 bg-stone-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-1.5 h-1.5 bg-stone-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-1.5 h-1.5 bg-stone-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="flex gap-2 flex-shrink-0">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault()
+              callSecretary(input)
+            }
+          }}
+          placeholder="สั่งงาน WhyMan… (Enter ส่ง)"
+          className="flex-1 bg-white border border-stone-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 placeholder-stone-400"
+        />
+        <button
+          onClick={() => callSecretary(input)}
+          disabled={loading || !input.trim()}
+          className="px-5 py-3 bg-stone-800 text-white rounded-2xl hover:bg-stone-700 disabled:opacity-40 transition-colors text-sm font-semibold"
+        >
+          ส่ง
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type Tab = "mandala" | "timeline"
+type Tab = "mandala" | "timeline" | "schedule" | "secretary"
 
 export default function RoutinePage() {
-  const [tab, setTab] = useState<Tab>("mandala")
+  const [tab, setTab] = useState<Tab>("schedule")
+
+  const TABS = [
+    { key: "schedule" as Tab,   label: "Daily Schedule", icon: "📅" },
+    { key: "secretary" as Tab,  label: "WhyMan AI",       icon: "🤖" },
+    { key: "mandala" as Tab,    label: "Mandala Chart",  icon: "⬡"  },
+    { key: "timeline" as Tab,   label: "Life Timeline",  icon: "◈"  },
+  ]
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8" style={{ background: "linear-gradient(135deg, #f0f7f9 0%, #e8edf5 100%)" }}>
       <div className="max-w-[1400px] mx-auto">
         {/* Header */}
         <header className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-black text-stone-800 tracking-tight">Routine & Future Planning</h1>
-          <p className="text-sm text-stone-500 mt-1">จองอนาคตด้วยสมุดโน้ตเล่มเดียว — Mandala Chart + Life Timeline</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-stone-800 tracking-tight">
+            Routine & Future Planning
+          </h1>
+          <p className="text-sm text-stone-500 mt-1">
+            จัดการชีวิตกับ WhyMan AI — Schedule · AI Secretary · Mandala · Timeline
+          </p>
+          <div className="flex gap-3 mt-3 flex-wrap">
+            {[
+              { label: "🇯🇵 ภาษาญี่ปุ่น", color: "bg-pink-100 text-pink-700" },
+              { label: "🇬🇧 ภาษาอังกฤษ", color: "bg-sky-100 text-sky-700" },
+              { label: "💰 ออมเงิน / ลงทุน", color: "bg-emerald-100 text-emerald-700" },
+            ].map((g) => (
+              <span key={g.label} className={`text-xs font-semibold px-3 py-1 rounded-full ${g.color}`}>
+                {g.label}
+              </span>
+            ))}
+          </div>
         </header>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-white/60 backdrop-blur-xl rounded-2xl p-1 border border-white shadow-sm w-fit">
-          {([
-            { key: "mandala", label: "Mandala Chart", icon: "⬡" },
-            { key: "timeline", label: "Life Timeline", icon: "◈" },
-          ] as const).map((t) => (
+        <div className="flex gap-1 mb-6 bg-white/60 backdrop-blur-xl rounded-2xl p-1 border border-white shadow-sm w-fit overflow-x-auto">
+          {TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 tab === t.key
                   ? "bg-stone-800 text-white shadow-md"
                   : "text-stone-500 hover:text-stone-700 hover:bg-white/60"
@@ -792,8 +1509,10 @@ export default function RoutinePage() {
 
         {/* Content */}
         <div>
-          {tab === "mandala" && <MandalaTab />}
-          {tab === "timeline" && <TimelineTab />}
+          {tab === "schedule"   && <ScheduleTab />}
+          {tab === "secretary"  && <SecretaryTab />}
+          {tab === "mandala"    && <MandalaTab />}
+          {tab === "timeline"   && <TimelineTab />}
         </div>
       </div>
     </div>
