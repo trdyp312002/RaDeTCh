@@ -14,7 +14,7 @@ const APP_URL  = (process.env.WHYMAN_APP_URL ?? "http://localhost:3000").replace
 const PASSWORD = process.env.APP_PASSWORD ?? ""
 // Save to MYWORLD/DATA/diary (shared data folder, 2 levels up from project root)
 const DIARY_DIR = path.join(process.cwd(), "..", "..", "DATA", "diary")
-const INTERVAL_MS = 60_000 // sync ทุก 1 นาที
+const INTERVAL_MS = 12 * 60 * 60 * 1000 // sync ทุก 12 ชั่วโมง
 
 type Entry = { date: string; morning: string; afternoon: string; evening: string }
 
@@ -66,7 +66,7 @@ if (ONCE) {
   console.log(`[sync-diary] sync ครั้งเดียว (--once) → ${DIARY_DIR}`)
   sync().then(() => process.exit(0))
 } else {
-  console.log(`[sync-diary] เริ่ม sync ทุก ${INTERVAL_MS / 1000}s → ${DIARY_DIR}`)
+  console.log(`[sync-diary] เริ่ม sync ทุก ${INTERVAL_MS / 1000 / 3600}h → ${DIARY_DIR}`)
   sync() // sync ทันทีตอน start
   setInterval(sync, INTERVAL_MS)
 }
