@@ -33,7 +33,7 @@ dotenv.config({ path: ".env.local" })
 const TOKEN     = process.env.DISCORD_BOT_TOKEN!
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID!
 const GUILD_ID  = process.env.DISCORD_GUILD_ID ?? ""   // ถ้าตั้งค่า → register เฉพาะ server นั้น (instant)
-const APP_URL   = (process.env.WHYMAN_APP_URL ?? "http://localhost:3000").replace(/\/$/, "")
+const APP_URL   = (process.env.WHYMAN_APP_URL ?? `http://localhost:${process.env.PORT ?? 3000}`).replace(/\/$/, "")
 const PASSWORD  = process.env.APP_PASSWORD ?? ""
 
 if (!TOKEN || !CLIENT_ID) {
@@ -297,8 +297,9 @@ async function handleWrite(interaction: ChatInputCommandInteraction, section: Se
 
     await interaction.editReply({ embeds: [embed] })
   } catch (err) {
-    console.error(err)
-    await interaction.editReply("❌ บันทึกไม่สำเร็จ — ตรวจสอบ WHYMAN_APP_URL และ APP_PASSWORD")
+    console.error("handleWrite error:", err)
+    const msg = err instanceof Error ? err.message : String(err)
+    await interaction.editReply(`❌ บันทึกไม่สำเร็จ\n\`\`\`${msg.slice(0, 300)}\`\`\``)
   }
 }
 
