@@ -28,9 +28,16 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
-  const session = req.cookies.get("radetch_session")?.value
   const expected = await sha256(password)
 
+  // Allow bot/API clients using x-app-password header (plain password)
+  const headerPassword = req.headers.get("x-app-password")
+  if (headerPassword === password) {
+    return NextResponse.next()
+  }
+
+  // Allow browser sessions using cookie (hashed password)
+  const session = req.cookies.get("radetch_session")?.value
   if (session !== expected) {
     const loginUrl = req.nextUrl.clone()
     loginUrl.pathname = "/login"
