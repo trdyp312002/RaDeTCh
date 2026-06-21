@@ -61,7 +61,7 @@ export async function getGarminClient(): Promise<GarminConnect> {
   if (saved) {
     try {
       const client = new GarminConnect({ username: email, password: password });
-      client.loadToken(saved.oauth1Token as IOauth1Token, saved.oauth2Token as IOauth2Token);
+      client.loadToken(saved.oauth1 as IOauth1Token, saved.oauth2 as IOauth2Token);
       cachedClient = client;
       tokenExpiry = Date.now() + 55 * 60 * 1000;
       return client;
