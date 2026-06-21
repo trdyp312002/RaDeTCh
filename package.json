@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "dev:all": "concurrently \"next dev -H 0.0.0.0\" \"npx tsx bot/discord-bot.ts\"",
+    "dev:all": "concurrently \"next dev -H 0.0.0.0\" \"npx tsx bot/discord-bot.ts\" \"npx tsx scripts/sync-diary.ts\"",
+    "sync:diary": "tsx scripts/sync-diary.ts",
     "build": "next build",
     "start": "next start",
     "start:all": "concurrently --kill-others-on-fail \"next start\" \"tsx bot/discord-bot.ts\"",
