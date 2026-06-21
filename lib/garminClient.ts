@@ -32,7 +32,12 @@ function loadTokensFromFile(): IGarminTokens | null {
 
 async function createFreshClient(email: string, password: string): Promise<GarminConnect> {
   const client = new GarminConnect({ username: email, password: password });
-  await client.login();
+
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("Garmin login timed out after 30s")), 30_000)
+  );
+  await Promise.race([client.login(), timeout]);
+
   const tokens = client.exportToken();
   saveTokens(tokens);
   tokenExpiry = Date.now() + 55 * 60 * 1000;
