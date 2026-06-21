@@ -95,7 +95,6 @@ export default function DashboardPage() {
   const [mandala, setMandala] = useState<MandalaData | null>(null);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [countriesCount, setCountriesCount] = useState(0);
-  const [netWorth, setNetWorth] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -108,7 +107,6 @@ export default function DashboardPage() {
           fetchMandala(),
           fetchTimeline(),
           fetchTravel(),
-          fetchNetWorth(),
         ]);
       } finally {
         setLoading(false);
@@ -179,46 +177,6 @@ export default function DashboardPage() {
     } catch {}
   }
 
-  async function fetchNetWorth() {
-    try {
-      const [finRes, fxRes, hRes] = await Promise.all([
-        fetch("/api/finance"),
-        fetch("/api/fx"),
-        fetch("/api/holdings"),
-      ]);
-      let cash = 0, other = 0, liability = 0;
-      if (finRes.ok) {
-        const items = await finRes.json();
-        items.forEach((i: any) => {
-          const a = Number(i.amount) || 0;
-          if (i.category === "cash") cash += a;
-          if (i.category === "other_asset" || i.category === "bond") other += a;
-          if (i.category === "liability") liability += a;
-        });
-      }
-      let holdingsTHB = 0;
-      let thbRate = 35.5;
-      if (fxRes.ok) {
-        const fx = await fxRes.json();
-        if (fx?.rates?.THB) thbRate = fx.rates.THB;
-      }
-      if (hRes.ok) {
-        const holdings = await hRes.json();
-        const symbols = [...new Set(holdings.map((h: any) => h.symbol))].filter(Boolean).join(",");
-        if (symbols) {
-          const qRes = await fetch(`/api/market?symbols=${symbols}`);
-          if (qRes.ok) {
-            const quotes = await qRes.json();
-            holdings.forEach((h: any) => {
-              const price = quotes[h.symbol]?.currentPrice || 0;
-              holdingsTHB += (h.quantity || 0) * price * thbRate;
-            });
-          }
-        }
-      }
-      setNetWorth(cash + other + holdingsTHB - liability);
-    } catch {}
-  }
 
   // ── Derived values ──────────────────────────────────────────────────────
   const latest = healthLogs[healthLogs.length - 1] ?? null;
@@ -429,22 +387,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Section 4: Net Worth + Travel + Timeline ──────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Net Worth */}
-        <Link href="/life" className="block group">
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-3xl p-6 h-full shadow-xl hover:-translate-y-1 transition-transform duration-200">
-            <p className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-1">💰 Net Worth</p>
-            <p className="text-2xl font-extrabold mt-2">
-              {netWorth != null
-                ? new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(netWorth)
-                : "—"}
-            </p>
-            <p className="text-xs text-slate-400 mt-1">อัปเดตล่าสุด</p>
-            <p className="text-xs text-slate-300 mt-4 group-hover:underline">ดูรายละเอียด →</p>
-          </div>
-        </Link>
-
+      {/* ── Section 4: Travel + Timeline ──────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Travel */}
         <Link href="/travel" className="block group">
           <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-3xl p-6 h-full shadow-xl hover:-translate-y-1 transition-transform duration-200">
