@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   AreaChart,
   Area,
@@ -67,10 +65,6 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 }
 
 export default function HealthDashboard({ logs }: Props) {
-  const router = useRouter();
-  const [syncing, setSyncing] = useState(false);
-  const [syncMsg, setSyncMsg] = useState<string | null>(null);
-
   const latest = logs[0] ?? null;
   const chartData = logs
     .slice(0, 14)
@@ -99,38 +93,6 @@ export default function HealthDashboard({ logs }: Props) {
 
   const latestDate = latest?.date ? String(latest.date).substring(0, 10) : null;
 
-  async function handleSync() {
-    setSyncing(true);
-    setSyncMsg(null);
-    try {
-      const garminRes = await fetch('/api/garmin');
-      const garmin = await garminRes.json();
-
-      if (garmin.error) {
-        setSyncMsg(`❌ ${garmin.error}`);
-        return;
-      }
-
-      const saveRes = await fetch('/api/health', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...garmin, notes: 'Garmin Auto-Sync' }),
-      });
-
-      if (!saveRes.ok) {
-        setSyncMsg('❌ Failed to save data');
-        return;
-      }
-
-      setSyncMsg('✓ Synced successfully!');
-      router.refresh();
-    } catch (e: unknown) {
-      setSyncMsg(`❌ ${e instanceof Error ? e.message : 'Unknown error'}`);
-    } finally {
-      setSyncing(false);
-    }
-  }
-
   return (
     <div className="w-full max-w-[1200px] mx-auto p-8 animate-in fade-in duration-500">
 
@@ -145,31 +107,15 @@ export default function HealthDashboard({ logs }: Props) {
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-full text-[14px] font-medium transition-colors"
-          >
-            {syncing ? (
-              <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                <path d="M21 3v5h-5" />
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                <path d="M8 16H3v5" />
-              </svg>
-            )}
-            {syncing ? 'Syncing...' : 'Sync from Garmin'}
-          </button>
-          {syncMsg && (
-            <span className={`text-[12px] ${syncMsg.startsWith('❌') ? 'text-red-500' : 'text-emerald-600'}`}>
-              {syncMsg}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5 text-[13px] text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+              <path d="M8 16H3v5" />
+            </svg>
+            Auto-synced daily via Garmin Connect
+          </div>
         </div>
       </div>
 
