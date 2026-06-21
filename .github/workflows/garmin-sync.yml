@@ -1,42 +1,45 @@
-name: Daily Health Sync
+name: Daily VeSync Weight Sync
 
 on:
   schedule:
-    # Run every day at 21:30 UTC = 06:30 JST (Japan Standard Time)
+    # Run every day at 21:30 UTC = 06:30 JST
     - cron: '30 21 * * *'
-  workflow_dispatch: # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install Node Dependencies
-        run: npm ci --legacy-peer-deps
-
       - name: Install Python Dependencies
         run: pip install pyvesync
 
-      - name: Run Daily Sync (Garmin + VeSync)
+      - name: Run VeSync Sync
         env:
-          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
-          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
           VESYNC_EMAIL: ${{ secrets.VESYNC_EMAIL }}
           VESYNC_PASSWORD: ${{ secrets.VESYNC_PASSWORD }}
           WHYMAN_APP_URL: ${{ secrets.WHYMAN_APP_URL }}
-        run: node scripts/daily-sync.js
+        run: |
+          python scripts/vesync_weight.py > /tmp/vesync_out.json
+          cat /tmp/vesync_out.json
+
+          WEIGHT=$(python -c "import json,sys; d=json.load(open('/tmp/vesync_out.json')); print(d.get('weight',''))" 2>/dev/null || echo "")
+          BMI=$(python -c "import json,sys; d=json.load(open('/tmp/vesync_out.json')); print(d.get('bmi',''))" 2>/dev/null || echo "")
+          BODY_FAT=$(python -c "import json,sys; d=json.load(open('/tmp/vesync_out.json')); print(d.get('body_fat',''))" 2>/dev/null || echo "")
+
+          if [ -n "$WEIGHT" ]; then
+            curl -sf -X POST "$WHYMAN_APP_URL/api/health" \
+              -H "Content-Type: application/json" \
+              -d "{\"weight\":$WEIGHT,\"bmi\":${BMI:-null},\"body_fat\":${BODY_FAT:-null},\"notes\":\"VeSync Auto-Sync\"}"
+            echo "VeSync synced: weight=$WEIGHT bmi=$BMI body_fat=$BODY_FAT"
+          else
+            echo "VeSync: no weight data today"
+          fi
