@@ -191,7 +191,10 @@ async function saveEntry(date: string, morning: string, afternoon: string, eveni
     },
     body: JSON.stringify({ date, morning, afternoon, evening }),
   })
-  if (!res.ok) throw new Error(`POST /api/daily failed: ${res.status}`)
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string }
+    throw new Error(`POST /api/daily failed: ${res.status}${body.error ? ` — ${body.error}` : ""}`)
+  }
 }
 
 type Entry = { id: string; date: string; morning: string; afternoon: string; evening: string }

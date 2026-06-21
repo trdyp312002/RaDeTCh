@@ -98,6 +98,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, date })
   } catch (error) {
     console.error("daily POST error:", error)
-    return NextResponse.json({ success: false }, { status: 500 })
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 })
   }
 }
