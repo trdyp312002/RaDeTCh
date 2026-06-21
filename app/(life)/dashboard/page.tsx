@@ -306,7 +306,7 @@ export default function DashboardPage() {
                   <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#8C837A" }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 12]} tick={{ fontSize: 11, fill: "#8C837A" }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    formatter={(v: number) => [`${v}h`, "นอน"]}
+                    formatter={(v) => [`${v}h`, "นอน"]}
                     contentStyle={{ borderRadius: "10px", border: "none", fontSize: 12 }}
                   />
                   <Bar dataKey="hours" fill="#818CF8" radius={[6, 6, 0, 0]} />
