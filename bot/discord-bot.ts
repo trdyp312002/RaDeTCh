@@ -98,6 +98,10 @@ const commands = [
         .addStringOption(opt =>
           opt.setName("date").setDescription("วัน (YYYY-MM-DD) default = วันนี้").setRequired(false)
         )
+    )
+    .addSubcommand(sub =>
+      sub.setName("export")
+        .setDescription("📤 Export diary ทั้งหมดเป็น Markdown file (ใช้ paste เข้า Claude/ChatGPT)")
     ),
 
   // ── /routine ─────────────────────────────────────────────────────────────────
@@ -334,6 +338,38 @@ async function handleView(interaction: ChatInputCommandInteraction) {
   }
 }
 
+async function handleExport(interaction: ChatInputCommandInteraction) {
+  try {
+    const res = await fetch(`${APP_URL}/api/daily`, {
+      headers: PASSWORD ? { "x-app-password": PASSWORD } : {},
+    })
+    if (!res.ok) throw new Error(`GET /api/daily failed: ${res.status}`)
+    const { entries } = await res.json() as { entries: Entry[] }
+
+    if (!entries.length) {
+      await interaction.editReply("📭 ยังไม่มี diary entry เลย")
+      return
+    }
+
+    const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date))
+    const md = sorted.map(e =>
+      `# ${e.date}\n\n## ☀️ Morning\n${e.morning || "_ยังไม่ได้เขียน_"}\n\n## ☁️ Afternoon\n${e.afternoon || "_ยังไม่ได้เขียน_"}\n\n## 🌙 Evening\n${e.evening || "_ยังไม่ได้เขียน_"}`
+    ).join("\n\n---\n\n")
+
+    const buffer = Buffer.from(md, "utf-8")
+    const date = new Date().toLocaleDateString("en-CA")
+
+    await interaction.editReply({
+      content: `📤 Diary export — ${entries.length} entries (paste เข้า Claude/ChatGPT ได้เลย)`,
+      files: [{ attachment: buffer, name: `diary-export-${date}.md` }],
+    })
+  } catch (err) {
+    console.error("handleExport error:", err)
+    const msg = err instanceof Error ? err.message : String(err)
+    await interaction.editReply(`❌ Export ไม่สำเร็จ\n\`\`\`${msg.slice(0, 300)}\`\`\``)
+  }
+}
+
 // ─── Routine Handlers ────────────────────────────────────────────────────────
 
 async function handleTaskList(interaction: ChatInputCommandInteraction) {
@@ -500,6 +536,8 @@ client.on("interactionCreate", async (interaction) => {
     if (cmd === "diary") {
       if (sub === "view") {
         await handleView(interaction)
+      } else if (sub === "export") {
+        await handleExport(interaction)
       } else if (sub === "morning" || sub === "afternoon" || sub === "evening") {
         await handleWrite(interaction, sub)
       }
