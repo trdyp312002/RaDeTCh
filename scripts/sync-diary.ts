@@ -55,6 +55,14 @@ async function sync() {
   }
 }
 
-console.log(`[sync-diary] เริ่ม sync ทุก ${INTERVAL_MS / 1000}s → ${DIARY_DIR}`)
-sync() // sync ทันทีตอน start
-setInterval(sync, INTERVAL_MS)
+// --once flag: sync ครั้งเดียวแล้วออก (ใช้กับ Task Scheduler / startup)
+const ONCE = process.argv.includes("--once")
+
+if (ONCE) {
+  console.log(`[sync-diary] sync ครั้งเดียว (--once) → ${DIARY_DIR}`)
+  sync().then(() => process.exit(0))
+} else {
+  console.log(`[sync-diary] เริ่ม sync ทุก ${INTERVAL_MS / 1000}s → ${DIARY_DIR}`)
+  sync() // sync ทันทีตอน start
+  setInterval(sync, INTERVAL_MS)
+}
