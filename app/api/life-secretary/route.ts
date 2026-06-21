@@ -63,10 +63,31 @@ Format the message beautifully with sections, emojis, and motivational tone.
 Include: Today's free time schedule, top tasks for each goal, and one motivational sentence in Japanese.
 Use Discord markdown (** for bold, \` for code blocks, --- for dividers).`
 
+const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+
 function buildClient() {
   const apiKey = process.env.GOOGLE_AI_API_KEY
   if (!apiKey) return null
   return new GoogleGenerativeAI(apiKey)
+}
+
+async function generateWithFallback(
+  genAI: GoogleGenerativeAI,
+  systemInstruction: string,
+  prompt: string
+): Promise<string> {
+  for (const modelName of MODELS) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName, systemInstruction })
+      const result = await model.generateContent(prompt)
+      return result.response.text()
+    } catch (e: any) {
+      const is503 = e?.message?.includes("503") || e?.message?.includes("Service Unavailable") || e?.message?.includes("high demand")
+      if (!is503 || modelName === MODELS[MODELS.length - 1]) throw e
+      // try next model
+    }
+  }
+  throw new Error("All models unavailable")
 }
 
 async function generateDiscordMessage(genAI: GoogleGenerativeAI): Promise<string> {
@@ -82,13 +103,7 @@ async function generateDiscordMessage(genAI: GoogleGenerativeAI): Promise<string
     ? `Generate a Discord daily briefing for ${dayNames[dow]} (${dayEN[dow]}), ${dateStr}. It's a WEEKEND so there's lots of free time. Time now: ${timeStr}. Include morning/afternoon/evening schedule with specific time blocks for Japanese, English, and savings goals. Make it motivating and use Discord markdown with code blocks for schedules.`
     : `Generate a Discord daily briefing for ${dayNames[dow]} (${dayEN[dow]}), ${dateStr}. It's a WEEKDAY — work 8AM-7PM. Free time is only ~8PM–10:30PM (2.5 hours). Time now: ${timeStr}. Include an optimized 2.5-hour evening routine with specific tasks for Japanese, English, and savings. End with a Japanese motivational quote.`
 
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    systemInstruction: SYSTEM,
-  })
-
-  const result = await model.generateContent(prompt)
-  return result.response.text()
+  return generateWithFallback(genAI, SYSTEM, prompt)
 }
 
 async function postToDiscord(content: string): Promise<boolean> {
@@ -131,9 +146,8 @@ Current time: ${timeStr}, Day: วัน${dayNames[dow]}
 
 Give 2-3 SHORT, specific, actionable recommendations for what the user should do or check RIGHT NOW on this page. Be direct and practical. Mix Thai/English naturally. Use bullet points (•). Max 4 lines total. No long explanations.`
 
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: SYSTEM })
-      const result = await model.generateContent(prompt)
-      return NextResponse.json({ message: result.response.text() })
+      const text = await generateWithFallback(genAI, SYSTEM, prompt)
+      return NextResponse.json({ message: text })
     }
 
     // Discord action: generate message + post to webhook
@@ -157,14 +171,7 @@ Give 2-3 SHORT, specific, actionable recommendations for what the user should do
       return NextResponse.json({ error: "Empty message" }, { status: 400 })
     }
 
-    const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    systemInstruction: SYSTEM,
-  })
-
-  const result = await model.generateContent(message)
-    const text = result.response.text()
-
+    const text = await generateWithFallback(genAI, SYSTEM, message)
     return NextResponse.json({ message: text })
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error"
