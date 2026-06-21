@@ -1,0 +1,30 @@
+name: Daily Garmin Sync
+
+on:
+  schedule:
+    # 06:30 JST every day (21:30 UTC)
+    - cron: '30 21 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run Garmin Sync
+        env:
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          WHYMAN_APP_URL: ${{ secrets.WHYMAN_APP_URL }}
+        run: node scripts/daily-sync.js
