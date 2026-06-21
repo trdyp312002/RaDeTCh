@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server"
+import fs from "fs/promises"
+import path from "path"
 import db from "@/lib/db"
 
 export const dynamic = "force-dynamic"
+
+const DIARY_DIR = path.join(process.cwd(), "data", "diary")
 
 async function ensureTable() {
   await db.execute(`
@@ -14,6 +18,19 @@ async function ensureTable() {
       updated_at TEXT DEFAULT (datetime('now'))
     )
   `)
+}
+
+function toMd(date: string, morning: string, afternoon: string, evening: string) {
+  return `# ${date}\n\n## Morning\n${morning}\n\n## Afternoon\n${afternoon}\n\n## Evening\n${evening}\n`
+}
+
+async function writeMarkdownFile(date: string, morning: string, afternoon: string, evening: string) {
+  try {
+    await fs.mkdir(DIARY_DIR, { recursive: true })
+    await fs.writeFile(path.join(DIARY_DIR, `${date}.md`), toMd(date, morning, afternoon, evening), "utf8")
+  } catch {
+    // Silently ignore on Railway (ephemeral filesystem)
+  }
 }
 
 export async function GET() {
@@ -74,6 +91,9 @@ export async function POST(req: Request) {
       `,
       args: [date, newMorning, newAfternoon, newEvening],
     })
+
+    // Also write .md file locally (silently ignored on Railway)
+    await writeMarkdownFile(date, newMorning, newAfternoon, newEvening)
 
     return NextResponse.json({ success: true, date })
   } catch (error) {
