@@ -111,7 +111,7 @@ async function syncGarmin() {
 }
 
 // ── VeSync sync ───────────────────────────────────────────────────────────────
-function syncVeSync() {
+async function syncVeSync() {
   const email    = process.env.VESYNC_EMAIL
   const password = process.env.VESYNC_PASSWORD
   if (!email || !password) { console.log("[VeSync] Missing credentials"); return }
@@ -145,6 +145,6 @@ function syncVeSync() {
 ;(async () => {
   console.log(`\n=== RaDeTCh Daily Sync — ${TODAY} ===`)
   await syncGarmin()
-  syncVeSync()
+  await syncVeSync()
   console.log("=== Done ===\n")
 })()
