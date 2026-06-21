@@ -23,10 +23,12 @@ function getDb(): Client {
   return _db
 }
 
-// Proxy that forwards every property access to the lazy client
+// Proxy that forwards every property access to the lazy client (bind methods to preserve `this`)
 const db = new Proxy({} as Client, {
   get(_target, prop) {
-    return (getDb() as any)[prop]
+    const client = getDb()
+    const value = (client as any)[prop]
+    return typeof value === "function" ? value.bind(client) : value
   },
 })
 
