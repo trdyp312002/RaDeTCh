@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import db from "@/lib/db"
+import fs from "fs"
+import path from "path"
 
 export const dynamic = "force-dynamic"
 
@@ -173,6 +175,64 @@ export async function GET(req: NextRequest) {
       }
     }
     logs.push(`[+] Migrated ${migratedCount} diary entries.`)
+
+    // 6. Create health_logs table and seed from data/health.json
+    logs.push("[*] Creating health_logs table...")
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS health_logs (
+        date               TEXT PRIMARY KEY,
+        weight             REAL,
+        bmi                REAL,
+        body_fat           REAL,
+        sleep_hours        REAL,
+        sleep_score        INTEGER,
+        steps              INTEGER,
+        resting_heart_rate INTEGER,
+        calories_in        INTEGER,
+        calories_out       INTEGER,
+        notes              TEXT DEFAULT '',
+        created_at         TEXT DEFAULT (datetime('now')),
+        updated_at         TEXT DEFAULT (datetime('now'))
+      )
+    `)
+    logs.push("[+] health_logs table ready.")
+
+    const healthFilePath = path.join(process.cwd(), "data", "health.json")
+    if (fs.existsSync(healthFilePath)) {
+      const raw = JSON.parse(fs.readFileSync(healthFilePath, "utf8"))
+      const healthLogs: any[] = raw.logs || []
+      let healthMigrated = 0
+      for (const entry of healthLogs) {
+        const dateKey = String(entry.date || "").substring(0, 10)
+        if (!dateKey) continue
+        try {
+          await db.execute({
+            sql: `INSERT OR IGNORE INTO health_logs
+                    (date, weight, bmi, body_fat, sleep_hours, sleep_score, steps, resting_heart_rate, calories_in, calories_out, notes)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            args: [
+              dateKey,
+              entry.weight ?? null,
+              entry.bmi ?? null,
+              entry.body_fat ?? null,
+              entry.sleep_hours ?? null,
+              entry.sleep_score ?? null,
+              entry.steps ?? null,
+              entry.resting_heart_rate ?? null,
+              entry.calories_in ?? null,
+              entry.calories_out ?? null,
+              entry.notes ?? "",
+            ],
+          })
+          healthMigrated++
+        } catch (e: any) {
+          logs.push(`[!] Skipped health entry ${dateKey}: ${e.message}`)
+        }
+      }
+      logs.push(`[+] Seeded ${healthMigrated} health log entries from health.json.`)
+    } else {
+      logs.push("[~] data/health.json not found — skipping health seed (normal on fresh deploys).")
+    }
 
     return NextResponse.json({
       success: true,

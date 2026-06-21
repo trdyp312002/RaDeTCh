@@ -57,6 +57,27 @@ function upsert(data, datePrefix, updates, notes) {
   }
 }
 
+// ── POST health data to Railway API ──────────────────────────────────────────
+async function postHealth(dateStr, fields, notes) {
+  const appUrl = process.env.WHYMAN_APP_URL
+  if (!appUrl) {
+    // Fallback: write to local file when running locally without WHYMAN_APP_URL
+    const data = readHealth()
+    upsert(data, dateStr, fields, notes)
+    writeHealth(data)
+    return
+  }
+  const res = await fetch(`${appUrl}/api/health`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ date: dateStr, ...fields, notes }),
+  })
+  if (!res.ok) {
+    const txt = await res.text()
+    throw new Error(`POST /api/health failed (${res.status}): ${txt}`)
+  }
+}
+
 // ── Garmin sync ───────────────────────────────────────────────────────────────
 async function syncGarmin() {
   const email    = process.env.GARMIN_EMAIL
@@ -82,9 +103,7 @@ async function syncGarmin() {
       ? stepsData.reduce((acc, s) => acc + (s.steps || 0), 0) : null
     const resting_heart_rate = hrData?.restingHeartRate ?? null
 
-    const data = readHealth()
-    upsert(data, TODAY, { sleep_hours, sleep_score, steps, resting_heart_rate }, "Garmin Auto-Sync")
-    writeHealth(data)
+    await postHealth(TODAY, { sleep_hours, sleep_score, steps, resting_heart_rate }, "Garmin Auto-Sync")
     console.log(`[Garmin] OK — sleep: ${sleep_hours}h, steps: ${steps}, RHR: ${resting_heart_rate}`)
   } catch (e) {
     console.error("[Garmin] Error:", e.message)
@@ -115,9 +134,7 @@ function syncVeSync() {
     const result = JSON.parse(raw)
     if (result.error) { console.log("[VeSync] Error:", result.error); return }
 
-    const data = readHealth()
-    upsert(data, TODAY, { weight: result.weight }, "VeSync Auto-Sync")
-    writeHealth(data)
+    await postHealth(TODAY, { weight: result.weight }, "VeSync Auto-Sync")
     console.log(`[VeSync] OK — weight: ${result.weight} kg`)
   } catch (e) {
     console.error("[VeSync] Error:", e.message)
