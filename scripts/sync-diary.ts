@@ -23,9 +23,12 @@ function toMd(e: Entry) {
 
 async function sync() {
   try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10_000)
     const res = await fetch(`${APP_URL}/api/daily`, {
       headers: PASSWORD ? { "x-app-password": PASSWORD } : {},
-    })
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeout))
     if (!res.ok) throw new Error(`GET /api/daily failed: ${res.status}`)
 
     const { entries } = await res.json() as { entries: Entry[] }
