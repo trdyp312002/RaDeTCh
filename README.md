@@ -204,14 +204,163 @@ railway variables --json
 
 ## 📌 งานถัดไป
 
-- [ ] เพิ่มการกำหนดว่า action ใดเป็น “งานของวันนี้” โดยมีวันที่จริง แทนการแสดง action ที่มีข้อความทั้งหมด
-- [ ] ทำ Daily Schedule ให้แก้ไขได้และใช้ข้อมูลกลางเดียวกันระหว่าง Routine กับ Dashboard
+### P0 — ทำให้ Daily OS เชื่อถือได้
+
+- [ ] เพิ่ม `scheduled_date`, `start_time`, `end_time`, `priority` และ `completed_at` ให้ action
+- [ ] แยก Daily Goal ออกจาก Mandala main goal แต่เชื่อม Daily Goal กลับไปยัง subgoal ได้
+- [ ] แก้ตารางข้ามเที่ยงคืนให้ช่วงนอน 22:00–06:00 คำนวณเป็น 8 ชั่วโมง
+- [ ] แก้ช่วงเวลาซ้อนกันระหว่างอาหารเย็น 19:30–20:10 และ Self-Development 20:00–21:30
+- [ ] ทำ Daily Schedule เป็นข้อมูลกลางเดียวกันระหว่าง Routine กับ Dashboard
+- [ ] แสดงสถานะรายแหล่งข้อมูล: loaded, empty, stale และ failed ให้แตกต่างกัน
+
+### P1 — เพิ่มคุณค่ารายวัน
+
 - [ ] เชื่อม Google Calendar หรือ Outlook Calendar เพื่อรวม meeting/event จริงในตารางวันนี้
-- [ ] เพิ่ม metadata เสื้อผ้า เช่น ประเภท สี ฤดูกาล และโอกาสใช้งาน เพื่อให้คำแนะนำลุคแม่นยำขึ้น
-- [ ] เพิ่มปุ่มลบภาพ Closet พร้อม confirmation ใน UI
-- [ ] ย้ายรูป Closet ไป Object Storage เมื่อคลังภาพมีขนาดใหญ่
-- [ ] เพิ่ม location setting สำหรับพยากรณ์อากาศแทนค่าเริ่มต้น Tokyo
-- [ ] เพิ่ม dashboard QA สำหรับข้อมูลที่ stale หรือ API บางห้องโหลดไม่สำเร็จ
+- [ ] ทำ greeting ให้เปลี่ยนตามเวลา: morning, afternoon, evening และ night
+- [ ] ทำ first viewport ให้เห็นทั้ง Today Goal และสรุป Calendar โดยไม่ต้องเลื่อนมาก
+- [ ] เพิ่ม metadata เสื้อผ้า: ประเภท สี วัสดุ ฤดูกาล formal/casual และสภาพอากาศที่เหมาะสม
+- [ ] เปลี่ยน Outfit Recommendation จากการหมุนรูปตามลำดับเป็นการจัดอันดับตาม weather + schedule + clothing metadata
+- [ ] เพิ่ม location setting แทนค่าเริ่มต้น Tokyo
+- [ ] เพิ่มปุ่มลบภาพ Closet พร้อม confirmation และ undo window
+
+### P2 — รองรับการเติบโต
+
+- [ ] ย้ายรูป Closet ไป Object Storage เช่น R2/S3 และเก็บเฉพาะ URL ใน Turso
+- [ ] เพิ่ม source freshness และ last successful sync ใน Dashboard
+- [ ] เพิ่ม event log สำหรับ AI generation, save failure และ API latency
+- [ ] เพิ่ม automated tests สำหรับ schedule, cross-midnight duration, API failure และ responsive states
+- [ ] แยก schedule constants ออกจากหน้า Routine ไปเป็น shared domain module
+
+---
+
+## 🔎 Website Analysis — Production Audit
+
+ตรวจเว็บไซต์ production จากหน้าที่ผู้ใช้เห็นจริงเมื่อวันที่ **24 กรกฎาคม 2026** ครอบคลุม Dashboard, Routine, Closet, navigation, data flow และ deployment architecture
+
+### Executive assessment
+
+RaDeTCh มีทิศทางผลิตภัณฑ์ที่ชัดขึ้นจาก “หน้ารวมหลายฟีเจอร์” ไปเป็น **Daily Personal Operating System** จุดแข็งคือ visual identity ที่สงบ สม่ำเสมอ และมีโมดูลชีวิตที่ครอบคลุม แต่ระบบข้อมูลรายวันยังไม่แข็งแรงพอที่จะตอบคำถามหลักว่า “วันนี้ต้องทำอะไร และเสร็จหรือยัง” อย่างแม่นยำ
+
+| ด้าน | ระดับปัจจุบัน | วิเคราะห์ |
+|---|---:|---|
+| Product direction | 8/10 | เป้าหมาย Today-first ชัดและแตกต่างจาก dashboard ทั่วไป |
+| Visual design | 8/10 | ลำดับชั้นดี โทน Life OS สม่ำเสมอ และ card system ดูเป็นผลิตภัณฑ์เดียวกัน |
+| Daily planning model | 4/10 | Mandala action ยังไม่มีวันที่ เวลา priority หรือความหมายว่าเป็นงานของวันนี้ |
+| Data reliability | 5/10 | มี Turso และ API จริง แต่ empty/failure/stale ยังแยกไม่ชัด |
+| Personalization | 5/10 | มี Health, Closet และ Weather แต่คำแนะนำยังใช้ rule แบบกว้าง |
+| Persistence | 6/10 | ข้อมูลหลักอยู่ Turso แล้ว แต่ binary image ในฐานข้อมูลจะเป็นข้อจำกัดเมื่อโต |
+| Deployment | 8/10 | GitHub main → Railway production ทำงานอัตโนมัติและตรวจสอบสถานะได้ |
+| Accessibility/responsive | 7/10 | semantic controls และ responsive layout ค่อนข้างดี แต่ยังต้องทดสอบ keyboard/focus/mobile จริงครบทุก flow |
+
+### สิ่งที่ทำได้ดี
+
+1. **Dashboard มีลำดับข้อมูลที่ถูกทิศทาง** — Today Goal, action status และ schedule ถูกยกระดับเหนือ Health/Closet/Books
+2. **Visual hierarchy ชัด** — primary goal ใช้พื้นที่และ contrast สูง ส่วนข้อมูลรองลดน้ำหนักลงอย่างเหมาะสม
+3. **Routine เป็น editing source เดียว** — Dashboard ไม่สร้าง checkbox ซ้ำ ลดโอกาส state ขัดแย้งกัน
+4. **Closet มี workflow ครบวงจร** — upload → AI generation → durable save → full-image view → download
+5. **ระบบ production มีพื้นฐานดี** — Next.js, Turso, GitHub และ Railway เชื่อมกันเป็นเส้นทาง deploy ที่ตรวจสอบได้
+6. **Empty state มีคำแนะนำต่อ** — เมื่อยังไม่มี goal/action/closet ระบบพาไปหน้าที่ควรเริ่มทำ
+7. **Navigation มี mental model คงที่** — Dashboard, Health, Closet, Routine และห้องชีวิตอื่นอยู่ใน Life OS family เดียวกัน
+
+### ข้อค้นพบสำคัญ
+
+#### 1. Daily Goal ยังไม่ใช่ daily จริง
+
+Dashboard นำ `mandala_charts.main_goal` มาแสดงเป็น Today’s Primary Goal และนำ action ที่มีข้อความทั้งหมดมาเป็น Today’s Actions แต่ schema ปัจจุบันไม่มีวันที่, due date, priority หรือ recurrence ดังนั้นรายการที่เห็นอาจเป็นเป้าหมายระยะยาว ไม่ใช่งานของวันที่เปิด Dashboard
+
+**ผลกระทบ:** progress ของ “วันนี้” อาจดูถูกต้องทางตัวเลขแต่ผิดความหมาย
+
+**ข้อเสนอ:** เพิ่ม domain model `daily_plans` และ `daily_actions` หรือเพิ่ม scheduling fields ให้ `mandala_actions` พร้อม query ตาม timezone ของผู้ใช้
+
+#### 2. ตารางเวลาข้ามเที่ยงคืนคำนวณผิด
+
+Routine ระบุเป้าหมายนอน `22:00 → 06:00 (8 ชั่วโมง)` แต่ block ใช้ `1320 → 1440` จึงแสดง `22:00 → 00:00` และคำนวณเพียง 2 ชั่วโมง ทั้งใน Routine และ Dashboard
+
+**ผลกระทบ:** ตารางไม่สอดคล้องกับเป้าหมายสุขภาพและ readiness
+
+**ข้อเสนอ:** รองรับ block ที่ `end < start` หรือใช้ timestamp ของวันจริงแทน minute-of-day เพียงอย่างเดียว
+
+#### 3. ตารางมีช่วงเวลาซ้อนกันโดยไม่แจ้ง conflict
+
+อาหารเย็นกำหนด `19:30–20:10` ขณะที่ Self-Development เริ่ม `20:00` ทำให้ซ้อนกัน 10 นาที
+
+**ผลกระทบ:** ตารางดูแน่นแต่ทำจริงไม่ได้ตามเวลาที่กำหนด
+
+**ข้อเสนอ:** เพิ่ม validation ตอนบันทึก schedule และแสดง conflict badge หากช่วงเวลาทับกัน
+
+#### 4. Greeting ไม่สัมพันธ์กับเวลาจริง
+
+Production เวลา 23:15 ยังแสดง `Good morning, RaDeTCh.`
+
+**ผลกระทบ:** ลดความรู้สึกว่า Dashboard เข้าใจบริบทปัจจุบัน
+
+**ข้อเสนอ:** map greeting จาก local hour และใช้ timezone setting เดียวกับ calendar/weather
+
+#### 5. First viewport ยังใช้พื้นที่มาก
+
+Today Goal hero มีความชัดเจน แต่สูงจนตารางวันนี้เริ่มอยู่ใต้ขอบจอ desktop ส่วนใหญ่ ผู้ใช้ต้องเลื่อนจึงเห็น schedule ซึ่งเป็นข้อมูลหลักลำดับที่สอง
+
+**ข้อเสนอ:** ลด hero height, จำกัด action preview 3–5 รายการ และวาง “Now / Next” ข้าง goal เพื่อให้ summary ของ calendar อยู่เหนือ fold
+
+#### 6. Empty, failed และ stale data ยังคล้ายกัน
+
+ใน production หลายโมดูลแสดงค่า `0`, `—` หรือ “ยังไม่มีข้อมูล” แต่ผู้ใช้ไม่ทราบว่าไม่มี record จริง, session/API ล้มเหลว หรือข้อมูล sync ไม่ทัน
+
+**ข้อเสนอ:** ทุก source ควรมี `status`, `lastUpdated`, `recordCount` และ error boundary เฉพาะส่วน
+
+#### 7. Outfit recommendation ยังไม่เข้าใจเสื้อผ้า
+
+Dashboard หมุนเลือกภาพจาก Closet ตามลำดับและใช้ weather rule สร้างคำอธิบาย แต่ยังไม่มี metadata ว่าเสื้อเป็นประเภทใด สีอะไร หนาหรือบาง และเหมาะกับกิจกรรมใด
+
+**ผลกระทบ:** คำแนะนำ “มาจาก Closet” จริง แต่ยังไม่ใช่ recommendation engine ที่เลือกชุดเหมาะที่สุด
+
+**ข้อเสนอ:** ตอนสร้างภาพให้ AI ส่ง structured metadata คู่กับภาพ แล้ว rank ด้วย weather, schedule และ dress code
+
+#### 8. การเก็บรูปใน Turso มีเพดานการเติบโต
+
+การเก็บ JPEG เป็น data URL ใน `closet_creations.image_data` ทำให้ใช้งานง่ายและ durable ในระยะเริ่มต้น แต่เพิ่มขนาดฐานข้อมูล, response payload และ memory usage ทุกครั้งที่โหลด gallery
+
+**ข้อเสนอ:** ย้ายภาพไป Object Storage, ทำ thumbnail และ paginate gallery
+
+#### 9. Schedule มี source ซ้ำใน code
+
+Dashboard และ Routine มี schedule constants คนละชุด แม้เนื้อหาปัจจุบันตรงกัน แต่การแก้หน้าเดียวอาจทำให้อีกหน้าไม่อัปเดต
+
+**ข้อเสนอ:** สร้าง `lib/dailySchedule.ts` หรือ table/API กลาง แล้วให้ทั้งสองหน้าอ่านจาก source เดียว
+
+#### 10. Dashboard breadth ดี แต่บางห้องยังเป็นเพียงทางลัด
+
+Relations ไม่มี metric จริง ส่วน Music/Menu ใช้เพียงจำนวนรายการ จึงยังไม่ช่วยตัดสินใจเท่า Today Goal, Health หรือ Schedule
+
+**ข้อเสนอ:** แสดงเฉพาะ signal ที่นำไปสู่การกระทำ เช่น คนที่ควรติดต่อวันนี้, เมนูที่เหมาะกับ calorie target หรือ playlist สำหรับ focus block ปัจจุบัน
+
+### สถาปัตยกรรมเป้าหมาย
+
+```text
+Routine / Calendar / Health / Closet
+              │
+              ▼
+       Daily Context API
+  date · timezone · goal · actions
+  events · readiness · weather · outfit
+              │
+              ▼
+        Dashboard (read model)
+  Now → Next → Today → Secondary signals
+```
+
+Dashboard ควรอ่านจาก endpoint เดียว เช่น `/api/daily-context` ซึ่งรวมและ normalize ข้อมูลจากหลาย source ฝั่ง server เพื่อให้ freshness, error handling, timezone และ metric definitions สอดคล้องกัน
+
+### Definition of done สำหรับ Daily Dashboard
+
+- ผู้ใช้รู้ภายใน 5 วินาทีว่าเป้าหมายวันนี้คืออะไร
+- ผู้ใช้เห็นจำนวนงานที่เหลือและงานสำคัญถัดไปโดยไม่ต้องเลื่อน
+- ตารางแสดง `Now`, `Next` และ conflict อย่างถูกต้อง
+- action ทุกตัวมีวันที่หรือกฎ recurrence ที่ตรวจสอบได้
+- การติ๊กใน Routine สะท้อนบน Dashboard หลัง refresh โดยไม่มี state ซ้ำ
+- ข้อมูลว่าง, stale และ error มีหน้าตา/ข้อความต่างกัน
+- Outfit ที่แนะนำมีเหตุผลจาก weather + schedule + garment metadata
+- หน้า mobile แสดง goal, next action และ next calendar event ใน first viewport
 
 ---
 
