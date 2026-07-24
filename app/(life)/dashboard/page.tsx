@@ -10,6 +10,7 @@ type WeatherDay = { date:string; code:number; max:number; min:number; rain:numbe
 type Book = { id:string; title:string; author:string; status:string; cover_image?:string };
 type Diary = { date:string; morning:string; afternoon:string; evening:string };
 type Mandala = { chart:{main_goal:string}|null; actions:Array<{completed:number;text:string}> };
+type ScheduleItem={start:number;end:number;label:string;type:string};
 type DashboardData = { health:Health[]; closet:Creation[]; books:Book[]; diary:Diary[]; mandala:Mandala|null; countries:unknown[]; music:unknown[]; menu:unknown[] };
 
 const EMPTY:DashboardData={health:[],closet:[],books:[],diary:[],mandala:null,countries:[],music:[],menu:[]};
@@ -17,6 +18,10 @@ const weatherIcon=(code:number)=>code===0?"sunny":code<4?"partly_cloudy_day":cod
 const weatherLabel=(code:number)=>code===0?"ฟ้าโปร่ง":code<4?"มีเมฆบางส่วน":code>=51&&code<=82?"มีฝน":code>=95?"พายุฝน":"ครึ้ม";
 const todayISO=()=>new Date().toLocaleDateString("en-CA");
 const dayName=(iso:string,index:number)=>index===0?"วันนี้":new Date(`${iso}T12:00:00`).toLocaleDateString("th-TH",{weekday:"short"});
+const fmtTime=(minutes:number)=>`${String(Math.floor(minutes/60)%24).padStart(2,"0")}:${String(minutes%60).padStart(2,"0")}`;
+const WEEKDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกาย",type:"health"},{start:390,end:420,label:"เตรียมตัว + ออกจากบ้าน",type:"prepare"},{start:480,end:1140,label:"ทำงาน",type:"work"},{start:1140,end:1170,label:"เดินทางกลับบ้าน",type:"travel"},{start:1170,end:1210,label:"อาหารเย็น + พัก",type:"meal"},{start:1200,end:1290,label:"Self-Development",type:"focus"},{start:1290,end:1320,label:"เตรียมนอน + ทบทวนวัน",type:"rest"},{start:1320,end:1440,label:"นอนหลับ",type:"sleep"}];
+const SATURDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกาย",type:"health"},{start:390,end:430,label:"อาหารเช้า",type:"meal"},{start:430,end:720,label:"Deep Focus: ภาษาญี่ปุ่น",type:"focus"},{start:720,end:780,label:"พักกลางวัน",type:"meal"},{start:780,end:1020,label:"English + Financial",type:"focus"},{start:1020,end:1110,label:"พักผ่อน",type:"rest"},{start:1110,end:1200,label:"Review สัปดาห์ + วางแผน",type:"focus"},{start:1200,end:1290,label:"เสริมทักษะ + ผ่อนคลาย",type:"rest"},{start:1290,end:1320,label:"เตรียมนอน",type:"sleep"}];
+const SUNDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกายเบา ๆ",type:"health"},{start:390,end:430,label:"อาหารเช้า",type:"meal"},{start:430,end:720,label:"Japanese Study",type:"focus"},{start:720,end:810,label:"พักกลางวัน",type:"meal"},{start:810,end:1020,label:"English + Side Project",type:"focus"},{start:1020,end:1110,label:"พักผ่อน / ครอบครัว",type:"rest"},{start:1110,end:1200,label:"เตรียมสัปดาห์ใหม่",type:"focus"},{start:1200,end:1290,label:"ผ่อนคลาย",type:"rest"},{start:1290,end:1320,label:"เตรียมนอน",type:"sleep"}];
 
 function outfitReason(day:WeatherDay){
   if(day.rain>=45)return "มีโอกาสฝน เลือกชิ้นที่คล่องตัวและพกเสื้อคลุมบาง";
@@ -38,18 +43,22 @@ export default function DashboardPage(){
   })()},[]);
 
   const latest=data.health.at(-1)||data.health[0]; const todayDiary=data.diary.find(x=>x.date===todayISO())||data.diary.at(-1); const reading=data.books.filter(x=>x.status==="reading");
-  const actions=data.mandala?.actions||[]; const done=actions.filter(x=>x.completed===1).length; const goal=data.mandala?.chart?.main_goal||"ยังไม่ได้ตั้งเป้าหมายหลัก";
+  const actions=(data.mandala?.actions||[]).filter(action=>action.text?.trim()); const done=actions.filter(x=>x.completed===1).length; const goal=data.mandala?.chart?.main_goal||"ยังไม่ได้ตั้งเป้าหมายหลัก";
+  const now=new Date(); const currentMin=now.getHours()*60+now.getMinutes(); const dow=now.getDay(); const todaySchedule=dow===6?SATURDAY:dow===0?SUNDAY:WEEKDAY; const progress=actions.length?Math.round(done/actions.length*100):0;
   const readiness=useMemo(()=>{if(!latest)return 0;const sleep=latest.sleep_score||0;const steps=Math.min((latest.steps||0)/10000*100,100);return Math.round(sleep*.72+steps*.28)},[latest]);
   const looks=weather.slice(0,3).map((day,i)=>({day,look:data.closet.length?data.closet[i%data.closet.length]:null})); const hero=looks[0];
 
   return <main className={styles.page}>
     <header className={styles.header}><div><p className={styles.eyebrow}>{new Date().toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p><h1>Good morning, RaDeTCh.</h1><p>วันนี้ควรโฟกัสอะไร ร่างกายพร้อมแค่ไหน และควรแต่งตัวอย่างไร</p></div><div className={styles.live}><span/> Daily brief · Tokyo</div></header>
     {error&&<div className={styles.notice}>ข้อมูลบางห้องยังโหลดไม่สำเร็จ — ส่วนที่พร้อมใช้งานยังแสดงตามปกติ</div>}
-    <section className={styles.hero}>
-      <div className={styles.outfitImage}>{hero?.look?<img src={hero.look.image} alt={`ลุคแนะนำ ${hero.look.style}`}/>:<div className={styles.noLook}><span className="material-symbols-outlined">checkroom</span><strong>ยังไม่มีลุคใน Closet</strong><Link href="/health/closet">สร้างลุคแรก →</Link></div>}<span className={styles.todayBadge}>TODAY&apos;S LOOK</span></div>
-      <div className={styles.heroCopy}><p className={styles.kicker}>DAILY STYLE · FROM YOUR CLOSET</p><h2>{hero?.look?hero.look.style:"เพิ่มเสื้อผ้าเพื่อรับคำแนะนำ"}</h2>{hero?.day&&<><div className={styles.weatherLine}><span className="material-symbols-outlined">{weatherIcon(hero.day.code)}</span><strong>{Math.round(hero.day.max)}°</strong><span>{weatherLabel(hero.day.code)} · ฝน {hero.day.rain}%</span></div><p className={styles.reason}>{outfitReason(hero.day)}</p></>}<div className={styles.heroActions}><Link href="/health/closet" className={styles.primary}>เปิด Closet</Link><Link href="/daily" className={styles.secondary}>วางแผนวันนี้</Link></div></div>
-      <div className={styles.readiness}><p>READINESS</p><div className={styles.score}>{loading?"…":readiness}<small>/100</small></div><div className={styles.meter}><span style={{width:`${readiness}%`}}/></div><p>{readiness>=80?"พร้อมลุยเต็มที่":readiness>=60?"รักษาจังหวะให้สมดุล":"วันนี้ควรเบาแรงและพักเพิ่ม"}</p></div>
+    <section className={styles.goalHero}>
+      <div className={styles.goalSummary}><p className={styles.kicker}>TODAY&apos;S PRIMARY GOAL</p><h2>{goal}</h2><div className={styles.goalProgress}><div><strong>{progress}%</strong><span>{done} จาก {actions.length} รายการเสร็จแล้ว</span></div><div className={styles.meter}><span style={{width:`${progress}%`}}/></div></div><Link href="/routine" className={styles.primary}>เปิด Routine เพื่ออัปเดต</Link></div>
+      <div className={styles.taskList}><div className={styles.taskHead}><div><p>TODAY&apos;S ACTIONS</p><h3>สิ่งที่ต้องทำวันนี้</h3></div><span>{actions.length-done} remaining</span></div>{actions.length?<div className={styles.tasks}>{actions.slice(0,7).map((action,index)=><div className={`${styles.task} ${action.completed?styles.taskDone:""}`} key={`${action.text}-${index}`}><span className="material-symbols-outlined">{action.completed?"check_circle":"radio_button_unchecked"}</span><p>{action.text}</p><small>{action.completed?"DONE":`#${String(index+1).padStart(2,"0")}`}</small></div>)}</div>:<div className={styles.noTasks}>ยังไม่มี action ใน Routine — เพิ่มสิ่งที่ต้องทำเพื่อให้ Dashboard ติดตามได้</div>}</div>
+      <div className={styles.goalStatus}><p>DAY STATUS</p><div className={styles.statusRing} style={{background:`conic-gradient(#70866a ${progress*3.6}deg,#ded7ce 0deg)`}}><div><strong>{done}</strong><span>done</span></div></div><p>{progress===100?"เป้าหมายวันนี้เสร็จแล้ว":progress>=50?"ผ่านครึ่งทางแล้ว เดินหน้าต่อ":"เริ่มจาก action สำคัญที่สุดหนึ่งอย่าง"}</p></div>
     </section>
+
+    <div className={styles.sectionHead}><div><p>TODAY&apos;S CALENDAR</p><h2>ตารางเวลาวันนี้</h2></div><Link href="/routine">ดูตารางเต็ม →</Link></div>
+    <section className={styles.schedule}><div className={styles.timeRail}>{todaySchedule.map((item,index)=>{const active=currentMin>=item.start&&currentMin<item.end;return <article className={`${styles.scheduleItem} ${styles[item.type]} ${active?styles.now:""}`} key={`${item.label}-${index}`}><div className={styles.scheduleTime}><strong>{fmtTime(item.start)}</strong><span>{fmtTime(item.end)}</span></div><div className={styles.scheduleLine}><i/><span/></div><div className={styles.scheduleName}><strong>{item.label}</strong><span>{Math.round((item.end-item.start)/60*10)/10} ชั่วโมง</span></div>{active&&<b>NOW</b>}</article>})}</div><aside className={styles.scheduleAside}><p>CURRENT TIME</p><strong>{now.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})}</strong><span>{todaySchedule.find(item=>currentMin>=item.start&&currentMin<item.end)?.label||"นอกตารางหลัก"}</span><div/><p>NEXT UP</p><h3>{todaySchedule.find(item=>item.start>currentMin)?.label||"พักผ่อนและเตรียมพรุ่งนี้"}</h3></aside></section>
 
     <section className={styles.metrics}>
       <Metric icon="bedtime" label="Sleep" value={latest?.sleep_hours?`${latest.sleep_hours.toFixed(1)}h`:"—"} note={`score ${latest?.sleep_score??"—"}`}/>
@@ -59,7 +68,7 @@ export default function DashboardPage(){
       <Metric icon="checkroom" label="Closet" value={`${data.closet.length}`} note="saved looks"/>
     </section>
 
-    <div className={styles.sectionHead}><div><p>NEXT 3 DAYS</p><h2>แต่งตัวตามวันและอากาศ</h2></div><Link href="/health/closet">จัดการ Closet →</Link></div>
+    <div className={styles.sectionHead}><div><p>SECONDARY · NEXT 3 DAYS</p><h2>แต่งตัวตามวันและอากาศ</h2></div><Link href="/health/closet">จัดการ Closet →</Link></div>
     <section className={styles.forecast}>{looks.map(({day,look},i)=><article className={styles.dayCard} key={day.date}><div className={styles.dayTop}><div><strong>{dayName(day.date,i)}</strong><span>{new Date(`${day.date}T12:00:00`).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}</span></div><span className="material-symbols-outlined">{weatherIcon(day.code)}</span></div>{look?<img src={look.image} alt={`ลุค ${look.style}`}/>:<div className={styles.dayEmpty}>No look</div>}<div className={styles.dayInfo}><strong>{look?.style||"เพิ่มลุคใน Closet"}</strong><span>{Math.round(day.min)}°–{Math.round(day.max)}° · ฝน {day.rain}%</span><p>{outfitReason(day)}</p></div></article>)}</section>
 
     <div className={styles.sectionHead}><div><p>ALL ROOMS</p><h2>ทุกส่วนของ Life OS ในมุมเดียว</h2></div></div>
