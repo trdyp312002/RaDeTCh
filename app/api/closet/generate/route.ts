@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import db from "@/lib/db";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -69,7 +71,23 @@ export async function POST(request: Request) {
       console.error("Closet response without image. Keys:", Object.keys(data), "stepTypes:", (data as { steps?: Array<{ type?: string }> }).steps?.map(step => step.type));
       return NextResponse.json({ error: "AI ประมวลผลเสร็จแต่ไม่ได้ส่งภาพกลับมา กรุณาลองรูปหรือท่าอื่น" }, { status: 502 });
     }
-    return NextResponse.json({ image: `data:${output.mime_type || "image/jpeg"};base64,${output.data}` });
+    const image = `data:${output.mime_type || "image/jpeg"};base64,${output.data}`;
+    const id = randomUUID();
+    const createdAt = new Date().toISOString();
+    const style = String(body.styleName || "3D Look").slice(0, 80);
+    const sourceName = String(body.sourceName || "").slice(0, 180);
+    await db.execute(`CREATE TABLE IF NOT EXISTS closet_creations (
+      id TEXT PRIMARY KEY,
+      image_data TEXT NOT NULL,
+      style TEXT NOT NULL,
+      source_name TEXT DEFAULT '',
+      created_at TEXT NOT NULL
+    )`);
+    await db.execute({
+      sql: "INSERT INTO closet_creations (id, image_data, style, source_name, created_at) VALUES (?, ?, ?, ?, ?)",
+      args: [id, image, style, sourceName, createdAt],
+    });
+    return NextResponse.json({ id, image, style, sourceName, createdAt });
   } catch (error) {
     console.error("Closet route:", error);
     if (error instanceof Error && error.name === "AbortError") return NextResponse.json({ error: "การสร้างภาพใช้เวลาเกิน 3 นาที กรุณาลองใหม่" }, { status: 504 });

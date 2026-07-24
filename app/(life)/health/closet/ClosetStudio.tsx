@@ -3,7 +3,7 @@
 import { ChangeEvent, DragEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import styles from "./ClosetStudio.module.css";
 
-type Creation = { id: string; image: string; style: string; createdAt: string };
+type Creation = { id: string; image: string; style: string; sourceName?: string; createdAt: string };
 const OPTIONS = [
   ["front", "Studio Front", "ยืนตรง เห็นชุดชัด", "accessibility_new", "full-body front-facing pose, clean balanced stance, premium fashion catalog render"],
   ["turn", "Soft Turn", "เอียงตัวเล็กน้อย มีมิติ", "360", "full-body three-quarter pose with a subtle body turn, elegant relaxed stance"],
@@ -27,8 +27,29 @@ export default function ClosetStudio() {
   const [error, setError] = useState("");
   const [creations, setCreations] = useState<Creation[]>([]);
   const [selectedCreation, setSelectedCreation] = useState<Creation | null>(null);
+  const [archiveLoading, setArchiveLoading] = useState(true);
 
-  useEffect(() => { try { const saved = localStorage.getItem(KEY); if (saved) setCreations(JSON.parse(saved)); } catch {} }, []);
+  useEffect(() => {
+    async function loadArchive() {
+      try {
+        const saved = localStorage.getItem(KEY);
+        const localItems: Creation[] = saved ? JSON.parse(saved) : [];
+        let migrated = true;
+        for (const item of localItems) {
+          const response = await fetch("/api/closet", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(item) });
+          if (!response.ok) migrated = false;
+        }
+        if (migrated && localItems.length) localStorage.removeItem(KEY);
+        const response = await fetch("/api/closet", { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "โหลดคลังภาพไม่สำเร็จ");
+        setCreations(data.creations || []);
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : "โหลดคลังภาพไม่สำเร็จ");
+      } finally { setArchiveLoading(false); }
+    }
+    loadArchive();
+  }, []);
   useEffect(() => {
     if (!busy) { setElapsed(0); return; }
     const started = Date.now();
@@ -59,12 +80,12 @@ export default function ClosetStudio() {
     if (!source) return;
     setBusy(true); setError("");
     try {
-      const response = await fetch("/api/closet/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: source, stylePrompt: OPTIONS[selected][4], note }) });
+      const response = await fetch("/api/closet/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image: source, styleName: OPTIONS[selected][1], stylePrompt: OPTIONS[selected][4], sourceName, note }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "สร้างภาพไม่สำเร็จ");
-      const creation = { id: crypto.randomUUID(), image: data.image, style: OPTIONS[selected][1], createdAt: new Date().toISOString() };
+      const creation: Creation = { id: data.id, image: data.image, style: data.style, sourceName: data.sourceName, createdAt: data.createdAt };
       setResult(data.image);
-      setCreations(current => { const next = [creation, ...current].slice(0, 12); try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {} return next; });
+      setCreations(current => [creation, ...current.filter(item => item.id !== creation.id)]);
     } catch (caught) { setError(caught instanceof Error ? caught.message : "เกิดข้อผิดพลาด กรุณาลองอีกครั้ง"); }
     finally { setBusy(false); }
   }
@@ -86,12 +107,12 @@ export default function ClosetStudio() {
         <div className={styles.actions}><button className={styles.button} type="button" onClick={generate} disabled={!source || busy}>{busy ? <><span className={styles.spinner}/>กำลังสร้างโมเดล 3D · {elapsed} วินาที</> : <><span className="material-symbols-outlined">view_in_ar</span>สร้าง mannequin แบบ {OPTIONS[selected][1]}</>}</button>{busy && <p className={styles.error} style={{color:"#776f66"}}>ปกติใช้เวลาประมาณ 30–90 วินาที กรุณาเปิดหน้านี้ไว้</p>}{error && <p className={styles.error} role="alert">{error}</p>}{result && <a className={styles.download} href={result} download={`closet-3d-${OPTIONS[selected][0]}.jpg`}>บันทึกภาพ 3D</a>}</div>
       </div>
     </section>
-    <section className={styles.gallery}><div className={styles.galleryHeader}><h2>My 3D Wardrobe</h2><span>{creations.length} looks · เก็บในอุปกรณ์นี้</span></div>{creations.length ? <div className={styles.grid}>{creations.map(item => <button type="button" className={styles.card} key={item.id} onClick={() => setSelectedCreation(item)} aria-label={`ดูภาพเต็ม ${item.style}`}><img src={item.image} alt={`mannequin 3D แบบ ${item.style}`}/><div className={styles.meta}><span>{item.style}</span><span>{new Date(item.createdAt).toLocaleDateString("th-TH")}</span></div><span className={`material-symbols-outlined ${styles.expand}`}>open_in_full</span></button>)}</div> : <div className={styles.emptyGallery}>ภาพ mannequin 3D ที่สร้างสำเร็จจะถูกเก็บเป็น wardrobe archive ตรงนี้</div>}</section>
+    <section className={styles.gallery}><div className={styles.galleryHeader}><h2>My 3D Wardrobe</h2><span>{creations.length} looks · บันทึกถาวรบน Turso</span></div>{archiveLoading ? <div className={styles.emptyGallery}>กำลังโหลดคลังภาพ...</div> : creations.length ? <div className={styles.grid}>{creations.map(item => <button type="button" className={styles.card} key={item.id} onClick={() => setSelectedCreation(item)} aria-label={`ดูภาพเต็ม ${item.style}`}><img src={item.image} alt={`mannequin 3D แบบ ${item.style}`}/><div className={styles.meta}><span>{item.style}</span><span>{new Date(item.createdAt).toLocaleDateString("th-TH")}</span></div><span className={`material-symbols-outlined ${styles.expand}`}>open_in_full</span></button>)}</div> : <div className={styles.emptyGallery}>ภาพ mannequin 3D ที่สร้างสำเร็จจะถูกบันทึกถาวรและแสดงตรงนี้</div>}</section>
     {selectedCreation && <div className={styles.lightbox} role="dialog" aria-modal="true" aria-label={`ภาพเต็ม ${selectedCreation.style}`} onMouseDown={event => { if (event.target === event.currentTarget) setSelectedCreation(null); }}>
       <div className={styles.lightboxPanel}>
         <button type="button" className={styles.close} onClick={() => setSelectedCreation(null)} aria-label="ปิดภาพเต็ม"><span className="material-symbols-outlined">close</span></button>
         <div className={styles.fullImage}><img src={selectedCreation.image} alt={`ภาพ mannequin 3D แบบ ${selectedCreation.style}`}/></div>
-        <div className={styles.detailBar}><div><p>3D LOOK</p><h3>{selectedCreation.style}</h3><span>สร้างเมื่อ {new Date(selectedCreation.createdAt).toLocaleString("th-TH", { dateStyle: "long", timeStyle: "short" })}</span></div><a href={selectedCreation.image} download={`closet-3d-${selectedCreation.id}.jpg`} className={styles.detailDownload}><span className="material-symbols-outlined">download</span>ดาวน์โหลดภาพ</a></div>
+        <div className={styles.detailBar}><div><p>3D LOOK · SAVED</p><h3>{selectedCreation.style}</h3><span>สร้างเมื่อ {new Date(selectedCreation.createdAt).toLocaleString("th-TH", { dateStyle: "long", timeStyle: "short" })}{selectedCreation.sourceName ? ` · จาก ${selectedCreation.sourceName}` : ""}</span></div><a href={selectedCreation.image} download={`closet-3d-${selectedCreation.id}.jpg`} className={styles.detailDownload}><span className="material-symbols-outlined">download</span>ดาวน์โหลดภาพ</a></div>
       </div>
     </div>}
   </main>;
