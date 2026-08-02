@@ -1,12 +1,13 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart2, Briefcase, Scale, Home, Search } from "lucide-react";
+import { BarChart2, Briefcase, Scale, Home, Search, ReceiptText } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Home", Icon: Home },
   { href: "/wealth-os/dashboard", label: "Dashboard", Icon: BarChart2 },
   { href: "/wealth-os/portfolio", label: "Portfolio", Icon: Briefcase },
+  { href: "/wealth-os/cash-flow", label: "Cash Flow", Icon: ReceiptText },
   { href: "/wealth-os/stocks", label: "Discover", Icon: Search },
   { href: "/wealth-os/balance-sheet", label: "Balance", Icon: Scale },
 ];
@@ -58,7 +59,7 @@ export default function WealthMobileNav() {
               key={href}
               href={href}
               style={{ textDecoration: "none" }}
-              className="flex flex-col items-center gap-1 py-1 px-2 rounded-xl min-w-[56px] transition-all"
+              className="flex flex-col items-center gap-1 py-1 px-1 rounded-xl min-w-[48px] transition-all"
             >
               <div style={{
                 width: isActive ? 40 : 28, height: 28,

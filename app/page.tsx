@@ -25,7 +25,7 @@ export default function Portal() {
 
         {/* LEFT / TOP: Health OS */}
         <Link
-          href="/health"
+          href="/dashboard"
           prefetch={false}
           className="flex-1 relative group bg-[#FAF6F0] flex flex-col items-center justify-center overflow-hidden transition-all duration-500 md:hover:flex-[1.2] active:scale-[0.98]"
           style={{ minHeight: "45vh" }}

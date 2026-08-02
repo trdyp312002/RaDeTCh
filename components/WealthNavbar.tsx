@@ -10,10 +10,11 @@ export default function WealthNavbar() {
   const isPortfolio = pathname.includes('portfolio');
   const isBalanceSheet = pathname.includes('balance-sheet');
   const isStocks = pathname.includes('/wealth-os/stocks');
+  const isCashFlow = pathname.includes('/wealth-os/cash-flow');
   const isDashboard = pathname.includes('dashboard') && !isPortfolio && !isBalanceSheet;
 
   return (
-    <header className="db-header" style={{background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
+    <header className="db-header" style={{background: 'rgba(13, 17, 26, 0.96)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
       <Link href="/" className="db-logo" style={{textDecoration: 'none'}}>
         <span className="db-logo-w">W</span>
         <span style={{color: '#fff'}}>Wealth</span> <span className="db-logo-os">OS</span>
@@ -22,6 +23,7 @@ export default function WealthNavbar() {
         <Link href="/wealth-os/dashboard" className={`db-nav-item ${isDashboard ? 'active' : ''}`}>Dashboard</Link>
         <Link href="/wealth-os/portfolio" className={`db-nav-item ${isPortfolio ? 'active' : ''}`}>Portfolio</Link>
         <Link href="/wealth-os/balance-sheet" className={`db-nav-item ${isBalanceSheet ? 'active' : ''}`}>Balance Sheet</Link>
+        <Link href="/wealth-os/cash-flow" className={`db-nav-item ${isCashFlow ? 'active' : ''}`}>Cash Flow</Link>
         <Link href="/wealth-os/stocks" className={`db-nav-item ${isStocks ? 'active' : ''}`}>Stock Discovery</Link>
       </nav>
       <div className="db-right">
