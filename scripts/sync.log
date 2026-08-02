@@ -16,3 +16,20 @@ login page title: Success
 [VeSync] Error: Invalid password - account or password incorrect
 === Done ===
 
+◇ injected env (13) from .env.local // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+[sync-diary] sync ครั้งเดียว (--once) → C:\Users\trdyp\OneDrive\Desktop\MYWORLD\BRAIN\06-Diary
+◇ injected env (13) from .env.local // tip: ⌘ enable debugging { debug: true }
+[sync-diary] sync ครั้งเดียว (--once) → C:\Users\trdyp\OneDrive\Desktop\MYWORLD\BRAIN\06-Diary
+[sync-diary] ✗ fetch failed
+◇ injected env (13) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+[sync-diary] sync ครั้งเดียว (--once) → C:\Users\trdyp\OneDrive\Desktop\MYWORLD\BRAIN\06-Diary
+[sync-diary] ✓ 19:42:54 — ทุกไฟล์เป็นปัจจุบันแล้ว (6 entries)
+◇ injected env (13) from .env.local // tip: ⌘ suppress logs { quiet: true }
+[sync-diary] sync ครั้งเดียว (--once) → C:\Users\trdyp\OneDrive\Desktop\MYWORLD\BRAIN\06-Diary
+[sync-diary] ✓ 17:41:45 — ทุกไฟล์เป็นปัจจุบันแล้ว (6 entries)
+◇ injected env (13) from .env.local // tip: ⌘ suppress logs { quiet: true }
+[sync-diary] sync ครั้งเดียว (--once) → C:\Users\trdyp\OneDrive\Desktop\MYWORLD\BRAIN\06-Diary
+[sync-diary] ✓ 09:32:21 — ทุกไฟล์เป็นปัจจุบันแล้ว (6 entries)
+◇ injected env (13) from .env.local // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+[sync-diary] sync ครั้งเดียว (--once) → C:\Users\trdyp\OneDrive\Desktop\MYWORLD\BRAIN\06-Diary
+[sync-diary] ✓ 14:01:00 — ทุกไฟล์เป็นปัจจุบันแล้ว (6 entries)

@@ -1,4 +1,4 @@
----
+﻿---
 step: 3
 title: "Shadow Realm Training"
 subtitle: "Paper Trading Simulation"
@@ -25,3 +25,15 @@ The shadow realm is where illusions are tested. Paper trading reveals what backt
 - Live paper PnL within 85% of backtest expectations
 - Max latency under 200ms on 99th percentile
 - All alerts and monitoring systems confirmed working
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/workflow/02-backtesting|02-backtesting]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/04-deployment|04-deployment]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/01-define-strategy|01-define-strategy]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/04-testing-workflow|04-testing-workflow]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

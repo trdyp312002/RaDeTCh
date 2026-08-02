@@ -1,4 +1,4 @@
----
+﻿---
 title: "Strategic Advisor"
 class: "Grand Vizier"
 shortTitle: "Advisor"
@@ -73,3 +73,15 @@ No command reaches the team without the Vizier's refinement.
 - **SMART ROUTE** — Automatically assign tasks to the correct team member
 - **PRIORITY SHIELD** — Flag conflicting priorities before they cause friction
 - **WEEKLY ORACLE** — Generate status briefings across all active operations
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/roles/backend-engineer|backend-engineer]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/risk-manager|risk-manager]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/devops-sre|devops-sre]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/quant-researcher|quant-researcher]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

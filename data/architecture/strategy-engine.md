@@ -1,4 +1,4 @@
----
+﻿---
 title: "Strategy Engine"
 ability: "Alpha Core"
 icon: "🧠"
@@ -27,3 +27,15 @@ The Strategy Engine is the core intelligence. It receives a stream of market dat
 - Mean Reversion (Bollinger Bands, RSI)
 - DCA (Dollar Cost Averaging)
 - Arbitrage (Cross-exchange spread)
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/architecture/backtesting-engine|backtesting-engine]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/execution-module|execution-module]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/data-handler|data-handler]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/risk-portfolio-manager|risk-portfolio-manager]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

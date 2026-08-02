@@ -1,4 +1,4 @@
----
+﻿---
 title: "Risk & Portfolio Manager"
 ability: "Iron Shield"
 icon: "🛡️"
@@ -28,3 +28,15 @@ No signal passes to Execution without Iron Shield's approval. This is the last l
 - Max daily loss: -5% triggers trading halt
 - Max drawdown: -15% triggers full system shutdown
 - Correlation limit: No more than 60% in correlated assets
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/architecture/execution-module|execution-module]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/strategy-engine|strategy-engine]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/backtesting-engine|backtesting-engine]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/data-handler|data-handler]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

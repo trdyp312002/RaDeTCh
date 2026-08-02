@@ -6,6 +6,7 @@
     "dev": "next dev -H 0.0.0.0",
     "dev:all": "concurrently \"next dev -H 0.0.0.0\" \"npx tsx bot/discord-bot.ts\" \"npx tsx scripts/sync-diary.ts\"",
     "sync:diary": "tsx scripts/sync-diary.ts",
+    "sync:stocks": "node scripts/generate-stock-discovery.js",
     "build": "next build",
     "start": "next start",
     "start:all": "concurrently --kill-others-on-fail \"next start\" \"tsx bot/discord-bot.ts\"",
@@ -50,3 +51,4 @@
     "typescript": "^5"
   }
 }
+

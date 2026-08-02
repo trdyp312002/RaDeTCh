@@ -1,4 +1,4 @@
----
+﻿---
 step: 2
 title: "Trial by Time"
 subtitle: "Historical Backtesting"
@@ -25,3 +25,15 @@ The strategy must prove itself against the past before earning a place in the pr
 - Max Drawdown ≤ 20%
 - Win Rate ≥ 45% (or Profit Factor ≥ 1.8)
 - Minimum 100 trades in sample
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/workflow/01-define-strategy|01-define-strategy]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/03-paper-trading|03-paper-trading]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/04-deployment|04-deployment]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/backtesting-engine|backtesting-engine]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

@@ -1,4 +1,4 @@
----
+﻿---
 chapter: 3
 title: "Safety & Risk Management"
 subtitle: "The Iron Laws — Most Critical"
@@ -34,3 +34,15 @@ Risk management is not optional — it IS the product. A trading bot without pro
 3. Max 15% drawdown → full shutdown
 4. All positions logged with timestamp
 5. Alert within 1 second of any anomaly
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/guide/04-testing-workflow|04-testing-workflow]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/05-strategy-tips|05-strategy-tips]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/02-logic-execution|02-logic-execution]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/01-foundation|01-foundation]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

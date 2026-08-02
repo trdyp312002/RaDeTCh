@@ -16,7 +16,7 @@ type DashboardData = { health:Health[]; closet:Creation[]; books:Book[]; diary:D
 const EMPTY:DashboardData={health:[],closet:[],books:[],diary:[],mandala:null,countries:[],music:[],menu:[]};
 const weatherIcon=(code:number)=>code===0?"sunny":code<4?"partly_cloudy_day":code>=51&&code<=82?"rainy":code>=95?"thunderstorm":"cloud";
 const weatherLabel=(code:number)=>code===0?"ฟ้าโปร่ง":code<4?"มีเมฆบางส่วน":code>=51&&code<=82?"มีฝน":code>=95?"พายุฝน":"ครึ้ม";
-const todayISO=()=>new Date().toLocaleDateString("en-CA");
+const todayISO=(date:Date)=>date.toLocaleDateString("en-CA");
 const dayName=(iso:string,index:number)=>index===0?"วันนี้":new Date(`${iso}T12:00:00`).toLocaleDateString("th-TH",{weekday:"short"});
 const fmtTime=(minutes:number)=>`${String(Math.floor(minutes/60)%24).padStart(2,"0")}:${String(minutes%60).padStart(2,"0")}`;
 const WEEKDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกาย",type:"health"},{start:390,end:420,label:"เตรียมตัว + ออกจากบ้าน",type:"prepare"},{start:480,end:1140,label:"ทำงาน",type:"work"},{start:1140,end:1170,label:"เดินทางกลับบ้าน",type:"travel"},{start:1170,end:1210,label:"อาหารเย็น + พัก",type:"meal"},{start:1200,end:1290,label:"Self-Development",type:"focus"},{start:1290,end:1320,label:"เตรียมนอน + ทบทวนวัน",type:"rest"},{start:1320,end:1440,label:"นอนหลับ",type:"sleep"}];
@@ -35,21 +35,23 @@ async function json(url:string){const r=await fetch(url,{cache:"no-store"});if(!
 
 export default function DashboardPage(){
   const [data,setData]=useState(EMPTY); const [weather,setWeather]=useState<WeatherDay[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(false);
+  const [now,setNow]=useState<Date|null>(null);
   useEffect(()=>{(async()=>{const urls=["/api/health","/api/closet","/api/books","/api/daily","/api/mandala","/api/travel/countries","/api/music","/api/menu","/api/weather"];
     const r=await Promise.allSettled(urls.map(json)); const val=(i:number,fallback:any)=>r[i].status==="fulfilled"?r[i].value:fallback;
-    const diaryRaw=val(3,[]); const musicRaw=val(6,[]); const menuRaw=val(7,[]);
-    setData({health:val(0,[]),closet:val(1,{creations:[]}).creations||[],books:val(2,[]),diary:Array.isArray(diaryRaw)?diaryRaw:diaryRaw.entries||[],mandala:val(4,null),countries:val(5,[]),music:Array.isArray(musicRaw)?musicRaw:musicRaw.tracks||[],menu:Array.isArray(menuRaw)?menuRaw:menuRaw.items||[]});
+    const healthRaw=val(0,{logs:[]}); const diaryRaw=val(3,[]); const musicRaw=val(6,[]); const menuRaw=val(7,[]);
+    setData({health:Array.isArray(healthRaw)?healthRaw:healthRaw.logs||[],closet:val(1,{creations:[]}).creations||[],books:val(2,[]),diary:Array.isArray(diaryRaw)?diaryRaw:diaryRaw.entries||[],mandala:val(4,null),countries:val(5,[]),music:Array.isArray(musicRaw)?musicRaw:musicRaw.tracks||[],menu:Array.isArray(menuRaw)?menuRaw:menuRaw.items||[]});
     setWeather(val(8,{days:[]}).days||[]); setError(r.some(x=>x.status==="rejected")); setLoading(false);
   })()},[]);
+  useEffect(()=>{setNow(new Date());const timer=window.setInterval(()=>setNow(new Date()),30_000);return()=>window.clearInterval(timer)},[]);
 
-  const latest=data.health.at(-1)||data.health[0]; const todayDiary=data.diary.find(x=>x.date===todayISO())||data.diary.at(-1); const reading=data.books.filter(x=>x.status==="reading");
+  const latest=data.health.at(-1)||data.health[0]; const todayDiary=(now?data.diary.find(x=>x.date===todayISO(now)):null)||data.diary.at(-1); const reading=data.books.filter(x=>x.status==="reading");
   const actions=(data.mandala?.actions||[]).filter(action=>action.text?.trim()); const done=actions.filter(x=>x.completed===1).length; const goal=data.mandala?.chart?.main_goal||"ยังไม่ได้ตั้งเป้าหมายหลัก";
-  const now=new Date(); const currentMin=now.getHours()*60+now.getMinutes(); const dow=now.getDay(); const todaySchedule=dow===6?SATURDAY:dow===0?SUNDAY:WEEKDAY; const progress=actions.length?Math.round(done/actions.length*100):0;
+  const currentMin=now?now.getHours()*60+now.getMinutes():-1; const dow=now?.getDay(); const todaySchedule=dow===6?SATURDAY:dow===0?SUNDAY:WEEKDAY; const progress=actions.length?Math.round(done/actions.length*100):0;
   const readiness=useMemo(()=>{if(!latest)return 0;const sleep=latest.sleep_score||0;const steps=Math.min((latest.steps||0)/10000*100,100);return Math.round(sleep*.72+steps*.28)},[latest]);
   const looks=weather.slice(0,3).map((day,i)=>({day,look:data.closet.length?data.closet[i%data.closet.length]:null})); const hero=looks[0];
 
   return <main className={styles.page}>
-    <header className={styles.header}><div><p className={styles.eyebrow}>{new Date().toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p><h1>Good morning, RaDeTCh.</h1><p>วันนี้ควรโฟกัสอะไร ร่างกายพร้อมแค่ไหน และควรแต่งตัวอย่างไร</p></div><div className={styles.live}><span/> Daily brief · Tokyo</div></header>
+    <header className={styles.header}><div><p className={styles.eyebrow}>{now?now.toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"กำลังโหลดวันและเวลา…"}</p><h1>Good morning, RaDeTCh.</h1><p>วันนี้ควรโฟกัสอะไร ร่างกายพร้อมแค่ไหน และควรแต่งตัวอย่างไร</p></div><div className={styles.live}><span/> Daily brief · Tokyo</div></header>
     {error&&<div className={styles.notice}>ข้อมูลบางห้องยังโหลดไม่สำเร็จ — ส่วนที่พร้อมใช้งานยังแสดงตามปกติ</div>}
     <section className={styles.goalHero}>
       <div className={styles.goalSummary}><p className={styles.kicker}>TODAY&apos;S PRIMARY GOAL</p><h2>{goal}</h2><div className={styles.goalProgress}><div><strong>{progress}%</strong><span>{done} จาก {actions.length} รายการเสร็จแล้ว</span></div><div className={styles.meter}><span style={{width:`${progress}%`}}/></div></div><Link href="/routine" className={styles.primary}>เปิด Routine เพื่ออัปเดต</Link></div>
@@ -58,7 +60,7 @@ export default function DashboardPage(){
     </section>
 
     <div className={styles.sectionHead}><div><p>TODAY&apos;S CALENDAR</p><h2>ตารางเวลาวันนี้</h2></div><Link href="/routine">ดูตารางเต็ม →</Link></div>
-    <section className={styles.schedule}><div className={styles.timeRail}>{todaySchedule.map((item,index)=>{const active=currentMin>=item.start&&currentMin<item.end;return <article className={`${styles.scheduleItem} ${styles[item.type]} ${active?styles.now:""}`} key={`${item.label}-${index}`}><div className={styles.scheduleTime}><strong>{fmtTime(item.start)}</strong><span>{fmtTime(item.end)}</span></div><div className={styles.scheduleLine}><i/><span/></div><div className={styles.scheduleName}><strong>{item.label}</strong><span>{Math.round((item.end-item.start)/60*10)/10} ชั่วโมง</span></div>{active&&<b>NOW</b>}</article>})}</div><aside className={styles.scheduleAside}><p>CURRENT TIME</p><strong>{now.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})}</strong><span>{todaySchedule.find(item=>currentMin>=item.start&&currentMin<item.end)?.label||"นอกตารางหลัก"}</span><div/><p>NEXT UP</p><h3>{todaySchedule.find(item=>item.start>currentMin)?.label||"พักผ่อนและเตรียมพรุ่งนี้"}</h3></aside></section>
+    <section className={styles.schedule}><div className={styles.timeRail}>{todaySchedule.map((item,index)=>{const active=currentMin>=item.start&&currentMin<item.end;return <article className={`${styles.scheduleItem} ${styles[item.type]} ${active?styles.now:""}`} key={`${item.label}-${index}`}><div className={styles.scheduleTime}><strong>{fmtTime(item.start)}</strong><span>{fmtTime(item.end)}</span></div><div className={styles.scheduleLine}><i/><span/></div><div className={styles.scheduleName}><strong>{item.label}</strong><span>{Math.round((item.end-item.start)/60*10)/10} ชั่วโมง</span></div>{active&&<b>NOW</b>}</article>})}</div><aside className={styles.scheduleAside}><p>CURRENT TIME</p><strong>{now?now.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}):"--:--"}</strong><span>{now?(todaySchedule.find(item=>currentMin>=item.start&&currentMin<item.end)?.label||"นอกตารางหลัก"):"กำลังตรวจสอบตาราง"}</span><div/><p>NEXT UP</p><h3>{now?(todaySchedule.find(item=>item.start>currentMin)?.label||"พักผ่อนและเตรียมพรุ่งนี้"):"—"}</h3></aside></section>
 
     <section className={styles.metrics}>
       <Metric icon="bedtime" label="Sleep" value={latest?.sleep_hours?`${latest.sleep_hours.toFixed(1)}h`:"—"} note={`score ${latest?.sleep_score??"—"}`}/>
@@ -82,7 +84,7 @@ export default function DashboardPage(){
       <Room href="/travel" icon="flight" tone="sky" title="Travel" value={`${data.countries.length} ประเทศ`} detail="ความทรงจำและจุดหมายถัดไป"/>
       <Room href="/health" icon="monitor_heart" tone="red" title="Health" value={readiness?`${readiness} readiness`:"รอข้อมูลสุขภาพ"} detail="แนวโน้มการนอน ก้าวเดิน และหัวใจ"/>
     </section>
-    <footer className={styles.footer}>ข้อมูลสดจาก Life OS · Weather by Open-Meteo · {new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})}</footer>
+    <footer className={styles.footer}>ข้อมูลสดจาก Life OS · Weather by Open-Meteo · {now?now.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}):"--:--"}</footer>
   </main>
 }
 

@@ -1,4 +1,4 @@
----
+﻿---
 positions:
   - symbol: "BTC/USDT"
     side: "LONG"
@@ -36,3 +36,15 @@ positions:
 
 This file stores currently open positions.
 Update in real-time as positions open and close.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/dashboard/trades|trades]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/dashboard/metrics|metrics]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/risk-portfolio-manager|risk-portfolio-manager]] — อยู่ในธีมหลักเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/01-define-strategy|01-define-strategy]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

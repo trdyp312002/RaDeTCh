@@ -1,4 +1,4 @@
----
+﻿---
 title: "Execution Module"
 ability: "Swift Strike"
 icon: "⚡"
@@ -25,3 +25,15 @@ Swift Strike is the trigger finger of OmniTrade. Once Risk clears a signal, Exec
 ## Order Flow
 
 Signal → Risk Check → Order Construction → Exchange API → Fill Confirmation → Ledger Update
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/architecture/risk-portfolio-manager|risk-portfolio-manager]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/strategy-engine|strategy-engine]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/data-handler|data-handler]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/backtesting-engine|backtesting-engine]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

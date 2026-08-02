@@ -2,12 +2,6 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-const wealthNavItems = [
-  { href: "/", label: "Portal", emoji: "🌌" },
-  { href: "/project-omnitech", label: "OmniTrade", emoji: "🚀" },
-  { href: "/finance", label: "Finance", emoji: "💰" },
-]
-
 const lifeNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/health", label: "Health & Sleep", icon: "bedtime" },

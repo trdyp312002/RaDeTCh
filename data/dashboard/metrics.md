@@ -1,4 +1,4 @@
----
+﻿---
 totalPnL: "+$42,380"
 totalPnLPercent: "+12.4%"
 pnlTrend: "positive"
@@ -29,3 +29,15 @@ Update this file to reflect current bot state. All dashboard panels read from he
 - `calmarRatio` — Annual return / Max Drawdown
 - `systemUptime` — Infrastructure uptime percentage
 - `botStatus` — ONLINE / OFFLINE / PAUSED / ERROR
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/dashboard/trades|trades]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/dashboard/positions|positions]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/backtesting-engine|backtesting-engine]] — อยู่ในธีมหลักเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/02-backtesting|02-backtesting]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

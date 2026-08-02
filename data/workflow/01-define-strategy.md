@@ -1,4 +1,4 @@
----
+﻿---
 step: 1
 title: "Define the Hunt"
 subtitle: "Strategy Definition"
@@ -22,3 +22,15 @@ Every great campaign begins with a plan. Before writing a single line of code, t
 ## Success Criteria
 
 The quest is complete when a written SSD exists that can be independently implemented by any Backend Engineer without ambiguity.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/workflow/02-backtesting|02-backtesting]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/04-deployment|04-deployment]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/03-paper-trading|03-paper-trading]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/strategy-engine|strategy-engine]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

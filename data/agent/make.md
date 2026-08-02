@@ -20,3 +20,15 @@ dependencies:
 ## Overview
 
 Best for connecting systems rather than controlling a browser. Use Make when you need data to flow between apps — e.g. fetch trade results and push to Google Sheets automatically.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/agent/multion|multion]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/agent/openinterpreter|openinterpreter]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/data-handler|data-handler]] — อยู่ในธีมหลักเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/backtesting-engine|backtesting-engine]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

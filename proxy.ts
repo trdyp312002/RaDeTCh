@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
-// Paths reachable without a session (the login page + the auth endpoint itself).
-const PUBLIC_PATHS = ["/login", "/api/auth"]
+// Public callbacks still enforce their own authentication (LINE uses HMAC signatures).
+const PUBLIC_PATHS = ["/login", "/api/auth", "/api/line/webhook"]
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))

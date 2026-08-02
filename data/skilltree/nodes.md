@@ -1,4 +1,4 @@
----
+﻿---
 trees:
   - id: "quant"
     label: "Data Oracle Path"
@@ -144,3 +144,15 @@ trees:
 
 Statuses: MASTERED | AVAILABLE | LOCKED
 Update node status as team members level up their skills.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/roles/backend-engineer|backend-engineer]] — อยู่ในธีมหลักเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/devops-sre|devops-sre]] — อยู่ในธีมหลักเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/quant-researcher|quant-researcher]] — อยู่ในธีมหลักเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/risk-manager|risk-manager]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

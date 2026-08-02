@@ -87,6 +87,7 @@ Production: [https://radetch-production.up.railway.app](https://radetch-producti
 | `/api/closet` | `POST` | ย้าย/อัปโหลดภาพเก่าจาก browser เข้า Turso |
 | `/api/closet` | `DELETE` | รองรับการลบผลงานตาม ID |
 | `/api/weather` | `GET` | พยากรณ์ Tokyo 3 วันสำหรับ Dashboard |
+| `/api/line/webhook` | `POST` | รับ LINE webhook, ตรวจลายเซ็น และตอบจากข้อมูล Turso ของเว็บไซต์ |
 
 ตาราง Turso ที่เพิ่ม:
 
@@ -113,6 +114,9 @@ APP_PASSWORD=
 TURSO_DATABASE_URL=
 TURSO_AUTH_TOKEN=
 GOOGLE_AI_API_KEY=
+LINE_CHANNEL_SECRET=
+LINE_CHANNEL_ACCESS_TOKEN=
+LINE_ALLOWED_USER_IDS=
 ```
 
 ค่าที่เลือกตั้งเพิ่มได้:
@@ -124,6 +128,129 @@ WEATHER_LONGITUDE=139.6503
 ```
 
 ห้าม commit ค่า secret จริงลง GitHub
+
+### LINE Personal Secretary บน Railway
+
+ระบบนี้ทำให้คุยกับข้อมูลภายใน RaDeTCh ผ่าน LINE ได้ตลอดเวลาที่ Railway service ออนไลน์ โดยใช้ webhook แบบสองทาง ไม่ได้พึ่ง LINE MCP Server เพียงอย่างเดียว เพราะ MCP Server เน้นงานส่งออกและไม่ได้รับข้อความผู้ใช้แทน webhook
+
+```text
+ผู้ใช้พิมพ์ใน LINE
+        ↓
+LINE Messaging API ส่ง webhook
+        ↓
+RaDeTCh /api/line/webhook บน Railway
+        ↓
+ตรวจ HMAC-SHA256 signature + LINE user allowlist
+        ↓
+อ่านข้อมูลล่าสุดจาก Turso ของเว็บไซต์
+        ↓
+Gemini / WhyMan สร้างคำตอบ
+        ↓
+LINE Reply API ส่งคำตอบกลับผู้ใช้
+```
+
+#### ใครเป็นผู้ตอบ
+
+- **WhyMan** คือบุคลิกเลขาส่วนตัวที่กำหนดไว้ใน system instruction
+- **Google Gemini** คือโมเดลภาษาที่วิเคราะห์คำถามและสร้างคำตอบ
+- ค่าเริ่มต้นใช้ `gemini-2.5-flash`; เปลี่ยนได้ด้วย `LINE_GEMINI_MODEL`
+- **Turso/RaDeTCh** เป็นแหล่งข้อมูลจริงสำหรับข้อมูลส่วนตัว
+- **LINE Messaging API** เป็นช่องทางรับและส่งข้อความ ไม่ใช่ผู้คิดคำตอบ
+- **Railway** เป็น server ที่รัน webhook และเว็บไซต์ตลอดเวลา
+
+#### ข้อมูลที่ LINE Assistant อ่านได้
+
+- Daily log / Diary ล่าสุด
+- Health logs เช่น น้ำหนัก การนอน จำนวนก้าว และ resting heart rate
+- Mandala goal, subgoal และ action ที่ทำแล้วหรือยังค้างอยู่
+- Books และสถานะการอ่าน
+- Finance items, holdings และ transactions
+
+ตัวรวบรวมข้อมูลจำกัดจำนวน record ต่อหมวดเพื่อควบคุม latency, token และการเปิดเผยข้อมูลเกินจำเป็น ตารางที่ยังไม่มีหรืออ่านไม่ได้จะถูกข้าม และ AI ถูกกำชับไม่ให้เดาข้อมูลที่ไม่มี
+
+#### ตัวอย่างคำถาม
+
+- `วันนี้มีงานอะไรค้างอยู่บ้าง`
+- `เมื่อคืนฉันนอนกี่ชั่วโมง`
+- `สรุปสุขภาพ 7 วันที่ผ่านมา`
+- `ตอนนี้เป้าหมายหลักของฉันคืออะไร`
+- `มีหนังสืออะไรที่กำลังอ่านอยู่`
+- `สรุปสถานะการเงินจากข้อมูลล่าสุด`
+- `ช่วยจัดตารางคืนนี้ให้เหมาะกับงานที่ยังค้าง`
+- `สรุปชีวิตของฉันตอนนี้ และบอก 3 เรื่องที่ควรทำต่อ`
+
+ถามความรู้ทั่วไปได้ แต่คำตอบเกี่ยวกับข้อมูลส่วนตัวจะอ้างอิงเฉพาะข้อมูลที่มีในเว็บไซต์
+
+#### ข้อจำกัดปัจจุบัน
+
+- รองรับเฉพาะข้อความตัวอักษร
+- ยังไม่รองรับเสียง รูป ใบเสร็จ สลิป หรือนามบัตร
+- ยังไม่เขียน แก้ไข หรือลบข้อมูลกลับเข้าเว็บไซต์จาก LINE
+- ยังไม่มี conversation memory ระยะยาว แต่ละข้อความจึงค่อนข้างแยกจากกัน
+- หากข้อมูลใน Turso ยังไม่อัปเดต คำตอบก็จะอ้างอิงข้อมูลเก่า
+- ถ้า Gemini เกินโควตาหรือภายนอกขัดข้อง บอทอาจไม่ตอบชั่วคราว
+
+#### วิธีหา LINE credentials
+
+เข้า [LINE Developers Console](https://developers.line.biz/console/) → เลือก Provider → เลือก Messaging API channel ของ LINE OA
+
+| Railway Variable | หาได้จาก LINE Developers Console |
+|---|---|
+| `LINE_CHANNEL_SECRET` | แท็บ **Basic settings** → **Channel secret**; ต้องมีสิทธิ์ Admin |
+| `LINE_CHANNEL_ACCESS_TOKEN` | แท็บ **Messaging API** → **Channel access token (long-lived)** → **Issue** |
+| `LINE_ALLOWED_USER_IDS` | แท็บ **Basic settings** → **Your user ID**; ขึ้นต้นด้วย `U` และไม่ใช่ LINE ID ที่ใช้ค้นหาเพื่อน |
+
+ถ้าไม่พบ `Your user ID` ให้เชื่อม Business ID กับบัญชี LINE ก่อน หาก OA ยังไม่มี Messaging API channel ให้เปิด Messaging API จาก LINE Official Account Manager ก่อน
+
+อย่ากด reissue access token หาก channel เดียวกันมีระบบอื่นใช้งาน token เดิม เพราะ token เดิมอาจถูกยกเลิก และห้ามส่ง credential จริงในแชตหรือ commit ลง GitHub
+
+#### การตั้งค่า Railway และ LINE
+
+1. Railway → Project `hospitable-emotion` → Service `RaDeTCh` → **Variables**
+2. เพิ่ม `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN` และ `LINE_ALLOWED_USER_IDS`
+3. LINE Developers Console → Messaging API → Webhook settings
+4. ตั้ง Webhook URL เป็น `https://radetch-production.up.railway.app/api/line/webhook`
+5. กด **Verify**, เปิด **Use webhook** และเปิด **Webhook redelivery**
+6. ปิด Greeting message / Auto-reply message หากไม่ต้องการให้ข้อความตอบซ้ำกับ WhyMan
+7. เพิ่ม LINE OA เป็นเพื่อนและส่งข้อความทดสอบ
+
+`/api/line/webhook` ถูกยกเว้นจาก password gate ของเว็บไซต์เพื่อให้ LINE เรียกได้ แต่ endpoint ยังตรวจลายเซ็นจาก raw request body ทุกครั้ง Request ที่ไม่มีหรือมีลายเซ็นผิดจะถูกปฏิเสธด้วย `401` และถ้า `LINE_ALLOWED_USER_IDS` ว่าง ระบบจะไม่ตอบผู้ใช้ใด
+
+สถานะ production ที่ตรวจล่าสุดวันที่ 25 กรกฎาคม 2026:
+
+- Railway deployment สำเร็จ
+- `GET /api/line/webhook` ตอบ `200 application/json`
+- Request ทดสอบที่ไม่มี LINE signature ถูกปฏิเสธ `401`
+- LINE Developers Console กด Verify สำเร็จแล้ว
+
+#### Privacy Policy และ Terms of Use
+
+- **Privacy Policy** อธิบายว่าระบบเก็บ ใช้ ส่งต่อ และปกป้องข้อมูลผู้ใช้อย่างไร
+- **Terms of Use** กำหนดขอบเขตการใช้บริการ สิ่งที่ห้ามทำ และข้อจำกัดความรับผิดชอบ
+- หาก LINE Developers Console อนุญาตให้เว้นว่างและใช้เป็น OA ส่วนตัว อาจยังไม่ต้องกรอก
+- หากเปิดให้ผู้อื่นใช้ ควรมี URL เอกสารจริงที่เปิดอ่านได้ ไม่ควรใส่ URL หน้าหลักแทน
+- เนื่องจาก RaDeTCh มีข้อมูลสุขภาพ การเงิน และไดอารี Privacy Policy ต้องระบุข้อมูลอ่อนไหวและผู้ประมวลผลภายนอก เช่น Railway, Turso และ Google Gemini
+
+#### ค่าใช้จ่าย
+
+- LINE reply message ไม่นับโควตา push message; ส่วน push/broadcast จะนับตามแพ็กเกจ LINE OA
+- LINE assistant ใช้ `gemini-2.5-flash` ซึ่งมี Gemini API Free Tier แต่จำกัด request และ token ตามโควตาของโปรเจกต์
+- เมื่อเกินโควตา API อาจตอบ `429 RESOURCE_EXHAUSTED` และบอทจะไม่สามารถตอบได้ชั่วคราว
+- ถ้ายังไม่ได้เปิด Billing ใน Google AI Studio ระบบจะไม่เปลี่ยนเป็นบริการเสียเงินเอง
+- ตรวจโควตาจริงจาก Google AI Studio เพราะ limit อาจแตกต่างกันตามบัญชีและโปรเจกต์
+- Free Tier อาจนำข้อมูลที่ส่งเข้า API ไปใช้ปรับปรุงผลิตภัณฑ์ ส่วน Paid Tier ระบุว่าไม่นำข้อมูลไปใช้ในลักษณะดังกล่าว
+- Railway และ Turso มีโควตาหรือค่าใช้จ่ายแยกจาก Gemini และ LINE
+
+ข้อมูลสุขภาพ การเงิน ไดอารี และเป้าหมายบางส่วนจะถูกส่งจาก Railway ไปยัง Gemini เพื่อสร้างคำตอบ ควรพิจารณา Paid Tier หรือจำกัดชุดข้อมูลเพิ่มเติมหากต้องการความเป็นส่วนตัวสูงขึ้น
+
+เอกสารอ้างอิง:
+
+- [Receive messages with LINE webhooks](https://developers.line.biz/en/docs/messaging-api/receiving-messages/)
+- [Verify LINE webhook signatures](https://developers.line.biz/en/docs/messaging-api/verify-webhook-signature/)
+- [Get LINE user IDs](https://developers.line.biz/en/docs/messaging-api/getting-user-ids/)
+- [LINE channel access tokens](https://developers.line.biz/en/docs/basics/channel-access-token/)
+- [Gemini Developer API pricing](https://ai.google.dev/gemini-api/docs/pricing)
+- [Gemini API rate limits](https://ai.google.dev/gemini-api/docs/rate-limits)
 
 ---
 
