@@ -8,6 +8,7 @@ export default function HealthSidebar() {
   const navLinks = [
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
     { href: "/health", label: "Health", icon: "monitor_heart" },
+    { href: "/health/closet", label: "Closet", icon: "checkroom" },
     { href: "/routine", label: "Routine", icon: "task_alt" },
     { href: "/daily", label: "Diary", icon: "book_4" },
     { href: "/books", label: "Books", icon: "menu_book" },

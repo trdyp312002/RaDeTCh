@@ -1,4 +1,4 @@
----
+﻿---
 title: "Backtesting Engine"
 ability: "Time Vision"
 icon: "⏳"
@@ -28,3 +28,15 @@ Time Vision is the secret weapon. Before risking real capital, every strategy mu
 - Sharpe / Sortino / Calmar Ratio
 - Win Rate, Profit Factor, Avg Win/Loss
 - Number of trades, average holding period
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/architecture/strategy-engine|strategy-engine]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/data-handler|data-handler]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/risk-portfolio-manager|risk-portfolio-manager]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/execution-module|execution-module]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

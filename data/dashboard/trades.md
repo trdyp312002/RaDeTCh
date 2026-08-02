@@ -1,4 +1,4 @@
----
+﻿---
 trades:
   - id: "TRD-284"
     symbol: "BTC/USDT"
@@ -56,3 +56,15 @@ trades:
 
 This file stores the most recent closed trades for dashboard display.
 Append new trades at the top. Keep the last 20 entries.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/dashboard/positions|positions]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/dashboard/metrics|metrics]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/backtesting-engine|backtesting-engine]] — อยู่ในธีมหลักเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/strategy-engine|strategy-engine]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

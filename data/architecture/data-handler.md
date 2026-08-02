@@ -1,4 +1,4 @@
----
+﻿---
 title: "Data Handler"
 ability: "Market Sight"
 icon: "📡"
@@ -25,3 +25,15 @@ The eyes of OmniTrade. Without reliable, low-latency market data, every other mo
 - Binance WebSocket (primary)
 - Bybit REST fallback
 - Internal Redis cache layer
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/architecture/execution-module|execution-module]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/strategy-engine|strategy-engine]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/backtesting-engine|backtesting-engine]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/risk-portfolio-manager|risk-portfolio-manager]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

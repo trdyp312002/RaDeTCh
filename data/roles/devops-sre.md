@@ -1,4 +1,4 @@
----
+﻿---
 title: "DevOps / SRE"
 class: "Infrastructure Mage"
 shortTitle: "DevOps"
@@ -37,3 +37,15 @@ The Infrastructure Mage keeps OmniTrade alive when markets never sleep. 99.99% u
 - **ETERNAL GUARDIAN** — Auto-healing infrastructure that restarts on failure
 - **SHADOW DEPLOY** — Zero-downtime deployments via blue/green strategy
 - **ALERT STORM** — Real-time alerting via Telegram before humans notice issues
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/roles/backend-engineer|backend-engineer]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/risk-manager|risk-manager]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/quant-researcher|quant-researcher]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/secretary|secretary]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

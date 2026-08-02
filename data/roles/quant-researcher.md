@@ -1,4 +1,4 @@
----
+﻿---
 title: "Quantitative Researcher"
 class: "Data Oracle"
 shortTitle: "Quant"
@@ -36,3 +36,15 @@ The Data Oracle sees what others cannot — patterns hidden in the noise of mill
 - **MARKET VISION** — Detect hidden price patterns with 94% accuracy
 - **ALPHA FORGE** — Create new trading strategies from raw market data
 - **BACKTEST MASTERY** — Simulate years of trading in minutes
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/roles/backend-engineer|backend-engineer]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/risk-manager|risk-manager]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/devops-sre|devops-sre]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/secretary|secretary]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

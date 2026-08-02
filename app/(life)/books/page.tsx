@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import BookScanStudio from "./BookScanStudio";
 
 type Status = "wishlist" | "bought" | "reading" | "completed";
 
@@ -139,6 +140,7 @@ export default function BooksPage() {
   return (
     <div className="min-h-screen bg-[#FAF6F0] text-[#33302C] font-sans pb-24">
       <div className="max-w-6xl mx-auto px-6 mt-12">
+        <BookScanStudio onCreated={fetchBooks} />
         {/* Add Book Button since we removed the navbar where it was */}
         <div className="flex justify-end mb-8">
            <button className="text-[#33302C] bg-[#E8E1D5] hover:bg-[#D5CCBE] px-4 py-2 rounded-full text-sm font-medium transition-colors" onClick={() => setShowAddForm(!showAddForm)}>+ Add Book</button>

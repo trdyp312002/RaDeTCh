@@ -1,4 +1,4 @@
----
+﻿---
 chapter: 5
 title: "Strategy & Consistency Tips"
 subtitle: "Commander's Field Notes"
@@ -25,3 +25,15 @@ tools:
 The goal of OmniTrade is not to get rich fast. It is to generate consistent, reliable returns month over month while protecting capital during bad market conditions.
 
 A trading bot that averages +3% monthly with 8% max drawdown beats one that averages +15% but has 60% drawdown events. Survive long enough and compounding does the work.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/guide/04-testing-workflow|04-testing-workflow]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/03-safety-risk|03-safety-risk]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/02-logic-execution|02-logic-execution]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/01-foundation|01-foundation]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

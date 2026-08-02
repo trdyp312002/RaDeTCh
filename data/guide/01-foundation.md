@@ -1,4 +1,4 @@
----
+﻿---
 chapter: 1
 title: "The Foundation"
 subtitle: "Technical Infrastructure"
@@ -28,3 +28,15 @@ The foundation is what every other component runs on. A shaky foundation means t
 ## Critical Rule
 
 API keys must NEVER appear in source code files. Use `.env` files and environment variables. A leaked API key on GitHub is a total account loss.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/guide/02-logic-execution|02-logic-execution]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/03-safety-risk|03-safety-risk]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/04-testing-workflow|04-testing-workflow]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/05-strategy-tips|05-strategy-tips]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

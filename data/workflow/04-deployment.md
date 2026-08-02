@@ -1,4 +1,4 @@
----
+﻿---
 step: 4
 title: "Into the Arena"
 subtitle: "Live Deployment & Monitoring"
@@ -25,3 +25,15 @@ The arena is real. Money is real. Losses are real. The deployment quest never en
 - Weekly strategy performance review by Quant
 - Monthly infrastructure audit by DevOps
 - Immediate escalation if drawdown exceeds 10%
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/workflow/01-define-strategy|01-define-strategy]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/03-paper-trading|03-paper-trading]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/02-backtesting|02-backtesting]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/04-testing-workflow|04-testing-workflow]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

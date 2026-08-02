@@ -1,4 +1,4 @@
----
+﻿---
 chapter: 2
 title: "The Logic & Execution"
 subtitle: "Brain & Combat Mechanics"
@@ -32,3 +32,15 @@ Market Data → Signal Calculation → Risk Check → Order Construction → Exc
 ```
 
 Every step can fail. Every step needs error handling.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/guide/04-testing-workflow|04-testing-workflow]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/03-safety-risk|03-safety-risk]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/05-strategy-tips|05-strategy-tips]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/01-foundation|01-foundation]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

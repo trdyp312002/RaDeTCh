@@ -1,4 +1,4 @@
----
+﻿---
 chapter: 4
 title: "Testing Workflow"
 subtitle: "Trial Protocol Before the Arena"
@@ -31,3 +31,15 @@ Backtest (historical) → Paper Trade (live, fake money) → Latency Test → Sm
 ```
 
 Minimum 2 weeks of paper trading with zero crashes before advancing to real capital.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/guide/02-logic-execution|02-logic-execution]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/03-safety-risk|03-safety-risk]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/05-strategy-tips|05-strategy-tips]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/guide/01-foundation|01-foundation]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

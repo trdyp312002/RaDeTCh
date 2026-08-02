@@ -1,4 +1,4 @@
----
+﻿---
 title: "Open Interpreter"
 ability: "System Command"
 icon: "💻"
@@ -21,3 +21,15 @@ dependencies:
 ## Overview
 
 More powerful than browser-only agents. Open Interpreter can control your entire computer, not just a browser tab. Best for users with some coding background.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/agent/multion|multion]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/agent/make|make]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/strategy-engine|strategy-engine]] — อยู่ในธีมหลักเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/risk-portfolio-manager|risk-portfolio-manager]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+

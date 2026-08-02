@@ -1,4 +1,4 @@
----
+﻿---
 title: "Backend / Execution Engineer"
 class: "System Architect"
 shortTitle: "Backend"
@@ -37,3 +37,15 @@ The System Architect converts research into reality. Every millisecond counts in
 - **SWIFT STRIKE** — Execute orders in under 50ms
 - **IRON PIPE** — Zero-downtime WebSocket connection management
 - **CODE FORGE** — Transform quant research into production systems
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/roles/devops-sre|devops-sre]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/quant-researcher|quant-researcher]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/risk-manager|risk-manager]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/secretary|secretary]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

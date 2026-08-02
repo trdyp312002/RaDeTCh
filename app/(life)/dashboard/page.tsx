@@ -1,483 +1,92 @@
 "use client";
-import { useState, useEffect } from "react";
+
 import Link from "next/link";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-} from "recharts";
+import { useEffect, useMemo, useState } from "react";
+import styles from "./Dashboard.module.css";
 
-// ── Types ──────────────────────────────────────────────────────────────────
-interface HealthLog {
-  date: string;
-  sleep_hours: number | null;
-  sleep_score: number | null;
-  steps: number | null;
-  resting_heart_rate: number | null;
-  weight: number | null;
+type Health = { date:string; sleep_hours:number|null; sleep_score:number|null; steps:number|null; resting_heart_rate:number|null };
+type Creation = { id:string; image:string; style:string; sourceName?:string; createdAt:string };
+type WeatherDay = { date:string; code:number; max:number; min:number; rain:number };
+type Book = { id:string; title:string; author:string; status:string; cover_image?:string };
+type Diary = { date:string; morning:string; afternoon:string; evening:string };
+type Mandala = { chart:{main_goal:string}|null; actions:Array<{completed:number;text:string}> };
+type ScheduleItem={start:number;end:number;label:string;type:string};
+type DashboardData = { health:Health[]; closet:Creation[]; books:Book[]; diary:Diary[]; mandala:Mandala|null; countries:unknown[]; music:unknown[]; menu:unknown[] };
+
+const EMPTY:DashboardData={health:[],closet:[],books:[],diary:[],mandala:null,countries:[],music:[],menu:[]};
+const weatherIcon=(code:number)=>code===0?"sunny":code<4?"partly_cloudy_day":code>=51&&code<=82?"rainy":code>=95?"thunderstorm":"cloud";
+const weatherLabel=(code:number)=>code===0?"ฟ้าโปร่ง":code<4?"มีเมฆบางส่วน":code>=51&&code<=82?"มีฝน":code>=95?"พายุฝน":"ครึ้ม";
+const todayISO=(date:Date)=>date.toLocaleDateString("en-CA");
+const dayName=(iso:string,index:number)=>index===0?"วันนี้":new Date(`${iso}T12:00:00`).toLocaleDateString("th-TH",{weekday:"short"});
+const fmtTime=(minutes:number)=>`${String(Math.floor(minutes/60)%24).padStart(2,"0")}:${String(minutes%60).padStart(2,"0")}`;
+const WEEKDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกาย",type:"health"},{start:390,end:420,label:"เตรียมตัว + ออกจากบ้าน",type:"prepare"},{start:480,end:1140,label:"ทำงาน",type:"work"},{start:1140,end:1170,label:"เดินทางกลับบ้าน",type:"travel"},{start:1170,end:1210,label:"อาหารเย็น + พัก",type:"meal"},{start:1200,end:1290,label:"Self-Development",type:"focus"},{start:1290,end:1320,label:"เตรียมนอน + ทบทวนวัน",type:"rest"},{start:1320,end:1440,label:"นอนหลับ",type:"sleep"}];
+const SATURDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกาย",type:"health"},{start:390,end:430,label:"อาหารเช้า",type:"meal"},{start:430,end:720,label:"Deep Focus: ภาษาญี่ปุ่น",type:"focus"},{start:720,end:780,label:"พักกลางวัน",type:"meal"},{start:780,end:1020,label:"English + Financial",type:"focus"},{start:1020,end:1110,label:"พักผ่อน",type:"rest"},{start:1110,end:1200,label:"Review สัปดาห์ + วางแผน",type:"focus"},{start:1200,end:1290,label:"เสริมทักษะ + ผ่อนคลาย",type:"rest"},{start:1290,end:1320,label:"เตรียมนอน",type:"sleep"}];
+const SUNDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกายเบา ๆ",type:"health"},{start:390,end:430,label:"อาหารเช้า",type:"meal"},{start:430,end:720,label:"Japanese Study",type:"focus"},{start:720,end:810,label:"พักกลางวัน",type:"meal"},{start:810,end:1020,label:"English + Side Project",type:"focus"},{start:1020,end:1110,label:"พักผ่อน / ครอบครัว",type:"rest"},{start:1110,end:1200,label:"เตรียมสัปดาห์ใหม่",type:"focus"},{start:1200,end:1290,label:"ผ่อนคลาย",type:"rest"},{start:1290,end:1320,label:"เตรียมนอน",type:"sleep"}];
+
+function outfitReason(day:WeatherDay){
+  if(day.rain>=45)return "มีโอกาสฝน เลือกชิ้นที่คล่องตัวและพกเสื้อคลุมบาง";
+  if(day.max>=30)return "อากาศร้อน เหมาะกับเนื้อผ้าเบาและระบายอากาศ";
+  if(day.min<=12)return "เช้าเย็นค่อนข้างหนาว เพิ่มเลเยอร์หรือแจ็กเก็ต";
+  if(day.max-day.min>=9)return "อุณหภูมิแกว่ง เลือกชุดที่เพิ่ม–ถอดเลเยอร์ได้";
+  return "อากาศสบาย เลือกลุคที่เคลื่อนไหวสะดวกได้ทั้งวัน";
 }
 
-interface DiaryEntry {
-  date: string;
-  morning: string;
-  afternoon: string;
-  evening: string;
+async function json(url:string){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error(url);return r.json()}
+
+export default function DashboardPage(){
+  const [data,setData]=useState(EMPTY); const [weather,setWeather]=useState<WeatherDay[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(false);
+  const [now,setNow]=useState<Date|null>(null);
+  useEffect(()=>{(async()=>{const urls=["/api/health","/api/closet","/api/books","/api/daily","/api/mandala","/api/travel/countries","/api/music","/api/menu","/api/weather"];
+    const r=await Promise.allSettled(urls.map(json)); const val=(i:number,fallback:any)=>r[i].status==="fulfilled"?r[i].value:fallback;
+    const healthRaw=val(0,{logs:[]}); const diaryRaw=val(3,[]); const musicRaw=val(6,[]); const menuRaw=val(7,[]);
+    setData({health:Array.isArray(healthRaw)?healthRaw:healthRaw.logs||[],closet:val(1,{creations:[]}).creations||[],books:val(2,[]),diary:Array.isArray(diaryRaw)?diaryRaw:diaryRaw.entries||[],mandala:val(4,null),countries:val(5,[]),music:Array.isArray(musicRaw)?musicRaw:musicRaw.tracks||[],menu:Array.isArray(menuRaw)?menuRaw:menuRaw.items||[]});
+    setWeather(val(8,{days:[]}).days||[]); setError(r.some(x=>x.status==="rejected")); setLoading(false);
+  })()},[]);
+  useEffect(()=>{setNow(new Date());const timer=window.setInterval(()=>setNow(new Date()),30_000);return()=>window.clearInterval(timer)},[]);
+
+  const latest=data.health.at(-1)||data.health[0]; const todayDiary=(now?data.diary.find(x=>x.date===todayISO(now)):null)||data.diary.at(-1); const reading=data.books.filter(x=>x.status==="reading");
+  const actions=(data.mandala?.actions||[]).filter(action=>action.text?.trim()); const done=actions.filter(x=>x.completed===1).length; const goal=data.mandala?.chart?.main_goal||"ยังไม่ได้ตั้งเป้าหมายหลัก";
+  const currentMin=now?now.getHours()*60+now.getMinutes():-1; const dow=now?.getDay(); const todaySchedule=dow===6?SATURDAY:dow===0?SUNDAY:WEEKDAY; const progress=actions.length?Math.round(done/actions.length*100):0;
+  const readiness=useMemo(()=>{if(!latest)return 0;const sleep=latest.sleep_score||0;const steps=Math.min((latest.steps||0)/10000*100,100);return Math.round(sleep*.72+steps*.28)},[latest]);
+  const looks=weather.slice(0,3).map((day,i)=>({day,look:data.closet.length?data.closet[i%data.closet.length]:null})); const hero=looks[0];
+
+  return <main className={styles.page}>
+    <header className={styles.header}><div><p className={styles.eyebrow}>{now?now.toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"กำลังโหลดวันและเวลา…"}</p><h1>Good morning, RaDeTCh.</h1><p>วันนี้ควรโฟกัสอะไร ร่างกายพร้อมแค่ไหน และควรแต่งตัวอย่างไร</p></div><div className={styles.live}><span/> Daily brief · Tokyo</div></header>
+    {error&&<div className={styles.notice}>ข้อมูลบางห้องยังโหลดไม่สำเร็จ — ส่วนที่พร้อมใช้งานยังแสดงตามปกติ</div>}
+    <section className={styles.goalHero}>
+      <div className={styles.goalSummary}><p className={styles.kicker}>TODAY&apos;S PRIMARY GOAL</p><h2>{goal}</h2><div className={styles.goalProgress}><div><strong>{progress}%</strong><span>{done} จาก {actions.length} รายการเสร็จแล้ว</span></div><div className={styles.meter}><span style={{width:`${progress}%`}}/></div></div><Link href="/routine" className={styles.primary}>เปิด Routine เพื่ออัปเดต</Link></div>
+      <div className={styles.taskList}><div className={styles.taskHead}><div><p>TODAY&apos;S ACTIONS</p><h3>สิ่งที่ต้องทำวันนี้</h3></div><span>{actions.length-done} remaining</span></div>{actions.length?<div className={styles.tasks}>{actions.slice(0,7).map((action,index)=><div className={`${styles.task} ${action.completed?styles.taskDone:""}`} key={`${action.text}-${index}`}><span className="material-symbols-outlined">{action.completed?"check_circle":"radio_button_unchecked"}</span><p>{action.text}</p><small>{action.completed?"DONE":`#${String(index+1).padStart(2,"0")}`}</small></div>)}</div>:<div className={styles.noTasks}>ยังไม่มี action ใน Routine — เพิ่มสิ่งที่ต้องทำเพื่อให้ Dashboard ติดตามได้</div>}</div>
+      <div className={styles.goalStatus}><p>DAY STATUS</p><div className={styles.statusRing} style={{background:`conic-gradient(#70866a ${progress*3.6}deg,#ded7ce 0deg)`}}><div><strong>{done}</strong><span>done</span></div></div><p>{progress===100?"เป้าหมายวันนี้เสร็จแล้ว":progress>=50?"ผ่านครึ่งทางแล้ว เดินหน้าต่อ":"เริ่มจาก action สำคัญที่สุดหนึ่งอย่าง"}</p></div>
+    </section>
+
+    <div className={styles.sectionHead}><div><p>TODAY&apos;S CALENDAR</p><h2>ตารางเวลาวันนี้</h2></div><Link href="/routine">ดูตารางเต็ม →</Link></div>
+    <section className={styles.schedule}><div className={styles.timeRail}>{todaySchedule.map((item,index)=>{const active=currentMin>=item.start&&currentMin<item.end;return <article className={`${styles.scheduleItem} ${styles[item.type]} ${active?styles.now:""}`} key={`${item.label}-${index}`}><div className={styles.scheduleTime}><strong>{fmtTime(item.start)}</strong><span>{fmtTime(item.end)}</span></div><div className={styles.scheduleLine}><i/><span/></div><div className={styles.scheduleName}><strong>{item.label}</strong><span>{Math.round((item.end-item.start)/60*10)/10} ชั่วโมง</span></div>{active&&<b>NOW</b>}</article>})}</div><aside className={styles.scheduleAside}><p>CURRENT TIME</p><strong>{now?now.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}):"--:--"}</strong><span>{now?(todaySchedule.find(item=>currentMin>=item.start&&currentMin<item.end)?.label||"นอกตารางหลัก"):"กำลังตรวจสอบตาราง"}</span><div/><p>NEXT UP</p><h3>{now?(todaySchedule.find(item=>item.start>currentMin)?.label||"พักผ่อนและเตรียมพรุ่งนี้"):"—"}</h3></aside></section>
+
+    <section className={styles.metrics}>
+      <Metric icon="bedtime" label="Sleep" value={latest?.sleep_hours?`${latest.sleep_hours.toFixed(1)}h`:"—"} note={`score ${latest?.sleep_score??"—"}`}/>
+      <Metric icon="steps" label="Steps" value={latest?.steps?.toLocaleString()||"—"} note="goal 10,000"/>
+      <Metric icon="favorite" label="Resting HR" value={latest?.resting_heart_rate?`${latest.resting_heart_rate}`:"—"} note="bpm"/>
+      <Metric icon="task_alt" label="Routine" value={`${done}/${actions.length}`} note="actions complete"/>
+      <Metric icon="checkroom" label="Closet" value={`${data.closet.length}`} note="saved looks"/>
+    </section>
+
+    <div className={styles.sectionHead}><div><p>SECONDARY · NEXT 3 DAYS</p><h2>แต่งตัวตามวันและอากาศ</h2></div><Link href="/health/closet">จัดการ Closet →</Link></div>
+    <section className={styles.forecast}>{looks.map(({day,look},i)=><article className={styles.dayCard} key={day.date}><div className={styles.dayTop}><div><strong>{dayName(day.date,i)}</strong><span>{new Date(`${day.date}T12:00:00`).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}</span></div><span className="material-symbols-outlined">{weatherIcon(day.code)}</span></div>{look?<img src={look.image} alt={`ลุค ${look.style}`}/>:<div className={styles.dayEmpty}>No look</div>}<div className={styles.dayInfo}><strong>{look?.style||"เพิ่มลุคใน Closet"}</strong><span>{Math.round(day.min)}°–{Math.round(day.max)}° · ฝน {day.rain}%</span><p>{outfitReason(day)}</p></div></article>)}</section>
+
+    <div className={styles.sectionHead}><div><p>ALL ROOMS</p><h2>ทุกส่วนของ Life OS ในมุมเดียว</h2></div></div>
+    <section className={styles.rooms}>
+      <Room href="/routine" icon="track_changes" tone="sage" title="Focus & Routine" value={goal} detail={actions.length?`${done} จาก ${actions.length} actions สำเร็จแล้ว`:"เริ่มวางแผน Mandala"}/>
+      <Room href="/daily" icon="edit_note" tone="sand" title="Today’s Diary" value={todayDiary?(todayDiary.morning||todayDiary.afternoon||todayDiary.evening||"มีบันทึกแล้ว"):"ยังไม่มีบันทึกวันนี้"} detail="เก็บความคิดก่อนวันจบ"/>
+      <Room href="/books" icon="menu_book" tone="ink" title="Reading" value={reading[0]?.title||"ยังไม่มีเล่มที่กำลังอ่าน"} detail={`${data.books.length} เล่ม · อ่านจบ ${data.books.filter(x=>x.status==="completed").length}`}/>
+      <Room href="/music" icon="headphones" tone="rose" title="Music" value={`${data.music.length} tracks`} detail="เปิด soundtrack ของวันนี้"/>
+      <Room href="/menu" icon="restaurant" tone="amber" title="Menu" value={`${data.menu.length} เมนู`} detail="เลือกอาหารให้เหมาะกับพลังงานวันนี้"/>
+      <Room href="/relationships" icon="diversity_1" tone="blue" title="Relations" value="People check-in" detail="ดูแลความสัมพันธ์ที่สำคัญ"/>
+      <Room href="/travel" icon="flight" tone="sky" title="Travel" value={`${data.countries.length} ประเทศ`} detail="ความทรงจำและจุดหมายถัดไป"/>
+      <Room href="/health" icon="monitor_heart" tone="red" title="Health" value={readiness?`${readiness} readiness`:"รอข้อมูลสุขภาพ"} detail="แนวโน้มการนอน ก้าวเดิน และหัวใจ"/>
+    </section>
+    <footer className={styles.footer}>ข้อมูลสดจาก Life OS · Weather by Open-Meteo · {now?now.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}):"--:--"}</footer>
+  </main>
 }
 
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  status: string;
-  cover_image?: string;
-  category?: string;
-}
-
-interface MandalaAction {
-  completed: number;
-  text: string;
-}
-
-interface MandalaSubgoal {
-  title: string;
-  color: string;
-}
-
-interface MandalaData {
-  chart: { main_goal: string } | null;
-  subgoals: MandalaSubgoal[];
-  actions: MandalaAction[];
-}
-
-interface Milestone {
-  id: string;
-  year: number;
-  title: string;
-  description: string;
-  category: string;
-  color: string;
-}
-
-interface Country {
-  code?: string;
-  name?: string;
-  country?: string;
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-function fmtSleep(h: number | null) {
-  if (h == null) return "—";
-  return `${Math.floor(h)}h ${Math.round((h % 1) * 60)}m`;
-}
-
-function sleepColor(score: number | null) {
-  if (score == null) return "#94a3b8";
-  if (score >= 80) return "#3b82f6";
-  if (score >= 60) return "#f59e0b";
-  return "#ef4444";
-}
-
-function todayISO() {
-  return new Date().toLocaleDateString("en-CA");
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("th-TH", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  });
-}
-
-// ── Main Page ──────────────────────────────────────────────────────────────
-export default function DashboardPage() {
-  const [selectedMood, setSelectedMood] = useState("calm");
-  const [healthLogs, setHealthLogs] = useState<HealthLog[]>([]);
-  const [todayDiary, setTodayDiary] = useState<DiaryEntry | null>(null);
-  const [readingBooks, setReadingBooks] = useState<Book[]>([]);
-  const [bookStats, setBookStats] = useState({ total: 0, reading: 0, completed: 0 });
-  const [mandala, setMandala] = useState<MandalaData | null>(null);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [countriesCount, setCountriesCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchAll() {
-      try {
-        await Promise.all([
-          fetchHealth(),
-          fetchDiary(),
-          fetchBooks(),
-          fetchMandala(),
-          fetchTimeline(),
-          fetchTravel(),
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAll();
-  }, []);
-
-  async function fetchHealth() {
-    try {
-      const res = await fetch("/api/health");
-      if (!res.ok) return;
-      const logs: HealthLog[] = await res.json();
-      setHealthLogs(logs.slice(-30));
-    } catch {}
-  }
-
-  async function fetchDiary() {
-    try {
-      const res = await fetch("/api/daily");
-      if (!res.ok) return;
-      const data = await res.json();
-      const entries: DiaryEntry[] = Array.isArray(data) ? data : data.entries ?? [];
-      const today = todayISO();
-      const entry = entries.find((e) => e.date === today) ?? entries[entries.length - 1] ?? null;
-      setTodayDiary(entry);
-    } catch {}
-  }
-
-  async function fetchBooks() {
-    try {
-      const res = await fetch("/api/books");
-      if (!res.ok) return;
-      const books: Book[] = await res.json();
-      setReadingBooks(books.filter((b) => b.status === "reading"));
-      setBookStats({
-        total: books.length,
-        reading: books.filter((b) => b.status === "reading").length,
-        completed: books.filter((b) => b.status === "completed").length,
-      });
-    } catch {}
-  }
-
-  async function fetchMandala() {
-    try {
-      const res = await fetch("/api/mandala");
-      if (!res.ok) return;
-      setMandala(await res.json());
-    } catch {}
-  }
-
-  async function fetchTimeline() {
-    try {
-      const res = await fetch("/api/timeline");
-      if (!res.ok) return;
-      const data = await res.json();
-      const list: Milestone[] = Array.isArray(data) ? data : data.milestones ?? [];
-      setMilestones(list.sort((a, b) => b.year - a.year));
-    } catch {}
-  }
-
-  async function fetchTravel() {
-    try {
-      const res = await fetch("/api/travel/countries");
-      if (!res.ok) return;
-      const data: Country[] = await res.json();
-      setCountriesCount(Array.isArray(data) ? data.length : 0);
-    } catch {}
-  }
-
-
-  // ── Derived values ──────────────────────────────────────────────────────
-  const latest = healthLogs[healthLogs.length - 1] ?? null;
-  const sleepScore = latest?.sleep_score ?? null;
-  const CIRC = 2 * Math.PI * 40;
-  const scoreOffset = sleepScore != null ? CIRC * (1 - sleepScore / 100) : CIRC;
-
-  const sleepChartData = healthLogs.slice(-7).map((l) => ({
-    day: l.date.slice(5),
-    hours: Number((l.sleep_hours ?? 0).toFixed(1)),
-  }));
-
-  const mandalaGoal = mandala?.chart?.main_goal ?? "";
-  const totalActions = mandala?.actions?.length ?? 0;
-  const doneActions = mandala?.actions?.filter((a) => a.completed === 1).length ?? 0;
-  const mandalaPercent = totalActions > 0 ? Math.round((doneActions / totalActions) * 100) : 0;
-
-  const latestMilestone = milestones[0] ?? null;
-
-  return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <p className="text-xs font-bold tracking-widest text-[#8C837A] uppercase mb-1">
-          {new Date().toLocaleDateString("th-TH", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-        </p>
-        <h1 className="text-3xl font-serif text-[#1F1D1A] tracking-tight">Life OS Dashboard</h1>
-        <p className="text-sm text-[#8C837A] mt-1">ภาพรวมชีวิตของวันนี้ รวบรวมจากทุกหน้า</p>
-      </div>
-
-      {loading && (
-        <div className="flex items-center gap-2 text-[#8C837A] text-sm mb-6">
-          <div className="w-4 h-4 border-2 border-[#E8E1D5] border-t-[#8C837A] rounded-full animate-spin" />
-          กำลังโหลดข้อมูล...
-        </div>
-      )}
-
-      {/* ── Section 1: Health Snapshot ───────────────────────────────────── */}
-      <section className="mb-6">
-        <SectionLabel href="/health" label="สุขภาพ" icon="💪" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Sleep Score Ring */}
-          <div className="bg-white rounded-3xl p-5 border border-[#E8E1D5] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center gap-2">
-            <p className="text-xs text-[#8C837A] font-medium">Sleep Score</p>
-            <div className="relative w-20 h-20 flex items-center justify-center">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" stroke="#E8E1D5" strokeWidth="12" fill="none" />
-                <circle
-                  cx="50" cy="50" r="40"
-                  stroke={sleepColor(sleepScore)}
-                  strokeWidth="12"
-                  fill="none"
-                  strokeDasharray={CIRC}
-                  strokeDashoffset={scoreOffset}
-                  strokeLinecap="round"
-                  style={{ transition: "stroke-dashoffset 0.8s ease" }}
-                />
-              </svg>
-              <span className="absolute text-xl font-bold text-[#1F1D1A]">
-                {sleepScore ?? "—"}
-              </span>
-            </div>
-            <p className="text-xs text-[#8C837A]">
-              {sleepScore != null ? (sleepScore >= 80 ? "Good" : sleepScore >= 60 ? "Fair" : "Poor") : "ไม่มีข้อมูล"}
-            </p>
-          </div>
-
-          <SmallStat icon="🌙" label="นอนหลับ" value={fmtSleep(latest?.sleep_hours ?? null)} sub={latest?.date ?? "—"} />
-          <SmallStat icon="👟" label="ก้าวเดิน" value={latest?.steps != null ? latest.steps.toLocaleString() : "—"} sub="steps" />
-          <SmallStat icon="❤️" label="Heart Rate" value={latest?.resting_heart_rate != null ? `${latest.resting_heart_rate} bpm` : "—"} sub={latest?.weight != null ? `${latest.weight} kg` : ""} />
-        </div>
-      </section>
-
-      {/* ── Section 2: Sleep Chart + Book ────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-[#E8E1D5] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-base font-semibold text-[#1F1D1A]">การนอน 7 วันล่าสุด</h3>
-            <Link href="/health" className="text-xs text-[#8C837A] hover:text-[#1F1D1A]">ดูทั้งหมด →</Link>
-          </div>
-          {sleepChartData.length > 0 ? (
-            <div className="h-40">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sleepChartData} margin={{ top: 0, right: 0, left: -24, bottom: 0 }}>
-                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#8C837A" }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[0, 12]} tick={{ fontSize: 11, fill: "#8C837A" }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    formatter={(v) => [`${v}h`, "นอน"]}
-                    contentStyle={{ borderRadius: "10px", border: "none", fontSize: 12 }}
-                  />
-                  <Bar dataKey="hours" fill="#818CF8" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <EmptyState text="ยังไม่มีข้อมูลการนอน" />
-          )}
-        </div>
-
-        {/* Currently Reading */}
-        <div className="bg-white rounded-3xl p-6 border border-[#E8E1D5] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-base font-semibold text-[#1F1D1A]">📚 กำลังอ่าน</h3>
-            <Link href="/books" className="text-xs text-[#8C837A] hover:text-[#1F1D1A]">ห้องสมุด →</Link>
-          </div>
-          {readingBooks.length > 0 ? (
-            <div className="space-y-4">
-              {readingBooks.slice(0, 2).map((b) => (
-                <div key={b.id} className="flex gap-3 items-start">
-                  {b.cover_image ? (
-                    <img src={b.cover_image} alt={b.title} className="w-10 h-14 object-cover rounded-lg border border-[#E8E1D5] shrink-0" />
-                  ) : (
-                    <div className="w-10 h-14 bg-[#F5F0EA] rounded-lg border border-[#E8E1D5] shrink-0 flex items-center justify-center text-xl">📖</div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#1F1D1A] leading-tight line-clamp-2">{b.title}</p>
-                    <p className="text-xs text-[#8C837A] mt-0.5 truncate">{b.author}</p>
-                    <span className="inline-block mt-1 text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">reading</span>
-                  </div>
-                </div>
-              ))}
-              <div className="pt-2 border-t border-[#E8E1D5] flex gap-4 text-xs text-[#8C837A]">
-                <span>📚 {bookStats.total} เล่ม</span>
-                <span>✅ {bookStats.completed} จบแล้ว</span>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <EmptyState text="ยังไม่มีหนังสือที่กำลังอ่าน" />
-              <div className="pt-3 border-t border-[#E8E1D5] flex gap-4 text-xs text-[#8C837A] mt-3">
-                <span>📚 {bookStats.total} เล่ม</span>
-                <span>✅ {bookStats.completed} จบแล้ว</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Section 3: Diary + Mandala ───────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Today's Diary */}
-        <div className="bg-white rounded-3xl p-6 border border-[#E8E1D5] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-base font-semibold text-[#1F1D1A]">
-              📓 บันทึก {todayDiary?.date === todayISO() ? "วันนี้" : todayDiary ? formatDate(todayDiary.date) : ""}
-            </h3>
-            <Link href="/daily" className="text-xs text-[#8C837A] hover:text-[#1F1D1A]">เขียนบันทึก →</Link>
-          </div>
-          {todayDiary && (todayDiary.morning || todayDiary.afternoon || todayDiary.evening) ? (
-            <div className="space-y-3 text-sm">
-              {todayDiary.morning && (
-                <div>
-                  <span className="text-xs font-bold text-amber-500 uppercase tracking-wide">เช้า</span>
-                  <p className="text-[#33302C] mt-0.5 line-clamp-3 leading-relaxed">{todayDiary.morning}</p>
-                </div>
-              )}
-              {todayDiary.afternoon && (
-                <div>
-                  <span className="text-xs font-bold text-orange-400 uppercase tracking-wide">บ่าย</span>
-                  <p className="text-[#33302C] mt-0.5 line-clamp-3 leading-relaxed">{todayDiary.afternoon}</p>
-                </div>
-              )}
-              {todayDiary.evening && (
-                <div>
-                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-wide">เย็น</span>
-                  <p className="text-[#33302C] mt-0.5 line-clamp-3 leading-relaxed">{todayDiary.evening}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <EmptyState text="ยังไม่มีบันทึกวันนี้" />
-          )}
-        </div>
-
-        {/* Mandala Goal */}
-        <div className="bg-white rounded-3xl p-6 border border-[#E8E1D5] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-base font-semibold text-[#1F1D1A]">🎯 Mandala Goal</h3>
-            <Link href="/routine" className="text-xs text-[#8C837A] hover:text-[#1F1D1A]">แผน →</Link>
-          </div>
-          {mandalaGoal ? (
-            <div>
-              <p className="text-lg font-bold text-[#1F1D1A] mb-4">{mandalaGoal}</p>
-              <div className="mb-2 flex justify-between text-xs text-[#8C837A]">
-                <span>ความคืบหน้า</span>
-                <span>{doneActions}/{totalActions} tasks</span>
-              </div>
-              <div className="w-full h-2 bg-[#F5F0EA] rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-500 transition-all duration-700"
-                  style={{ width: `${mandalaPercent}%` }}
-                />
-              </div>
-              <p className="text-right text-xs text-[#8C837A] mt-1">{mandalaPercent}%</p>
-              {mandala?.subgoals && mandala.subgoals.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {mandala.subgoals.filter((s) => s.title).slice(0, 6).map((s, i) => (
-                    <span key={i} className="text-xs px-2 py-1 rounded-full text-white" style={{ backgroundColor: s.color }}>
-                      {s.title}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <EmptyState text="ยังไม่ได้ตั้ง Mandala Goal" />
-          )}
-        </div>
-      </div>
-
-      {/* ── Section 4: Travel + Timeline ──────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Travel */}
-        <Link href="/travel" className="block group">
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-3xl p-6 h-full shadow-xl hover:-translate-y-1 transition-transform duration-200">
-            <p className="text-xs font-bold tracking-widest text-blue-200 uppercase mb-1">✈️ Travel</p>
-            <p className="text-4xl font-extrabold mt-2">{countriesCount}</p>
-            <p className="text-sm text-blue-100 mt-1">ประเทศที่เคยไป</p>
-            <p className="text-xs text-blue-200 mt-4 group-hover:underline">ดูแผนที่ →</p>
-          </div>
-        </Link>
-
-        {/* Latest Milestone */}
-        <Link href="/routine" className="block group">
-          <div className="bg-white rounded-3xl p-6 border border-[#E8E1D5] shadow-[0_4px_20px_rgba(0,0,0,0.03)] h-full hover:-translate-y-1 transition-transform duration-200">
-            <p className="text-xs font-bold tracking-widest text-[#8C837A] uppercase mb-1">🗓️ Timeline</p>
-            {latestMilestone ? (
-              <>
-                <p className="text-2xl font-extrabold text-[#1F1D1A] mt-2">{latestMilestone.year}</p>
-                <p className="text-sm font-medium text-[#33302C] mt-1 line-clamp-2">{latestMilestone.title}</p>
-                <p className="text-xs text-[#8C837A] mt-1 line-clamp-1">{latestMilestone.description}</p>
-              </>
-            ) : (
-              <p className="text-sm text-[#8C837A] mt-2">ยังไม่มี Milestone</p>
-            )}
-            <p className="text-xs text-[#8C837A] mt-4 group-hover:text-[#1F1D1A]">ดู Timeline →</p>
-          </div>
-        </Link>
-      </div>
-
-      {/* ── Mood Selector ─────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E8E1D5] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-        <h3 className="text-base font-semibold text-[#1F1D1A] mb-5">อารมณ์วันนี้</h3>
-        <div className="flex justify-around items-center max-w-md mx-auto">
-          {[
-            { id: "happy", icon: "😁", label: "สุข" },
-            { id: "calm", icon: "😌", label: "สงบ" },
-            { id: "neutral", icon: "😐", label: "ปกติ" },
-            { id: "stressed", icon: "😫", label: "เครียด" },
-            { id: "sad", icon: "😢", label: "เศร้า" },
-          ].map((mood) => (
-            <button
-              key={mood.id}
-              onClick={() => setSelectedMood(mood.id)}
-              className="flex flex-col items-center gap-1.5 group"
-            >
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center text-3xl transition-all duration-200 ${selectedMood === mood.id ? "bg-[#4A90E2] shadow-lg scale-110" : "bg-[#F5F0EA] group-hover:bg-[#E6F0FA]"}`}>
-                <span className={selectedMood === mood.id ? "opacity-100" : "opacity-50 grayscale"}>
-                  {mood.icon}
-                </span>
-              </div>
-              <span className={`text-xs ${selectedMood === mood.id ? "text-[#4A90E2] font-semibold" : "text-[#8C837A]"}`}>
-                {mood.label}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Sub-components ─────────────────────────────────────────────────────────
-function SectionLabel({ href, label, icon }: { href: string; label: string; icon: string }) {
-  return (
-    <div className="flex items-center justify-between mb-3">
-      <h2 className="text-sm font-bold text-[#8C837A] uppercase tracking-widest flex items-center gap-1.5">
-        <span>{icon}</span> {label}
-      </h2>
-      <Link href={href} className="text-xs text-[#8C837A] hover:text-[#1F1D1A]">ดูเพิ่ม →</Link>
-    </div>
-  );
-}
-
-function SmallStat({ icon, label, value, sub }: { icon: string; label: string; value: string; sub?: string }) {
-  return (
-    <div className="bg-white rounded-3xl p-5 border border-[#E8E1D5] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-      <div className="text-2xl mb-2">{icon}</div>
-      <div>
-        <p className="text-xs text-[#8C837A]">{label}</p>
-        <p className="text-xl font-bold text-[#1F1D1A] mt-0.5">{value}</p>
-        {sub && <p className="text-xs text-[#8C837A] mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="flex items-center justify-center h-20 rounded-2xl bg-[#F9F6F2] border border-dashed border-[#E8E1D5]">
-      <p className="text-sm text-[#8C837A]">{text}</p>
-    </div>
-  );
-}
+function Metric({icon,label,value,note}:{icon:string;label:string;value:string;note:string}){return <div className={styles.metric}><span className="material-symbols-outlined">{icon}</span><div><p>{label}</p><strong>{value}</strong><small>{note}</small></div></div>}
+function Room({href,icon,tone,title,value,detail}:{href:string;icon:string;tone:string;title:string;value:string;detail:string}){return <Link href={href} className={`${styles.room} ${styles[tone]}`}><div className={styles.roomIcon}><span className="material-symbols-outlined">{icon}</span></div><div><p>{title}</p><h3>{value}</h3><span>{detail}</span></div><b>↗</b></Link>}

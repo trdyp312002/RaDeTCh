@@ -1,4 +1,4 @@
----
+﻿---
 title: "Risk Manager"
 class: "Guardian"
 shortTitle: "Risk"
@@ -35,3 +35,15 @@ The Guardian stands between OmniTrade and ruin. While others seek profit, the Gu
 - **KILL SWITCH** — Halt all trading instantly on anomaly detection
 - **IRON WALL** — Position size limits that cannot be overridden
 - **DRAWDOWN SHIELD** — Auto-reduce exposure when max loss threshold is hit
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/roles/quant-researcher|quant-researcher]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/devops-sre|devops-sre]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/backend-engineer|backend-engineer]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/roles/secretary|secretary]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+<!-- related-notes:end -->
+

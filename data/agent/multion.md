@@ -1,4 +1,4 @@
----
+﻿---
 title: "MultiOn"
 ability: "Browser Control"
 icon: "🌐"
@@ -21,3 +21,15 @@ dependencies:
 ## Overview
 
 Easiest entry point for browser automation. No coding required — describe what you want in plain language and the agent executes it inside your browser.
+
+---
+
+<!-- related-notes:start -->
+## Related Notes
+
+- [[BRAIN/02-Projects/radetch/data/agent/make|make]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/agent/openinterpreter|openinterpreter]] — อยู่ในกลุ่มข้อมูลเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/architecture/risk-portfolio-manager|risk-portfolio-manager]] — อยู่ในธีมหลักเดียวกัน
+- [[BRAIN/02-Projects/radetch/data/workflow/01-define-strategy|01-define-strategy]] — อยู่ในธีมหลักเดียวกัน
+<!-- related-notes:end -->
+
