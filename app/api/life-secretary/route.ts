@@ -18,11 +18,9 @@ const PAGE_CONTEXTS: Record<string, string> = {
   "/(life)/menu": "Menu — navigation hub for all life sections",
   "/(wealth)/finance": "Finance page — net worth, income, expenses, savings tracking",
   "/(wealth)/claw-empire": "Claw Empire — claw machine business tracking",
-  "/(wealth)/project-omnitech": "Project OmniTech — algorithmic trading project overview",
   "/wealth-os/dashboard": "Wealth OS Dashboard — investment overview and market data",
   "/wealth-os/portfolio": "Portfolio page — stock and crypto holdings tracker",
   "/wealth-os/balance-sheet": "Balance Sheet — assets vs liabilities overview",
-  "/wealth-os/omnitrade": "OmniTrade — live algorithmic trading bot interface",
 }
 
 const SYSTEM = `You are WhyMan, a personal life management AI secretary. You help your master — Bas (บาส), a Thai intern in Japan — optimize their limited free time to achieve their goals.

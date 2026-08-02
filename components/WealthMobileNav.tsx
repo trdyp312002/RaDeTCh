@@ -1,14 +1,14 @@
-"use client";
+﻿"use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart2, Briefcase, Scale, Cpu, Home } from "lucide-react";
+import { BarChart2, Briefcase, Scale, Home, Search } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Home", Icon: Home },
   { href: "/wealth-os/dashboard", label: "Dashboard", Icon: BarChart2 },
   { href: "/wealth-os/portfolio", label: "Portfolio", Icon: Briefcase },
+  { href: "/wealth-os/stocks", label: "Discover", Icon: Search },
   { href: "/wealth-os/balance-sheet", label: "Balance", Icon: Scale },
-  { href: "/project-omnitech", label: "OmniTrade", Icon: Cpu },
 ];
 
 export default function WealthMobileNav() {
@@ -85,3 +85,4 @@ export default function WealthMobileNav() {
     </>
   );
 }
+
