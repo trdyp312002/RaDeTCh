@@ -290,7 +290,8 @@ export default function Portfolio() {
   const longTermVal = longTermHoldings.reduce((s, h) => s + getHoldingValue(h), 0);
   const shortTermVal = shortTermHoldings.reduce((s, h) => s + getHoldingValue(h), 0);
   const totalVal = retirementVal + longTermVal + shortTermVal;
-  const displayNetWorth = snapshots.length > 0 ? snapshots[snapshots.length - 1].net_worth : totalVal;
+  // This is an investment-only page: net-worth snapshots include liabilities.
+  const displayPortfolioValue = totalVal;
 
   // Build chart history from filtered holdings
   const historyMap = new Map<string, number>();
@@ -398,9 +399,9 @@ export default function Portfolio() {
         <div className="pf-top">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h2>Total Net Worth</h2>
+              <h2>Total Portfolio Value</h2>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem' }}>
-                <h1>{loading ? <span style={{ opacity: 0.4 }}>Loading…</span> : displayNetWorth !== 0 ? fmt(displayNetWorth) : '$—'}</h1>
+                <h1>{loading ? <span style={{ opacity: 0.4 }}>Loading…</span> : displayPortfolioValue !== 0 ? fmt(displayPortfolioValue) : '$—'}</h1>
                 <span className="pf-top-change">↑ +4.5% today</span>
               </div>
               <div className="pf-top-date">
@@ -432,7 +433,7 @@ export default function Portfolio() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1 }}>
               <div>
                 <h3>Total Portfolio</h3>
-                <div className="val" style={{ fontSize: '2rem' }}>{fmt(totalValueAll || displayNetWorth)}</div>
+                <div className="val" style={{ fontSize: '2rem' }}>{fmt(totalValueAll)}</div>
                 <div className="change" style={{ color: totalGain >= 0 ? '#4ade80' : '#f87171' }}>
                   {totalGain >= 0 ? '▲' : '▼'} {fmt(Math.abs(totalGain))} ({totalGain >= 0 ? '+' : ''}{totalGainPct.toFixed(2)}%)
                 </div>

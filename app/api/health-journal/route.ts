@@ -1,0 +1,6 @@
+import { NextRequest, NextResponse } from "next/server"
+import db from "@/lib/db"
+export const dynamic = "force-dynamic"
+async function table(){await db.execute("CREATE TABLE IF NOT EXISTS health_journal (id TEXT PRIMARY KEY, entry_date TEXT NOT NULL, type TEXT NOT NULL, title TEXT NOT NULL, details TEXT DEFAULT '', benefits TEXT DEFAULT '', bedtime TEXT, wake_time TEXT, created_at TEXT DEFAULT (datetime('now')))")}
+export async function GET(){try{await table();const r=await db.execute("SELECT * FROM health_journal ORDER BY entry_date DESC, created_at DESC LIMIT 100");return NextResponse.json({entries:r.rows})}catch(e){return NextResponse.json({error:String(e)},{status:500})}}
+export async function POST(req:NextRequest){try{await table();const b=await req.json(),id=crypto.randomUUID();if(!["workout","meal","sleep"].includes(b.type)||!b.title)return NextResponse.json({error:"กรอกข้อมูลให้ครบ"},{status:400});await db.execute({sql:"INSERT INTO health_journal (id,entry_date,type,title,details,benefits,bedtime,wake_time) VALUES (?,?,?,?,?,?,?,?)",args:[id,b.entry_date,b.type,b.title,b.details||"",b.benefits||"",b.bedtime||null,b.wake_time||null]});return NextResponse.json({id},{status:201})}catch(e){return NextResponse.json({error:String(e)},{status:500})}}

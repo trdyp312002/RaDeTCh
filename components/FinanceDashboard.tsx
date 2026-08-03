@@ -339,8 +339,8 @@ export default function FinanceDashboard() {
       dbFinanceItems.filter(i => cats.includes(i.category))
         .reduce((acc, i) => acc + convertAmount(i.amount, i.currency, "THB"), 0)
     const ta = sumTHB(["cash", "other_asset", "bond"])
-    const tl = sumTHB(["liability"])
-    const nw = ta - tl
+    const tl = 0
+    const nw = ta
     const today = new Date().toISOString().split("T")[0]
     fetch("/api/networth", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -430,8 +430,8 @@ export default function FinanceDashboard() {
       dbFinanceItems.filter(i => cats.includes(i.category))
         .reduce((acc, i) => acc + convertAmount(i.amount, i.currency, displayCurrency), 0)
     const totalAssets      = sum(["cash", "other_asset", "bond"])
-    const totalLiabilities = sum(["liability"])
-    const netWorth         = totalAssets - totalLiabilities
+    const totalLiabilities = 0
+    const netWorth         = totalAssets
     const totalIncome      = dbMonthlyItems.filter(m => m.type.startsWith("income"))
       .reduce((acc, i) => acc + convertAmount(i.amount, i.currency, displayCurrency), 0)
     const totalExpenses    = dbMonthlyItems.filter(m => m.type.startsWith("expense"))
@@ -526,7 +526,7 @@ export default function FinanceDashboard() {
 
   const cashItems       = dbFinanceItems.filter(i => i.category === "cash")
   const investmentItems = dbFinanceItems.filter(i => i.category === "other_asset" || i.category === "bond")
-  const liabilityItems  = dbFinanceItems.filter(i => i.category === "liability")
+  const liabilityItems  = [] as DBFinanceItem[]
   const incomeFix       = dbMonthlyItems.filter(m => m.type === "income_fixed")
   const incomeVar       = dbMonthlyItems.filter(m => m.type === "income_variable")
   const expenseFix      = dbMonthlyItems.filter(m => m.type === "expense_fixed")
@@ -695,7 +695,7 @@ export default function FinanceDashboard() {
         {showBalanceSheet && (
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 border-t-4 border-[var(--color-on-background)] pt-8 text-[var(--color-on-surface)]">
              <div className="bg-[var(--color-surface)] border-2 border-[var(--color-primary)] brutal-shadow p-5 flex flex-col gap-5">
-               <h2 className="text-xl font-bold uppercase text-[var(--color-primary)]" style={{ fontFamily: "Manrope, sans-serif" }}>Assets & Liabilities</h2>
+               <h2 className="text-xl font-bold uppercase text-[var(--color-primary)]" style={{ fontFamily: "Manrope, sans-serif" }}>Assets</h2>
                <FinanceSection title="Cash & Liquid" items={cashItems} category="cash" accentColor="text-teal-600"
                   savingState={savingState} displayCurrency={displayCurrency} convertAmount={convertAmount}
                   onUpdateLabel={(id, v) => updateFinance(id, "label", v)} onUpdateAmount={(id, v) => updateFinance(id, "amount", v)}
@@ -704,7 +704,7 @@ export default function FinanceDashboard() {
                   savingState={savingState} displayCurrency={displayCurrency} convertAmount={convertAmount}
                   onUpdateLabel={(id, v) => updateFinance(id, "label", v)} onUpdateAmount={(id, v) => updateFinance(id, "amount", v)}
                   onDelete={deleteFinance} onAdd={addFinance} />
-                <div className="border-t-2 border-[var(--color-primary)] pt-4">
+                <div className="hidden border-t-2 border-[var(--color-primary)] pt-4">
                   <FinanceSection title="Liabilities & Debt" items={liabilityItems} category="liability" accentColor="text-[var(--color-error)]"
                     savingState={savingState} displayCurrency={displayCurrency} convertAmount={convertAmount}
                     onUpdateLabel={(id, v) => updateFinance(id, "label", v)} onUpdateAmount={(id, v) => updateFinance(id, "amount", v)}
@@ -722,7 +722,7 @@ export default function FinanceDashboard() {
                   savingState={savingState} displayCurrency={displayCurrency} convertAmount={convertAmount}
                   onUpdateLabel={(id, v) => updateMonthly(id, "label", v)} onUpdateAmount={(id, v) => updateMonthly(id, "amount", v)}
                   onDelete={deleteMonthly} onAdd={addMonthly} />
-                <div className="border-t-2 border-[var(--color-primary)] pt-4">
+                <div className="hidden border-t-2 border-[var(--color-primary)] pt-4">
                   <MonthlySection title="Fixed Expenses" type="expense_fixed" items={expenseFix} accentColor="text-rose-500"
                     savingState={savingState} displayCurrency={displayCurrency} convertAmount={convertAmount}
                     onUpdateLabel={(id, v) => updateMonthly(id, "label", v)} onUpdateAmount={(id, v) => updateMonthly(id, "amount", v)}

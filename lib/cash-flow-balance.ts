@@ -1,7 +1,7 @@
-﻿import type { InStatement } from "@libsql/client"
+import type { InStatement } from "@libsql/client"
 
 export type CashFlowKind = "income" | "expense"
-export type BalanceEffect = { type: CashFlowKind; amount: number; account: string; currency: string }
+export type BalanceEffect = { type: CashFlowKind; amount: number; account: string; currency: string; settlementAmount?: number; settlementCurrency?: string }
 
 function isLiabilityAccount(account: string) {
   const normalized = account.trim().toLowerCase()
@@ -13,12 +13,12 @@ function signedDelta(effect: BalanceEffect, multiplier = 1) {
   const direction = liability
     ? effect.type === "expense" ? 1 : -1
     : effect.type === "income" ? 1 : -1
-  return direction * Math.abs(effect.amount) * multiplier
+  return direction * Math.abs(effect.settlementAmount ?? effect.amount) * multiplier
 }
 
 export function balanceStatements(effect: BalanceEffect, multiplier = 1): InStatement[] {
   const account = effect.account.trim()
-  const currency = effect.currency.trim().toUpperCase()
+  const currency = (effect.settlementCurrency ?? effect.currency).trim().toUpperCase()
   const category = isLiabilityAccount(account) ? "liability" : "cash"
   const delta = signedDelta(effect, multiplier)
   return [

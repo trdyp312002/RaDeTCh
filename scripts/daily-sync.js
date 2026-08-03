@@ -53,7 +53,7 @@ function upsert(data, datePrefix, updates, notes) {
 
 // ── POST health data to Railway API (or write local file) ────────────────────
 async function postHealth(dateStr, fields, notes) {
-  const appUrl = process.env.WHYMAN_APP_URL
+  const appUrl = process.env.RADETCH_APP_URL || "https://radetch-production.up.railway.app"
   if (!appUrl) {
     const data = readHealth()
     upsert(data, dateStr, fields, notes)

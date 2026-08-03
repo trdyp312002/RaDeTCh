@@ -24,6 +24,10 @@ schtasks /create /tn "WhyMan Discord Bot" ^
   /sc onlogon /f
 echo [3/3] Discord Bot start-on-login task created
 
+REM Task 4: Garmin health sync (once at logon)
+schtasks /create /tn "WhyMan Garmin Health Sync" /tr "C:\Users\trdyp\OneDrive\Desktop\MYWORLD\BRAIN\02-Projects\radetch\scripts\daily-sync.bat" /sc onlogon /f
+echo [4/4] Garmin Health Sync task created (at logon)
+
 echo.
 echo ================================================================
 echo  All WhyMan tasks registered! 
