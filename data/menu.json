@@ -4,18 +4,19 @@
       "id": "1",
       "name": "ข้าวผัดหมู",
       "image": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=600&h=400&fit=crop&auto=format",
-      "emoji": "🍳",
+      "emoji": "🍽️",
       "nationality": "thai",
       "tags": [
+        "สูตรของฉัน",
         "ข้าว",
         "หมู",
         "ไข่",
         "กระเทียม",
         "ผัด"
       ],
-      "price": 50,
+      "price": 0,
       "time": 10,
-      "calories": 520,
+      "calories": 0,
       "servings": 1,
       "difficulty": 1,
       "desc": "ข้าวผัดกลิ่นหอม ใส่ไข่และกระเทียมเจียว",
@@ -58,7 +59,8 @@
         "เลื่อนข้าวออกด้านข้าง ใส่ไข่ลงในกระทะ คนให้สุก",
         "ผัดรวมกับข้าว ใส่น้ำมันหอย ชิมรส",
         "ตักใส่จาน โรยกระเทียมเจียว"
-      ]
+      ],
+      "videoUrl": "https://www.youtube.com/watch?v=xMkIX42_Xxg"
     },
     {
       "id": "2",
