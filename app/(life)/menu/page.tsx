@@ -95,6 +95,7 @@ export default function MenuPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<RecipeDraft>(EMPTY_RECIPE);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetch('/api/menu?t=' + Date.now())
@@ -125,6 +126,20 @@ export default function MenuPage() {
     const response = await fetch(editingId ? `/api/menu/${editingId}` : "/api/menu", { method: editingId ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(item) });
     if (response.ok) { const saved = await response.json(); setAllItems((previous) => editingId ? previous.map((menu) => menu.id === saved.id ? saved : menu) : [saved, ...previous]); setDraft(EMPTY_RECIPE); setShowAdd(false); setEditingId(null); setDetail(saved); }
     setSaving(false);
+  }
+
+  async function deleteRecipe() {
+    if (!editingId || !window.confirm("ต้องการลบเมนูนี้ใช่ไหม? การลบไม่สามารถย้อนกลับได้")) return;
+    setDeleting(true);
+    const response = await fetch(`/api/menu/${editingId}`, { method: "DELETE" });
+    if (response.ok) {
+      setAllItems((previous) => previous.filter((item) => item.id !== editingId));
+      setDetail(null);
+      setDraft(EMPTY_RECIPE);
+      setEditingId(null);
+      setShowAdd(false);
+    }
+    setDeleting(false);
   }
 
   const filtered = useMemo(() => {
@@ -499,7 +514,7 @@ export default function MenuPage() {
               </div>
               <aside className="space-y-6"><section className="rounded-2xl border border-stone-200 bg-white p-5"><h3 className="font-semibold text-stone-900">คลิปสอนทำ</h3><p className="mt-1 text-xs leading-relaxed text-stone-400">วางลิงก์ YouTube เพื่อฝังคลิปในหน้าสูตร</p><input type="url" value={draft.videoUrl} onChange={(e) => setDraft({ ...draft, videoUrl: e.target.value })} placeholder="https://youtu.be/..." className="mt-4 w-full rounded-xl border border-stone-200 px-3 py-3 text-sm outline-none focus:border-stone-500" /><div className="mt-4 aspect-video overflow-hidden rounded-xl border border-dashed border-stone-300 bg-stone-50">{youtubeEmbedUrl(draft.videoUrl) ? <iframe className="h-full w-full" src={youtubeEmbedUrl(draft.videoUrl)!} title="ตัวอย่างคลิปสอนทำ" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /> : <div className="grid h-full place-items-center px-6 text-center"><div><p className="text-2xl">▶</p><p className="mt-2 text-xs font-medium text-stone-500">ตัวอย่างวิดีโอจะปรากฏตรงนี้</p></div></div>}</div></section><section className="rounded-2xl border border-stone-200 bg-white p-5"><h3 className="font-semibold text-stone-900">แท็กเพิ่มเติม</h3><input value={draft.tags} onChange={(e) => setDraft({ ...draft, tags: e.target.value })} placeholder="เช่น โปรตีนสูง, ทำเร็ว" className="mt-3 w-full rounded-xl border border-stone-200 px-3 py-3 text-sm outline-none focus:border-stone-500" /><p className="mt-2 text-xs text-stone-400">คั่นแต่ละแท็กด้วยเครื่องหมาย ,</p></section></aside>
             </div>
-            <footer className="sticky bottom-0 z-10 flex items-center justify-end gap-3 border-t border-stone-200 bg-white px-5 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:px-8 md:py-4"><button type="button" onClick={() => setShowAdd(false)} className="rounded-full px-5 py-3 text-sm font-medium text-stone-500 hover:text-stone-900">ยกเลิก</button><button disabled={saving} className="rounded-full bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-700 disabled:opacity-50">{saving ? "กำลังบันทึก…" : editingId ? "บันทึกการแก้ไข" : "บันทึกเมนู"}</button></footer>
+            <footer className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-3 border-t border-stone-200 bg-white px-5 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:px-8 md:py-4">{editingId && <button type="button" disabled={deleting} onClick={deleteRecipe} className="mr-auto rounded-full px-4 py-3 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50">{deleting ? "กำลังลบ…" : "ลบเมนูนี้"}</button>}<button type="button" onClick={() => setShowAdd(false)} className="rounded-full px-5 py-3 text-sm font-medium text-stone-500 hover:text-stone-900">ยกเลิก</button><button disabled={saving || deleting} className="rounded-full bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-700 disabled:opacity-50">{saving ? "กำลังบันทึก…" : editingId ? "บันทึกการแก้ไข" : "บันทึกเมนู"}</button></footer>
           </form>
         </div>
       )}
