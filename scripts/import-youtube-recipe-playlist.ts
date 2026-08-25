@@ -9,6 +9,16 @@ const dataFile = path.join(process.cwd(), "data", "menu.json");
 type MenuData = { items: Array<Record<string, unknown>> };
 type PlaylistEntry = { id?: string; title?: string };
 
+function inferTags(title: string) {
+  const text = title.toLowerCase();
+  const tags = ["สูตรจากวิดีโอ", "อาหารไทย"];
+  const keywordTags: Array<[RegExp, string]> = [
+    [/fish|catfish|barramundi|tilapia/, "ปลา"], [/chicken/, "ไก่"], [/pork|belly|ribs|liver|leg|intestine|sausage/, "หมู"], [/beef/, "เนื้อ"], [/shrimp|prawn/, "กุ้ง"], [/squid/, "ปลาหมึก"], [/seafood/, "อาหารทะเล"], [/crab/, "ปู"], [/egg|omelet/, "ไข่"], [/curry/, "แกง"], [/stir.?fried|pad |basil/, "ผัด"], [/fried/, "ทอด"], [/soup|boiled|stewed/, "ต้ม"], [/salad|som tum/, "ยำ"], [/grilled/, "ย่าง"], [/rice/, "ข้าว"], [/noodle|vermicelli/, "เส้น"], [/basil/, "กะเพรา"], [/vegetable|morning glory|mushroom/, "ผัก"],
+  ];
+  for (const [pattern, tag] of keywordTags) if (pattern.test(text)) tags.push(tag);
+  return [...new Set(tags)];
+}
+
 function videoId(url: unknown) {
   if (typeof url !== "string") return null;
   try {
@@ -20,20 +30,27 @@ function videoId(url: unknown) {
 const raw = execFileSync("yt-dlp", ["--flat-playlist", "--dump-single-json", "--no-update", playlistUrl], { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 });
 const playlist = JSON.parse(raw) as { entries?: PlaylistEntry[] };
 const data = JSON.parse(fs.readFileSync(dataFile, "utf8")) as MenuData;
-const existingIds = new Set(data.items.map((item) => videoId(item.videoUrl)).filter(Boolean));
+const existingItems = new Map(data.items.map((item) => [videoId(item.videoUrl), item]));
 let added = 0;
 let skipped = 0;
+let tagged = 0;
 
 for (const [index, entry] of (playlist.entries || []).entries()) {
-  if (!entry.id || existingIds.has(entry.id)) { skipped++; continue; }
+  if (!entry.id) { skipped++; continue; }
   const title = entry.title?.replace(/\s+/g, " ").trim() || `เมนูจากวิดีโอ ${entry.id}`;
+  const tags = inferTags(title);
+  const existing = existingItems.get(entry.id);
+  if (existing) {
+    existing.tags = [...new Set([...(Array.isArray(existing.tags) ? existing.tags : []), ...tags])];
+    tagged++; skipped++; continue;
+  }
   data.items.push({
     id: `${Date.now()}${index}`,
     name: title,
     image: null,
     emoji: "🍽️",
     nationality: "thai",
-    tags: ["สูตรจากวิดีโอ", "อาหารไทย"],
+    tags,
     price: 0,
     time: 0,
     calories: 0,
@@ -48,4 +65,4 @@ for (const [index, entry] of (playlist.entries || []).entries()) {
 }
 
 fs.writeFileSync(dataFile, `${JSON.stringify(data, null, 2)}\n`);
-console.log(`Added ${added} menus; skipped ${skipped} existing videos.`);
+console.log(`Added ${added} menus; tagged ${tagged}; skipped ${skipped} existing videos.`);
