@@ -19,8 +19,7 @@ const weatherLabel=(code:number)=>code===0?"ฟ้าโปร่ง":code<4?"�
 const todayISO=(date:Date)=>date.toLocaleDateString("en-CA");
 const dayName=(iso:string,index:number)=>index===0?"วันนี้":new Date(`${iso}T12:00:00`).toLocaleDateString("th-TH",{weekday:"short"});
 const fmtTime=(minutes:number)=>`${String(Math.floor(minutes/60)%24).padStart(2,"0")}:${String(minutes%60).padStart(2,"0")}`;
-const WEEKDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกาย",type:"health"},{start:390,end:420,label:"เตรียมตัว + ออกจากบ้าน",type:"prepare"},{start:480,end:1140,label:"ทำงาน",type:"work"},{start:1140,end:1170,label:"เดินทางกลับบ้าน",type:"travel"},{start:1170,end:1210,label:"อาหารเย็น + พัก",type:"meal"},{start:1200,end:1290,label:"Self-Development",type:"focus"},{start:1290,end:1320,label:"เตรียมนอน + ทบทวนวัน",type:"rest"},{start:1320,end:1440,label:"นอนหลับ",type:"sleep"}];
-const SATURDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกาย",type:"health"},{start:390,end:430,label:"อาหารเช้า",type:"meal"},{start:430,end:720,label:"Deep Focus: ภาษาญี่ปุ่น",type:"focus"},{start:720,end:780,label:"พักกลางวัน",type:"meal"},{start:780,end:1020,label:"English + Financial",type:"focus"},{start:1020,end:1110,label:"พักผ่อน",type:"rest"},{start:1110,end:1200,label:"Review สัปดาห์ + วางแผน",type:"focus"},{start:1200,end:1290,label:"เสริมทักษะ + ผ่อนคลาย",type:"rest"},{start:1290,end:1320,label:"เตรียมนอน",type:"sleep"}];
+const WEEKDAY:ScheduleItem[]=[{start:330,end:340,label:"ตื่นนอน ดื่มน้ำเปล่า 1 แก้ว",type:"prepare"},{start:340,end:370,label:"ออกกำลังกายตอนเช้า",type:"health"},{start:370,end:420,label:"อาบน้ำ แต่งตัว และทานมื้อเช้า",type:"meal"},{start:420,end:1020,label:"เดินทาง ทำงาน มื้อกลางวัน",type:"work"},{start:1020,end:1080,label:"ถึงบ้าน / อาบน้ำ ทำมื้อเย็น",type:"meal"},{start:1080,end:1140,label:"ทานมื้อเย็น",type:"meal"},{start:1140,end:1200,label:"พักผ่อนตามอัธยาศัย / ทำงานบ้าน",type:"rest"},{start:1200,end:1290,label:"เคลียร์ตัวเอง เตรียมตัวนอน",type:"rest"},{start:1290,end:1770,label:"เข้านอน",type:"sleep"}];const SATURDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกาย",type:"health"},{start:390,end:430,label:"อาหารเช้า",type:"meal"},{start:430,end:720,label:"Deep Focus: ภาษาญี่ปุ่น",type:"focus"},{start:720,end:780,label:"พักกลางวัน",type:"meal"},{start:780,end:1020,label:"English + Financial",type:"focus"},{start:1020,end:1110,label:"พักผ่อน",type:"rest"},{start:1110,end:1200,label:"Review สัปดาห์ + วางแผน",type:"focus"},{start:1200,end:1290,label:"เสริมทักษะ + ผ่อนคลาย",type:"rest"},{start:1290,end:1320,label:"เตรียมนอน",type:"sleep"}];
 const SUNDAY:ScheduleItem[]=[{start:360,end:390,label:"ออกกำลังกายเบา ๆ",type:"health"},{start:390,end:430,label:"อาหารเช้า",type:"meal"},{start:430,end:720,label:"Japanese Study",type:"focus"},{start:720,end:810,label:"พักกลางวัน",type:"meal"},{start:810,end:1020,label:"English + Side Project",type:"focus"},{start:1020,end:1110,label:"พักผ่อน / ครอบครัว",type:"rest"},{start:1110,end:1200,label:"เตรียมสัปดาห์ใหม่",type:"focus"},{start:1200,end:1290,label:"ผ่อนคลาย",type:"rest"},{start:1290,end:1320,label:"เตรียมนอน",type:"sleep"}];
 
 function outfitReason(day:WeatherDay){
@@ -34,19 +33,19 @@ function outfitReason(day:WeatherDay){
 async function json(url:string){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error(url);return r.json()}
 
 export default function DashboardPage(){
-  const [data,setData]=useState(EMPTY); const [weather,setWeather]=useState<WeatherDay[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(false);
+  const [data,setData]=useState(EMPTY); const [weather,setWeather]=useState<WeatherDay[]>([]); const [routine,setRoutine]=useState<{regular:ScheduleItem[];overtime:ScheduleItem[]}|null>(null); const [loading,setLoading]=useState(true); const [error,setError]=useState(false);
   const [now,setNow]=useState<Date|null>(null);
-  useEffect(()=>{(async()=>{const urls=["/api/health","/api/closet","/api/books","/api/daily","/api/mandala","/api/travel/countries","/api/music","/api/menu","/api/weather"];
+  useEffect(()=>{(async()=>{const urls=["/api/health","/api/closet","/api/books","/api/daily","/api/mandala","/api/travel/countries","/api/music","/api/menu","/api/weather","/api/routine-schedule"];
     const r=await Promise.allSettled(urls.map(json)); const val=(i:number,fallback:any)=>r[i].status==="fulfilled"?r[i].value:fallback;
     const healthRaw=val(0,{logs:[]}); const diaryRaw=val(3,[]); const musicRaw=val(6,[]); const menuRaw=val(7,[]);
     setData({health:Array.isArray(healthRaw)?healthRaw:healthRaw.logs||[],closet:val(1,{creations:[]}).creations||[],books:val(2,[]),diary:Array.isArray(diaryRaw)?diaryRaw:diaryRaw.entries||[],mandala:val(4,null),countries:val(5,[]),music:Array.isArray(musicRaw)?musicRaw:musicRaw.tracks||[],menu:Array.isArray(menuRaw)?menuRaw:menuRaw.items||[]});
-    setWeather(val(8,{days:[]}).days||[]); setError(r.some(x=>x.status==="rejected")); setLoading(false);
+    setWeather(val(8,{days:[]}).days||[]); setRoutine(val(9,{schedule:null}).schedule); setError(r.some(x=>x.status==="rejected")); setLoading(false);
   })()},[]);
   useEffect(()=>{setNow(new Date());const timer=window.setInterval(()=>setNow(new Date()),30_000);return()=>window.clearInterval(timer)},[]);
 
   const latest=data.health.at(-1)||data.health[0]; const todayDiary=(now?data.diary.find(x=>x.date===todayISO(now)):null)||data.diary.at(-1); const reading=data.books.filter(x=>x.status==="reading");
   const actions=(data.mandala?.actions||[]).filter(action=>action.text?.trim()); const done=actions.filter(x=>x.completed===1).length; const goal=data.mandala?.chart?.main_goal||"ยังไม่ได้ตั้งเป้าหมายหลัก";
-  const currentMin=now?now.getHours()*60+now.getMinutes():-1; const dow=now?.getDay(); const todaySchedule=dow===6?SATURDAY:dow===0?SUNDAY:WEEKDAY; const progress=actions.length?Math.round(done/actions.length*100):0;
+  const currentMin=now?now.getHours()*60+now.getMinutes():-1; const dow=now?.getDay(); const todaySchedule=dow===6?SATURDAY:dow===0?SUNDAY:(routine?.regular||WEEKDAY); const progress=actions.length?Math.round(done/actions.length*100):0;
   const readiness=useMemo(()=>{if(!latest)return 0;const sleep=latest.sleep_score||0;const steps=Math.min((latest.steps||0)/10000*100,100);return Math.round(sleep*.72+steps*.28)},[latest]);
   const looks=weather.slice(0,3).map((day,i)=>({day,look:data.closet.length?data.closet[i%data.closet.length]:null})); const hero=looks[0];
 
