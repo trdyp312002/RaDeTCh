@@ -2,6 +2,20 @@
 
 import { useEffect, useState } from "react"
 
+export type HealthLog = {
+  id: string
+  date: string
+  weight: number | null
+  bmi: number | null
+  body_fat: number | null
+  sleep_hours: number | null
+  sleep_score: number | null
+  steps: number | null
+  resting_heart_rate: number | null
+  calories_in: number | null
+  calories_out: number | null
+  notes: string
+}
 type Entry = {
   id: string
   entry_date: string
@@ -59,7 +73,7 @@ function NutritionGuide() {
   )
 }
 
-export default function HealthDashboard() {
+export default function HealthDashboard({ logs: _logs = [] }: { logs?: HealthLog[] }) {
   const [rows, setRows] = useState<Entry[]>([])
   const [type, setType] = useState("workout")
   const [title, setTitle] = useState("")
