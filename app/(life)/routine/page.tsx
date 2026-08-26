@@ -1,5 +1,6 @@
 "use client"
 import React, { useCallback, useEffect, useRef, useState } from "react"
+import RoutineWorkspace from "./RoutineWorkspace"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ const PALETTE = [
 
 // ─── Schedule Types & Constants ───────────────────────────────────────────────
 
-type DayType = "weekday" | "saturday" | "sunday"
+type DayType = "regular" | "overtime"
 type BlockType = "sleep" | "exercise" | "prepare" | "commute" | "work" | "free" | "winddown" | "meal"
 type TaskCat = "japanese" | "english" | "savings" | "other"
 
@@ -125,51 +126,28 @@ const T_REFLECT: ScheduleTask = { cat: "other",    title: "ทบทวนวั
 
 // ── Schedules ─────────────────────────────────────────────────────────────────
 
-const WEEKDAY: ScheduleBlock[] = [
-  {
-    id: "exercise", start: 360, end: 390, type: "exercise",
-    label: "ออกกำลังกาย",
-    desc: "วิ่ง / ออกกำลังกาย — ช่วยให้สมองตื่นตัวพร้อมทำงาน",
-  },
-  {
-    id: "prepare", start: 390, end: 420, type: "prepare",
-    label: "เตรียมตัว + ออกจากบ้าน 07:00",
-    desc: "อาบน้ำ แต่งตัว เตรียมของ — ออกประตูไม่เกิน 07:00",
-  },
-  {
-    id: "work", start: 480, end: 1140, type: "work",
-    label: "ทำงาน (จ–ศ  08:00–19:00)",
-    desc: "11 ชั่วโมง — เวลาที่เปลี่ยนแปลงไม่ได้ ใช้ให้คุ้มค่า",
-  },
-  {
-    id: "commute", start: 1140, end: 1170, type: "commute",
-    label: "เดินทางกลับบ้าน",
-    desc: "ฟัง Japanese Podcast ระหว่างทางได้เลย 🎧",
-    tasks: [T_JPPOD, T_ENPOD],
-  },
-  {
-    id: "dinner", start: 1170, end: 1210, type: "meal",
-    label: "อาหารเย็น + พักผ่อนเล็กน้อย",
-    desc: "กิน พัก สั้น ๆ ก่อนเริ่ม session เย็น — ไม่เกิน 40 นาที",
-  },
-  {
-    id: "free-eve", start: 1200, end: 1290, type: "free",
-    label: "⭐ เวลาว่าง — Self-Development (20:00–21:30)",
-    desc: "1.5h — เวลาที่มีค่าที่สุดของวัน ใช้ให้เต็มที่",
-    tasks: [T_ANKI, T_GRAM, T_SHADOW, T_ENVOC, T_ENWRITE, T_EXPENSE, T_REFLECT],
-  },
-  {
-    id: "winddown", start: 1290, end: 1320, type: "winddown",
-    label: "เตรียมนอน + ทบทวนวัน (21:30–22:00)",
-    desc: "วางโทรศัพท์ ไม่ดู social media เขียน reflection สั้น ๆ",
-  },
-  {
-    id: "sleep", start: 1320, end: 1440, type: "sleep",
-    label: "นอนหลับ 22:00",
-    desc: "เป้าหมาย 8 ชั่วโมง → ตื่น 06:00",
-  },
+const REGULAR: ScheduleBlock[] = [
+  { id: "wake", start: 330, end: 340, type: "prepare", label: "ตื่นนอน ดื่มน้ำเปล่า 1 แก้ว" },
+  { id: "exercise", start: 340, end: 370, type: "exercise", label: "ออกกำลังกายตอนเช้า", desc: "30 นาที" },
+  { id: "prepare", start: 370, end: 420, type: "prepare", label: "อาบน้ำ แต่งตัว และทานมื้อเช้า" },
+  { id: "work", start: 420, end: 1020, type: "work", label: "เดินทาง ทำงาน มื้อกลางวัน" },
+  { id: "home", start: 1020, end: 1080, type: "meal", label: "ถึงบ้าน / อาบน้ำ ทำมื้อเย็น" },
+  { id: "dinner", start: 1080, end: 1140, type: "meal", label: "ทานมื้อเย็น", desc: "เน้นโปรตีนและผัก" },
+  { id: "relax", start: 1140, end: 1200, type: "free", label: "พักผ่อนตามอัธยาศัย / ทำงานบ้าน" },
+  { id: "winddown", start: 1200, end: 1290, type: "winddown", label: "เคลียร์ตัวเอง เตรียมตัวนอน" },
+  { id: "sleep", start: 1290, end: 1770, type: "sleep", label: "เข้านอน", desc: "นอนเต็มอิ่ม 8 ชั่วโมง" },
 ]
 
+const OVERTIME: ScheduleBlock[] = [
+  { id: "wake", start: 330, end: 340, type: "prepare", label: "ตื่นนอน ดื่มน้ำเปล่า 1 แก้ว" },
+  { id: "exercise", start: 340, end: 370, type: "exercise", label: "ออกกำลังกายตอนเช้า", desc: "30 นาที" },
+  { id: "prepare", start: 370, end: 420, type: "prepare", label: "อาบน้ำ แต่งตัว และทานมื้อเช้า" },
+  { id: "work", start: 420, end: 1155, type: "work", label: "เดินทาง ทำงาน มื้อกลางวัน", desc: "อยู่ทำงานโอที" },
+  { id: "commute", start: 1155, end: 1200, type: "commute", label: "เดินทางกลับบ้าน" },
+  { id: "dinner", start: 1200, end: 1260, type: "meal", label: "ถึงบ้าน / ทานมื้อเย็นเบาๆ", desc: "ย่อยง่าย" },
+  { id: "winddown", start: 1260, end: 1290, type: "winddown", label: "อาบน้ำ เคลียร์ตัวเอง เตรียมตัวนอน" },
+  { id: "sleep", start: 1290, end: 1770, type: "sleep", label: "เข้านอน", desc: "นอนเต็มอิ่ม 8 ชั่วโมง" },
+]
 const SATURDAY: ScheduleBlock[] = [
   {
     id: "exercise", start: 360, end: 390, type: "exercise",
@@ -976,12 +954,12 @@ function TimelineTab() {
 function ScheduleTab() {
   const now = new Date()
   const dow = now.getDay()
-  const defaultDay: DayType = dow === 6 ? "saturday" : dow === 0 ? "sunday" : "weekday"
+  const defaultDay: DayType = "regular"
 
   const [dayType, setDayType] = useState<DayType>(defaultDay)
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(["free-eve", "deep-jp", "free-am"]))
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(["relax"]))
 
-  const schedule = dayType === "weekday" ? WEEKDAY : dayType === "saturday" ? SATURDAY : SUNDAY
+  const schedule = dayType === "regular" ? REGULAR : OVERTIME
   const freeBlocks = schedule.filter((b) => b.type === "free")
   const totalFreeMin = freeBlocks.reduce((s, b) => s + b.end - b.start, 0)
   const currentMin = now.getHours() * 60 + now.getMinutes()
@@ -1003,7 +981,7 @@ function ScheduleTab() {
       <div className="flex-1 min-w-0">
         {/* Day selector */}
         <div className="flex gap-2 mb-5 flex-wrap">
-          {(["weekday", "saturday", "sunday"] as DayType[]).map((d) => (
+          {(["regular", "overtime"] as DayType[]).map((d) => (
             <button
               key={d}
               onClick={() => setDayType(d)}
@@ -1013,7 +991,7 @@ function ScheduleTab() {
                   : "bg-white/70 text-stone-500 hover:bg-white hover:text-stone-700 border border-white"
               }`}
             >
-              {d === "weekday" ? "จ–ศ 💼" : d === "saturday" ? "เสาร์ 🌅" : "อาทิตย์ 🏖️"}
+              {d === "regular" ? "ปกติ · กลับถึงบ้าน 17:00" : "ทำโอที · กลับถึงบ้าน ~19:15"}
             </button>
           ))}
           <div className="ml-auto flex items-center gap-2 text-xs text-stone-400">
@@ -1026,9 +1004,9 @@ function ScheduleTab() {
         <div className="mb-4 p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/40 text-xs text-indigo-300 flex items-center gap-3">
           <span className="text-lg">💤</span>
           <div>
-            <span className="font-semibold">นอนหลับ</span> 22:00 → ตื่น 06:00
+            <span className="font-semibold">นอนหลับ</span> 21:30 → ตื่น 05:30
             <span className="ml-1 font-bold text-indigo-200">(8 ชั่วโมง)</span>
-            <span className="ml-3 text-indigo-400">· เตรียมนอน 21:30</span>
+            <span className="ml-3 text-indigo-400">· นอนเต็มอิ่ม 8 ชั่วโมง</span>
           </div>
         </div>
 
@@ -1119,8 +1097,8 @@ function ScheduleTab() {
             {Math.floor(totalFreeMin / 60)}h{totalFreeMin % 60 > 0 ? ` ${totalFreeMin % 60}m` : ""}
           </div>
           <div className="text-xs text-stone-500 mt-1">จาก {freeBlocks.length} ช่วงเวลา</div>
-          {dayType === "weekday" && (
-            <div className="mt-2 text-xs text-stone-400">เวลาว่างทั้งสัปดาห์ ~<strong className="text-stone-600">30h</strong></div>
+          {dayType === "regular" && (
+            <div className="mt-2 text-xs text-stone-400">เวลาพักผ่อนหลังเลิกงาน</div>
           )}
         </div>
 
@@ -1453,68 +1431,6 @@ function SecretaryTab() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type Tab = "mandala" | "timeline" | "schedule" | "secretary"
-
 export default function RoutinePage() {
-  const [tab, setTab] = useState<Tab>("schedule")
-
-  const TABS = [
-    { key: "schedule" as Tab,   label: "Daily Schedule", icon: "📅" },
-    { key: "secretary" as Tab,  label: "WhyMan AI",       icon: "🤖" },
-    { key: "mandala" as Tab,    label: "Mandala Chart",  icon: "⬡"  },
-    { key: "timeline" as Tab,   label: "Life Timeline",  icon: "◈"  },
-  ]
-
-  return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8" style={{ background: "linear-gradient(135deg, #f0f7f9 0%, #e8edf5 100%)" }}>
-      <div className="max-w-[1400px] mx-auto">
-        {/* Header */}
-        <header className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-black text-stone-800 tracking-tight">
-            Routine & Future Planning
-          </h1>
-          <p className="text-sm text-stone-500 mt-1">
-            จัดการชีวิตกับ WhyMan AI — Schedule · AI Secretary · Mandala · Timeline
-          </p>
-          <div className="flex gap-3 mt-3 flex-wrap">
-            {[
-              { label: "🇯🇵 ภาษาญี่ปุ่น", color: "bg-pink-100 text-pink-700" },
-              { label: "🇬🇧 ภาษาอังกฤษ", color: "bg-sky-100 text-sky-700" },
-              { label: "💰 ออมเงิน / ลงทุน", color: "bg-emerald-100 text-emerald-700" },
-            ].map((g) => (
-              <span key={g.label} className={`text-xs font-semibold px-3 py-1 rounded-full ${g.color}`}>
-                {g.label}
-              </span>
-            ))}
-          </div>
-        </header>
-
-        {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-white/60 backdrop-blur-xl rounded-2xl p-1 border border-white shadow-sm w-fit overflow-x-auto">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                tab === t.key
-                  ? "bg-stone-800 text-white shadow-md"
-                  : "text-stone-500 hover:text-stone-700 hover:bg-white/60"
-              }`}
-            >
-              <span className="mr-1.5">{t.icon}</span>
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div>
-          {tab === "schedule"   && <ScheduleTab />}
-          {tab === "secretary"  && <SecretaryTab />}
-          {tab === "mandala"    && <MandalaTab />}
-          {tab === "timeline"   && <TimelineTab />}
-        </div>
-      </div>
-    </div>
-  )
+  return <RoutineWorkspace />
 }
