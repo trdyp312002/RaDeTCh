@@ -49,6 +49,8 @@ type Props = {
   fxRates: Record<string, number>
 }
 
+type PortfolioSnapshot = { portfolio: PortfolioType; date: string; value_usd: number }
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const PORTFOLIO_CONFIG: Record<PortfolioType, {
@@ -102,6 +104,7 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<"all" | "gainers" | "losers">("all")
 
+  const [snapshots, setSnapshots] = useState<PortfolioSnapshot[]>([])
   const [showAddHolding, setShowAddHolding] = useState(false)
   const [newSymbol, setNewSymbol] = useState("")
   const [newName, setNewName] = useState("")
@@ -129,7 +132,7 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
       if (withQty.length > 0) {
         const symbols = [...new Set(withQty.map(h => h.symbol))].join(",")
         try {
-          const mRes = await fetch(`/api/market?symbols=${symbols}`)
+          const mRes = await fetch(`/api/market?symbols=${symbols}&range=1y&live=1`)
           const quotes = await mRes.json()
           setHoldings(data.map(h => {
             const q = quotes[h.symbol]
@@ -167,6 +170,16 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
 
   useEffect(() => { fetchHoldings() }, [fetchHoldings])
 
+  useEffect(() => {
+    fetch(`/api/portfolio-snapshots?portfolio=${portfolio}`).then(r => r.ok ? r.json() : [])
+      .then(data => { if (Array.isArray(data)) setSnapshots(data as PortfolioSnapshot[]) }).catch(console.error)
+  }, [portfolio])
+
+  useEffect(() => {
+    const timer = window.setInterval(fetchHoldings, 60_000)
+    return () => window.clearInterval(timer)
+  }, [fetchHoldings])
+
   // ── Totals ──
   const totalCost    = holdings.reduce((s, h) => s + h.totalCost, 0)
   const totalValue   = holdings.reduce((s, h) => s + (h.currentValue ?? 0), 0)
@@ -174,6 +187,13 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
   const totalPnlPct  = totalCost > 0 && totalValue > 0 ? (totalPnl / totalCost) * 100 : 0
   const totalDailyPnl = holdings.reduce((s, h) => s + (h.dailyPnl ?? 0), 0)
   const hasMarketData = holdings.some(h => h.currentPrice != null)
+
+  useEffect(() => {
+    if (!hasMarketData) return
+    const date = new Date().toISOString().slice(0, 10)
+    fetch(`/api/portfolio-snapshots`, { method: `POST`, body: JSON.stringify({ portfolio, date, value_usd: totalValue }) })
+      .then(r => r.ok ? r.json() : null).then(snapshot => { if (snapshot) setSnapshots(prev => [...prev.filter(s => s.date !== snapshot.date), snapshot].sort((a, b) => a.date.localeCompare(b.date))) }).catch(console.error)
+  }, [portfolio, totalValue, hasMarketData])
 
   // ── Portfolio value history chart ──
   const portfolioValueHistory = useMemo(() => {
@@ -212,6 +232,10 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
       return { date: isoDate.slice(5), isoDate, value }
     }).filter(p => p.value > 0)
   }, [holdings])
+
+  const dailyPortfolioValueHistory = useMemo(() => snapshots.map(s => ({
+    date: s.date.slice(5), isoDate: s.date, value: Number(s.value_usd),
+  })), [snapshots])
 
   // ── Handlers ──
   const handleAddHolding = async (e: React.FormEvent) => {
@@ -336,12 +360,12 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
         </div>
 
         {/* Portfolio Value Chart */}
-        {portfolioValueHistory.length > 1 && (
+        {dailyPortfolioValueHistory.length > 1 && (
           <div className="mt-5 pt-4 border-t border-white/[0.05]">
             <p className="text-[9px] uppercase tracking-widest text-stone-400 mb-3">Portfolio Value · 30D</p>
             <div className="h-28">
               <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                <AreaChart data={portfolioValueHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                <AreaChart data={dailyPortfolioValueHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id={`ptab-grad-${portfolio}`} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor={chartColor} stopOpacity={0.3} />
