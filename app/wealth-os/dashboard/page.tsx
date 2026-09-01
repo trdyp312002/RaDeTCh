@@ -1,7 +1,9 @@
 "use client"
 import React from 'react';
+import Link from 'next/link';
 import { Bot, Globe, Settings, Activity, RefreshCw, Zap, TrendingUp, TrendingDown, Clock, Save } from 'lucide-react';
 import WealthNavbar from '@/components/WealthNavbar';
+import { calculateWealth, FALLBACK_FX_RATES } from '@/lib/wealth';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, ReferenceLine,
@@ -14,13 +16,6 @@ type FinanceItem = { id: string; category: string; label: string; amount: number
 
 const fmtFull = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 const fmt0 = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
-
-const THB_TO_USD = 0.028; // approx
-function toUSD(amount: number, currency: string) {
-  if (currency === 'USD') return amount;
-  if (currency === 'THB') return amount * THB_TO_USD;
-  return amount;
-}
 
 const PERIOD_LABELS = ['1D', '3M', '6M', '1Y', 'YTD', 'ALL'] as const;
 type Period = typeof PERIOD_LABELS[number];
@@ -67,6 +62,7 @@ export default function Dashboard() {
   const [snapshots, setSnapshots] = React.useState<NWSnapshot[]>([]);
   const [holdings, setHoldings] = React.useState<Holding[]>([]);
   const [financeItems, setFinanceItems] = React.useState<FinanceItem[]>([]);
+  const [fxRates, setFxRates] = React.useState<Record<string, number>>(FALLBACK_FX_RATES);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
@@ -76,17 +72,37 @@ export default function Dashboard() {
   const loadData = React.useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      const [nwRes, hRes, fRes] = await Promise.all([
+      const [nwRes, hRes, fRes, fxRes] = await Promise.all([
         fetch('/api/networth'),
         fetch('/api/holdings'),
         fetch('/api/finance'),
+        fetch('/api/fx', { cache: 'no-store' }),
       ]);
       const nwData = await nwRes.json();
-      const hData = await hRes.json();
+      const rawHoldings = await hRes.json();
       const fData = await fRes.json();
+      const fxData = fxRes.ok ? await fxRes.json() : null;
+      let hData = rawHoldings;
+      if (Array.isArray(rawHoldings) && rawHoldings.length > 0) {
+        try {
+          const symbols = [...new Set(rawHoldings.map((h: any) => {
+            const symbol = String(h.symbol || '').toUpperCase();
+            return h.type === 'crypto' && !symbol.endsWith('-USD') ? symbol + '-USD' : symbol;
+          }).filter(Boolean))].join(',');
+          const marketRes = symbols ? await fetch('/api/market?symbols=' + encodeURIComponent(symbols) + '&range=1d') : null;
+          const market = marketRes?.ok ? await marketRes.json() : {};
+          hData = rawHoldings.map((h: any) => {
+            const symbol = String(h.symbol || '').toUpperCase();
+            const yahoo = h.type === 'crypto' && !symbol.endsWith('-USD') ? symbol + '-USD' : symbol;
+            const price = Number(market?.[yahoo]?.currentPrice ?? market?.[symbol]?.currentPrice ?? 0);
+            return { ...h, totalValue: price > 0 && Number(h.quantity) > 0 ? price * Number(h.quantity) : Number(h.totalCost || 0) };
+          });
+        } catch { /* fall back to cost basis when market data is unavailable */ }
+      }
       if (Array.isArray(nwData)) setSnapshots(nwData);
       if (Array.isArray(hData)) setHoldings(hData);
       if (Array.isArray(fData)) setFinanceItems(fData);
+      if (fxData?.rates) setFxRates(rates => ({ ...rates, ...fxData.rates, USD: 1 }));
       setLastUpdated(new Date());
     } catch { /* silent */ } finally {
       setLoading(false);
@@ -103,12 +119,8 @@ export default function Dashboard() {
     autoSaveRef.current = true;
 
     // Calculate true net worth
-    const holdingsVal = holdings.reduce((s, h) => s + (h.totalValue || h.totalCost || 0), 0);
-    const cashTotal = financeItems.filter(i => i.category === 'cash').reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-    const otherAssetsTotal = financeItems.filter(i => i.category === 'other_asset').reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-    const liabTotal = financeItems.filter(i => i.category === 'liability').reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-    const totalAssets = cashTotal + otherAssetsTotal + holdingsVal;
-    const trueNetWorth = totalAssets - liabTotal;
+    const wealth = calculateWealth(financeItems, holdings, fxRates);
+    const { totalAssets, liabilities: liabTotal, netWorth: trueNetWorth } = wealth;
 
     if (totalAssets === 0 && liabTotal === 0) return;
     const today = new Date().toISOString().slice(0, 10);
@@ -121,18 +133,14 @@ export default function Dashboard() {
         body: JSON.stringify({ date: today, net_worth: trueNetWorth, total_assets: totalAssets, total_liabilities: liabTotal }),
       }).then(() => loadData(true)).catch(() => {});
     }
-  }, [loading, holdings, financeItems, snapshots, loadData]);
+  }, [loading, holdings, financeItems, fxRates, snapshots, loadData]);
 
   // ── Manual save snapshot ─────────────────────────────────────────────────
   async function saveSnapshot() {
     setSaving(true);
     try {
-      const holdingsVal = holdings.reduce((s, h) => s + (h.totalValue || h.totalCost || 0), 0);
-      const cashTotal = financeItems.filter(i => i.category === 'cash').reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-      const otherAssetsTotal = financeItems.filter(i => i.category === 'other_asset').reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-      const liabTotal = financeItems.filter(i => i.category === 'liability').reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-      const totalAssets = cashTotal + otherAssetsTotal + holdingsVal;
-      const trueNetWorth = totalAssets - liabTotal;
+      const wealth = calculateWealth(financeItems, holdings, fxRates);
+      const { totalAssets, liabilities: liabTotal, netWorth: trueNetWorth } = wealth;
 
       const today = new Date().toISOString().slice(0, 10);
       await fetch('/api/networth', {
@@ -150,14 +158,17 @@ export default function Dashboard() {
   const latestNW = snapshots.length > 0 ? snapshots[snapshots.length - 1].net_worth : 0;
   
   // Real-time calculation
-  const totalHoldingsVal = holdings.reduce((s, h) => s + (h.totalValue || h.totalCost || 0), 0);
-  const liveCash = financeItems.filter(i => i.category === 'cash').reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-  const liveOtherAssets = financeItems.filter(i => i.category === 'other_asset').reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-  const liveLiabilities = financeItems.filter(i => i.category === 'liability').reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-  const liveAssets = liveCash + liveOtherAssets + totalHoldingsVal;
-  const liveNW = liveAssets - liveLiabilities;
+  const wealth = calculateWealth(financeItems, holdings, fxRates);
+  const totalHoldingsVal = wealth.holdingsValue;
+  const liveCash = wealth.cash;
+  const liveOtherAssets = wealth.otherAssets;
+  const liveLiabilities = wealth.liabilities;
+  const liveAssets = wealth.totalAssets;
+  const liveNW = wealth.netWorth;
 
-  const displayNW = latestNW || liveNW || totalHoldingsVal;
+  // Live holdings/cash/liabilities are the current headline; snapshots are historical only.
+  const hasLiveData = holdings.length > 0 || financeItems.length > 0;
+  const displayNW = hasLiveData ? liveNW : (latestNW || 0);
 
   const filteredSnaps = filterByPeriod(snapshots, period);
   const chartData = filteredSnaps.length >= 2
@@ -173,9 +184,19 @@ export default function Dashboard() {
   const periodChangePct = firstVal > 0 ? (periodChange / firstVal) * 100 : 0;
   const isPos = periodChange >= 0;
 
-  const prevNW = snapshots.length > 1 ? snapshots[snapshots.length - 2].net_worth : 0;
-  const nwChange = latestNW - prevNW;
-  const nwChangePct = prevNW > 0 ? (nwChange / prevNW) * 100 : 0;
+  // Older snapshots may have been recorded in THB while the current dashboard is USD.
+  // Do not show a misleading change when the two values are clearly incomparable.
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const latestIsToday = snapshots[snapshots.length - 1]?.date === todayKey;
+  const previousSnapshot = snapshots.length > (latestIsToday ? 1 : 0)
+    ? snapshots[snapshots.length - 1 - (latestIsToday ? 1 : 0)]
+    : null;
+  const previousValue = previousSnapshot ? Number(previousSnapshot.net_worth) : 0;
+  const comparablePrevious = previousValue > 0 && displayNW > 0
+    ? Math.max(previousValue, displayNW) / Math.min(previousValue, displayNW) < 10
+    : false;
+  const nwChange = comparablePrevious ? displayNW - previousValue : 0;
+  const nwChangePct = comparablePrevious ? (nwChange / previousValue) * 100 : 0;
 
   // Allocation by type
   const allocationMap: Record<string, number> = {};
@@ -282,7 +303,7 @@ export default function Dashboard() {
             <span style={{ color: nwChangePct >= 0 ? '#4ade80' : '#f87171' }}>
               ({nwChangePct >= 0 ? '+' : ''}{nwChangePct.toFixed(2)}%)
             </span>
-            <span style={{ color: '#475569', fontSize: '0.8rem' }}>vs prev snapshot</span>
+            <span style={{ color: '#475569', fontSize: '0.8rem' }}>{comparablePrevious ? 'vs prev snapshot' : 'baseline reset (unit mismatch)'}</span>
           </div>
 
           {/* Breakdown / Equation Mini */}
@@ -296,6 +317,12 @@ export default function Dashboard() {
               <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Liabilities</div>
               <div style={{ fontSize: '1rem', fontWeight: 600, color: '#f87171' }}>{fmtFull(liveLiabilities)}</div>
             </div>
+            <Link href="/wealth-os/balance-sheet" style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '0.75rem', textDecoration: 'none' }}>
+              Edit cash & debt →
+            </Link>
+            <Link href="/wealth-os/portfolio" style={{ color: '#94a3b8', fontSize: '0.75rem', textDecoration: 'none' }}>
+              Edit portfolio →
+            </Link>
           </div>
 
           {/* Period selector */}

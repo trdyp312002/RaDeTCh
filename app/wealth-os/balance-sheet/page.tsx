@@ -2,6 +2,7 @@
 import React from 'react';
 import { Plus, X, Edit2, Trash2, RefreshCw, TrendingUp, TrendingDown, Building2, Wallet, CreditCard, BarChart3 } from 'lucide-react';
 import WealthNavbar from '@/components/WealthNavbar';
+import { calculateWealth, FALLBACK_FX_RATES } from '@/lib/wealth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type FinanceItem = {
@@ -24,12 +25,8 @@ const fmt = (v: number, cur = 'USD') =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: cur === 'THB' ? 'USD' : cur, maximumFractionDigits: 0 }).format(v);
 
 const THB_TO_USD = 0.028; // approximate — can be replaced with live FX
-function toUSD(amount: number, currency: string) {
-  if (currency === 'USD') return amount;
-  if (currency === 'THB') return amount * THB_TO_USD;
-  return amount;
-}
 
+// `/api/fx` returns the amount of each currency equivalent to 1 USD.
 const CATEGORY_META = {
   cash: { label: 'Cash & Liquid Assets', icon: Wallet, color: '#2dd4bf', bg: 'rgba(45,212,191,0.1)' },
   other_asset: { label: 'Investment & Other Assets', icon: Building2, color: '#fcd34d', bg: 'rgba(252,211,77,0.1)' },
@@ -66,15 +63,35 @@ export default function BalanceSheet() {
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState('');
   const [form, setForm] = React.useState({ category: 'cash', label: '', amount: '', currency: 'USD' });
+  const [fxRates, setFxRates] = React.useState<Record<string, number>>(FALLBACK_FX_RATES);
 
   const loadData = React.useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      const [fiRes, hRes] = await Promise.all([fetch('/api/finance'), fetch('/api/holdings')]);
+      const [fiRes, hRes, fxRes] = await Promise.all([fetch('/api/finance'), fetch('/api/holdings'), fetch('/api/fx', { cache: 'no-store' })]);
       const fiData = await fiRes.json();
-      const hData = await hRes.json();
+      const rawHoldings = await hRes.json();
+      const fxData = fxRes.ok ? await fxRes.json() : null;
+      let hData = rawHoldings;
+      if (Array.isArray(rawHoldings) && rawHoldings.length > 0) {
+        try {
+          const symbols = [...new Set(rawHoldings.map((h: any) => {
+            const symbol = String(h.symbol || '').toUpperCase();
+            return h.type === 'crypto' && !symbol.endsWith('-USD') ? symbol + '-USD' : symbol;
+          }).filter(Boolean))].join(',');
+          const marketRes = symbols ? await fetch('/api/market?symbols=' + encodeURIComponent(symbols) + '&range=1d') : null;
+          const market = marketRes?.ok ? await marketRes.json() : {};
+          hData = rawHoldings.map((h: any) => {
+            const symbol = String(h.symbol || '').toUpperCase();
+            const yahoo = h.type === 'crypto' && !symbol.endsWith('-USD') ? symbol + '-USD' : symbol;
+            const price = Number(market?.[yahoo]?.currentPrice ?? market?.[symbol]?.currentPrice ?? 0);
+            return { ...h, totalValue: price > 0 && Number(h.quantity) > 0 ? price * Number(h.quantity) : Number(h.totalCost || 0) };
+          });
+        } catch { /* use cost basis if market data is unavailable */ }
+      }
       if (Array.isArray(fiData)) setItems(fiData);
       if (Array.isArray(hData)) setHoldings(hData);
+      if (fxData?.rates) setFxRates(rates => ({ ...rates, ...fxData.rates, USD: 1 }));
     } catch { /* silent */ } finally {
       setLoading(false); setRefreshing(false);
     }
@@ -83,18 +100,16 @@ export default function BalanceSheet() {
   React.useEffect(() => { loadData(); }, [loadData]);
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  const holdingsVal = holdings.reduce((s, h) => s + (h.totalValue || h.totalCost || 0), 0);
-
   const cashItems = items.filter(i => i.category === 'cash');
   const assetItems = items.filter(i => i.category === 'other_asset');
   const liabItems = items.filter(i => i.category === 'liability');
-
-  const cashTotal = cashItems.reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-  const otherAssetTotal = assetItems.reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-  const liabTotal = liabItems.reduce((s, i) => s + toUSD(i.amount, i.currency), 0);
-
-  const totalAssets = cashTotal + otherAssetTotal + holdingsVal;
-  const netWorth = totalAssets - liabTotal;
+  const wealth = calculateWealth(items, holdings, fxRates);
+  const holdingsVal = wealth.holdingsValue;
+  const cashTotal = wealth.cash;
+  const otherAssetTotal = wealth.otherAssets;
+  const liabTotal = wealth.liabilities;
+  const totalAssets = wealth.totalAssets;
+  const netWorth = wealth.netWorth;
   const debtRatio = totalAssets > 0 ? (liabTotal / totalAssets) * 100 : 0;
 
   // ── Handlers ──────────────────────────────────────────────────────────────

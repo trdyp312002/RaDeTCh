@@ -1,0 +1,7 @@
+# Currency Impact
+
+Stock and ETF transactions use USD as the investment currency and THB as the base currency. A BUY records `purchase_fx_rate` (THB per USD), `original_cost_thb`, `fx_fee_thb`, and `fx_data_status`.
+
+The upgrade is idempotent: it reads `PRAGMA table_info(transactions)` and only then runs the necessary `ALTER TABLE` statements. Existing stock/ETF BUYs are backfilled from Yahoo Finance `USDTHB=X` for the transaction date. It never uses today's rate. When Yahoo cannot provide a historical close, the row is marked `incomplete` and THB currency-impact analytics must not be presented as complete. Crypto/BTC is marked `not_applicable`, because its cost is recorded in THB and no USD/THB impact is calculated.
+
+USD cost remains the existing average-cost calculation. For each SELL, both USD and THB cost basis are reduced by the same sold-quantity proportion. For a complete position, effective historical FX is `remainingCostTHB / remainingCostUSD`. `stockEffectTHB = (currentValueUSD - remainingCostUSD) × effectiveHistoricalFx`; `fxEffectTHB = currentValueUSD × (currentFx - effectiveHistoricalFx)`; and their sum equals `currentValueUSD × currentFx - originalCostTHB`. Percentage returns are never added directly.

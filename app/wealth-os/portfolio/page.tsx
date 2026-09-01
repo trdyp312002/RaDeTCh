@@ -1,11 +1,12 @@
 "use client"
 import React from 'react';
 import { Plus, Edit2, Trash2, ArrowUpRight, ArrowDownRight, RefreshCw, AlertCircle, Zap, ChevronDown, ChevronUp, BarChart2, TrendingUp, TrendingDown, X } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { AreaChart, Area, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import WealthNavbar from '@/components/WealthNavbar';
+import TransactionEditor from '@/components/TransactionEditor';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type NWSnapshot = { id: string; date: string; net_worth: number; total_assets: number; total_liabilities: number };
+type DailySnapshot = { portfolio: string; date: string; value_usd: number; value_thb: number | null; fx_rate: number | null };
 
 const PERIOD_LABELS = ['1D', '3M', '6M', '1Y', 'YTD', 'ALL'] as const;
 type Period = typeof PERIOD_LABELS[number];
@@ -19,6 +20,8 @@ type Holding = {
   quantity: number;
   avgCost: number;
   totalCost: number;
+  totalCostThb?: number | null;
+  fxDataStatus?: "complete" | "incomplete" | "not_applicable";
   totalValue?: number;
   currentPrice?: number;
   transactions?: Transaction[];
@@ -46,7 +49,7 @@ type LivePrice = {
 type ModalMode = 'add-asset' | 'edit-asset' | 'add-tx' | 'delete-confirm' | null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function filterByPeriod(snapshots: NWSnapshot[], period: Period): NWSnapshot[] {
+function filterByPeriod<T extends { date: string }>(snapshots: T[], period: Period): T[] {
   if (!snapshots.length) return snapshots;
   const now = new Date();
   let cutoff: Date | null = null;
@@ -101,15 +104,17 @@ function makeSpark(seed: number) {
 
 // ─── HoldingRow ───────────────────────────────────────────────────────────────
 function HoldingRow({
-  h, idx, livePrices, onEdit, onDelete, onAddTx,
+  h, idx, livePrices, currentFx, onEdit, onDelete, onAddTx,
 }: {
   h: Holding; idx: number;
   livePrices: Record<string, LivePrice>;
+    currentFx: number;
   onEdit: (h: Holding) => void;
   onDelete: (h: Holding) => void;
   onAddTx: (h: Holding) => void;
 }) {
   const [expanded, setExpanded] = React.useState(false);
+  const [editingTx, setEditingTx] = React.useState<Transaction | null>(null);
 
   const yahoo = toYahooSymbol(h.symbol, h.type);
   const live = livePrices[yahoo] || livePrices[h.symbol];
@@ -122,6 +127,7 @@ function HoldingRow({
   const gainPct = (h.totalCost || 0) > 0 ? (gain / (h.totalCost || 1)) * 100 : 0;
   const isPos = gain >= 0;
   const dayPos = livePct >= 0;
+  const fxPnl = (h.type === "stock" || h.type === "etf") && h.fxDataStatus === "complete" && h.totalCostThb != null && h.totalCost > 0 && currentVal > 0 ? currentVal * (currentFx - (h.totalCostThb / h.totalCost)) : null;
 
   const spark = makeSpark(idx + 1);
   const hue = (idx * 47) % 360;
@@ -164,6 +170,9 @@ function HoldingRow({
         <td style={{ fontWeight: 600, color: '#fff', fontSize: '0.87rem' }}>{fmt0(currentVal)}</td>
         {/* Total P&L */}
         <td>
+          {fxPnl == null ? <span style={{ color: '#475569', fontSize: '0.75rem' }}>{h.type === 'crypto' ? 'N/A' : 'No FX data'}</span> : <div><div style={{ color: fxPnl >= 0 ? '#4ade80' : '#f87171', fontSize: '0.85rem', fontWeight: 600 }}>{fxPnl >= 0 ? '+' : ''}฿{Math.abs(fxPnl).toLocaleString('en-US', { maximumFractionDigits: 0 })}</div><div style={{ color: '#64748b', fontSize: '0.68rem' }}>FX P/L</div></div>}
+        </td>
+        <td>
           <div style={{ color: isPos ? '#4ade80' : '#f87171', fontSize: '0.85rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 3 }}>
             {isPos ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
             {pct(gainPct)}
@@ -183,7 +192,7 @@ function HoldingRow({
       </tr>
       {expanded && (
         <tr>
-          <td colSpan={8} style={{ padding: 0 }}>
+          <td colSpan={9} style={{ padding: 0 }}>
             <div className="pf-expand-panel">
               <div style={{ fontWeight: 600, marginBottom: '0.75rem', color: '#64748b', fontSize: '0.78rem', letterSpacing: 1 }}>
                 TRANSACTION HISTORY
@@ -191,7 +200,7 @@ function HoldingRow({
               {h.transactions && h.transactions.length > 0 ? (
                 <table className="pf-tx-table">
                   <thead>
-                    <tr><th>Date</th><th>Type</th><th>Qty</th><th>Price</th><th>Fees</th><th>Total</th></tr>
+                    <tr><th>Date</th><th>Type</th><th>Qty</th><th>Price</th><th>Fees</th><th>Total</th><th></th></tr>
                   </thead>
                   <tbody>
                     {h.transactions.map(tx => (
@@ -202,6 +211,7 @@ function HoldingRow({
                         <td>{fmt(tx.price)}</td>
                         <td>{fmt(tx.fees || 0)}</td>
                         <td>{fmt(tx.quantity * tx.price)}</td>
+                        <td><button className="pf-action-btn pf-icon-btn" title="Edit transaction" onClick={() => setEditingTx(tx)}><Edit2 size={13}/></button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -209,6 +219,7 @@ function HoldingRow({
               ) : (
                 <div style={{ color: '#334155', fontSize: '0.82rem' }}>No transactions yet.</div>
               )}
+              {editingTx && <TransactionEditor transaction={editingTx} onClose={() => setEditingTx(null)} />}
             </div>
           </td>
         </tr>
@@ -220,11 +231,12 @@ function HoldingRow({
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function Portfolio() {
   const [holdings, setHoldings] = React.useState<Holding[]>([]);
-  const [snapshots, setSnapshots] = React.useState<NWSnapshot[]>([]);
+  const [dailySnapshots, setDailySnapshots] = React.useState<DailySnapshot[]>([]);
   const [period, setPeriod] = React.useState<Period>('ALL');
   const [livePrices, setLivePrices] = React.useState<Record<string, LivePrice>>({});
   const [priceLoading, setPriceLoading] = React.useState(false);
   const [priceError, setPriceError] = React.useState('');
+  const [fxRate, setFxRate] = React.useState(35.5);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [modal, setModal] = React.useState<ModalMode>(null);
@@ -233,17 +245,23 @@ export default function Portfolio() {
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState('');
   const [form, setForm] = React.useState({ symbol: '', name: '', type: 'stock', portfolio: 'long_term' });
-  const [txForm, setTxForm] = React.useState({ type: 'BUY', quantity: '', price: '', fees: '0', date: new Date().toISOString().slice(0, 10), notes: '' });
+  const [txForm, setTxForm] = React.useState({ type: 'BUY', quantity: '', price: '', fees: '0', purchaseFxRate: '', date: new Date().toISOString().slice(0, 10), notes: '' });
 
   // ── Data loading ──────────────────────────────────────────────────────────
   const loadData = React.useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      const [nwRes, hRes] = await Promise.all([fetch('/api/networth'), fetch('/api/holdings')]);
-      const nwData = await nwRes.json();
+      const [hRes, fxRes, historyRes] = await Promise.all([
+        fetch('/api/holdings'),
+        fetch('/api/fx'),
+        fetch('/api/portfolio-snapshots?portfolio=all'),
+      ]);
       const hData = await hRes.json();
-      if (Array.isArray(nwData)) setSnapshots(nwData);
+      const fxData = await fxRes.json();
+      const historyData = await historyRes.json();
       if (Array.isArray(hData)) setHoldings(hData);
+      if (Number.isFinite(fxData?.rates?.THB) && fxData.rates.THB > 0) setFxRate(fxData.rates.THB);
+      if (Array.isArray(historyData)) setDailySnapshots(historyData);
     } catch { /* silent */ } finally {
       setLoading(false); setRefreshing(false);
     }
@@ -293,45 +311,47 @@ export default function Portfolio() {
   // This is an investment-only page: net-worth snapshots include liabilities.
   const displayPortfolioValue = totalVal;
 
-  // Build chart history from filtered holdings
-  const historyMap = new Map<string, number>();
-  let dates: { date: string; isoDate: string }[] = [];
-  
-  filtered.forEach(h => {
-    const yahoo = toYahooSymbol(h.symbol, h.type);
-    const live = livePrices[yahoo] || livePrices[h.symbol];
-    if (live?.history && live.history.length > 0) {
-      if (dates.length === 0 || live.history.length > dates.length) {
-        dates = live.history.map(x => ({ date: x.date, isoDate: x.isoDate }));
-      }
-      live.history.forEach(hp => {
-        const existing = historyMap.get(hp.isoDate) || 0;
-        historyMap.set(hp.isoDate, existing + (hp.price * h.quantity));
-      });
-    }
-  });
+  // Current P/L is calculated from live prices. The history chart below deliberately uses only
+  // snapshots captured on each day, so it never backfills or invents past market performance.
+  const totalCostAll = holdings.reduce((sum, holding) => sum + (holding.totalCost || 0), 0);
+  const totalValueAll = holdings.reduce((sum, holding) => sum + getHoldingValue(holding), 0);
+  const totalGain = totalValueAll - totalCostAll;
+  const totalGainPct = totalCostAll > 0 ? (totalGain / totalCostAll) * 100 : 0;
+  const chartData = filterByPeriod(dailySnapshots, period)
+    .filter(snapshot => Number.isFinite(snapshot.value_thb) && Number.isFinite(snapshot.fx_rate))
+    .map(snapshot => ({
+      date: new Date(`${snapshot.date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      valueThb: Number(snapshot.value_thb),
+      fxRate: Number(snapshot.fx_rate),
+    }));
+  const hasSnapshotChart = chartData.length >= 2;
+  const latestSnapshot = chartData[chartData.length - 1];
+  const firstSnapshotDate = dailySnapshots[0]?.date;
 
-  const chartData = dates.length > 0 
-    ? dates.map(d => ({ date: d.date, value: historyMap.get(d.isoDate) || 0 }))
-    : Array.from({ length: 30 }, (_, i) => ({
-        date: `Day ${i + 1}`,
-        value: (filtered.reduce((s, h) => s + getHoldingValue(h), 0) || 1000) * (0.9 + (i / 30) * 0.1 + Math.sin(i * 0.4) * 0.02),
-      }));
+  React.useEffect(() => {
+    const hasLiveValues = holdings.length > 0 && holdings.every(holding => {
+      const live = livePrices[toYahooSymbol(holding.symbol, holding.type)] || livePrices[holding.symbol];
+      return Number.isFinite(live?.currentPrice) && Number(live?.currentPrice) > 0;
+    });
+    if (!hasLiveValues || !Number.isFinite(totalValueAll) || totalValueAll < 0 || !Number.isFinite(fxRate) || fxRate <= 0) return;
 
-  const firstVal = chartData[0]?.value || 0;
-  const lastVal = chartData[chartData.length - 1]?.value || 0;
-  const periodChange = lastVal - firstVal;
-  const periodChangePct = firstVal > 0 ? (periodChange / firstVal) * 100 : 0;
-  const isPeriodPos = periodChange >= 0;
-
+    const date = new Date().toISOString().slice(0, 10);
+    const valueThb = totalValueAll * fxRate;
+    fetch('/api/portfolio-snapshots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ portfolio: 'all', date, value_usd: totalValueAll, value_thb: valueThb, fx_rate: fxRate }),
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(snapshot => {
+        if (!snapshot) return;
+        setDailySnapshots(previous => [...previous.filter(item => item.date !== snapshot.date), snapshot].sort((a, b) => a.date.localeCompare(b.date)));
+      })
+      .catch(() => undefined);
+  }, [holdings, livePrices, totalValueAll, fxRate]);
   const hasRetirement = retirementHoldings.length > 0;
   const hasLongTerm = longTermHoldings.length > 0;
   const hasShortTerm = shortTermHoldings.length > 0;
-
-  const totalCostAll = holdings.reduce((s, h) => s + (h.totalCost || 0), 0);
-  const totalValueAll = holdings.reduce((s, h) => s + getHoldingValue(h), 0);
-  const totalGain = totalValueAll - totalCostAll;
-  const totalGainPct = totalCostAll > 0 ? (totalGain / totalCostAll) * 100 : 0;
 
   const sparkData1 = makeSpark(3);
   const sparkData2 = makeSpark(7);
@@ -341,7 +361,7 @@ export default function Portfolio() {
   // ── Handlers ──────────────────────────────────────────────────────────────
   function openAddAsset() { setForm({ symbol: '', name: '', type: 'stock', portfolio: 'long_term' }); setError(''); setModal('add-asset'); }
   function openEdit(h: Holding) { setSelectedHolding(h); setForm({ symbol: h.symbol, name: h.name, type: h.type, portfolio: h.portfolio }); setError(''); setModal('edit-asset'); }
-  function openAddTx(h: Holding) { setSelectedHolding(h); setTxForm({ type: 'BUY', quantity: '', price: '', fees: '0', date: new Date().toISOString().slice(0, 10), notes: '' }); setError(''); setModal('add-tx'); }
+  function openAddTx(h: Holding) { setSelectedHolding(h); setTxForm({ type: 'BUY', quantity: '', price: '', fees: '0', purchaseFxRate: '', date: new Date().toISOString().slice(0, 10), notes: '' }); setError(''); setModal('add-tx'); }
   function openDelete(h: Holding) { setSelectedHolding(h); setModal('delete-confirm'); }
   function closeModal() { setModal(null); setSelectedHolding(null); setError(''); }
 
@@ -381,7 +401,7 @@ export default function Portfolio() {
     try {
       const res = await fetch('/api/transactions', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ holdingId: selectedHolding.id, type: txForm.type, quantity: parseFloat(txForm.quantity), price: parseFloat(txForm.price), fees: parseFloat(txForm.fees) || 0, date: txForm.date, notes: txForm.notes || null }),
+        body: JSON.stringify({ holdingId: selectedHolding.id, type: txForm.type, quantity: parseFloat(txForm.quantity), price: parseFloat(txForm.price), fees: parseFloat(txForm.fees) || 0, purchaseFxRate: txForm.purchaseFxRate ? parseFloat(txForm.purchaseFxRate) : undefined, date: txForm.date, notes: txForm.notes || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
@@ -504,61 +524,48 @@ export default function Portfolio() {
           )}
         </div>
 
-        {/* Big Chart Section */}
+        {/* Daily snapshots: records the portfolio value and FX rate actually captured each day. */}
         <div className="db-chart-section" style={{ marginTop: '1.5rem', background: '#0f172a', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', gap: '1rem' }}>
             <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.2rem' }}>
-                {filterPortfolio === 'all' ? 'Total Portfolio' : filterPortfolio === 'long_term' ? 'Long-term Portfolio' : filterPortfolio === 'short_term' ? 'Short-term Portfolio' : 'Retirement Portfolio'} Value History
-              </h3>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <span style={{ color: isPeriodPos ? '#4ade80' : '#f87171', fontWeight: 600, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                  {isPeriodPos ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                  {isPeriodPos ? '+' : ''}{fmtFull(Math.abs(periodChange))}
-                </span>
-                <span style={{ color: isPeriodPos ? '#4ade80' : '#f87171', fontSize: '0.9rem' }}>
-                  ({isPeriodPos ? '+' : ''}{periodChangePct.toFixed(2)}%)
-                </span>
-                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>in selected period</span>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.2rem' }}>Daily portfolio value (THB)</h3>
+              <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.5 }}>
+                Daily records only — includes the combined movement of your assets and USD/THB. {firstSnapshotDate ? `Collecting since ${firstSnapshotDate}.` : 'The first record will be saved after live prices load.'}
               </div>
             </div>
-            {/* Period selector */}
             <div className="db-period-bar" style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: '0.2rem', borderRadius: '8px' }}>
-              {PERIOD_LABELS.map(p => (
-                <button
-                  key={p}
-                  style={{
-                    background: period === p ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    color: period === p ? '#fff' : '#64748b',
-                    border: 'none', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
-                  }}
-                  onClick={() => setPeriod(p)}
-                >
-                  {p}
-                </button>
-              ))}
+              {PERIOD_LABELS.map(p => <button key={p} style={{ background: period === p ? 'rgba(255,255,255,0.1)' : 'transparent', color: period === p ? '#fff' : '#64748b', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }} onClick={() => setPeriod(p)}>{p}</button>)}
             </div>
           </div>
-          
-          <div style={{ height: 280, width: '100%', marginTop: '1rem' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="chart-grad-pf" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#2dd4bf" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="date" stroke="#475569" fontSize={11} tickLine={false} axisLine={false} minTickGap={30} />
-                <YAxis stroke="#475569" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => '$' + (val / 1000).toFixed(0) + 'k'} width={60} />
-                <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
-                <Area type="monotone" dataKey="value" stroke="#2dd4bf" strokeWidth={3} fill="url(#chart-grad-pf)" isAnimationActive={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          {hasSnapshotChart ? (
+            <div style={{ height: 280, width: '100%' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
+                  <defs><linearGradient id="chart-grad-pf" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.3} /><stop offset="95%" stopColor="#2dd4bf" stopOpacity={0} /></linearGradient></defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="date" stroke="#475569" fontSize={11} tickLine={false} axisLine={false} minTickGap={30} />
+                  <YAxis yAxisId="value" stroke="#475569" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `฿${(value / 1000).toFixed(0)}k`} width={62} />
+                  <YAxis yAxisId="fx" orientation="right" stroke="#facc15" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => value.toFixed(1)} width={42} />
+                  <Tooltip formatter={(value, name) => { const numericValue = Number(value); return String(name) === 'USD/THB' ? numericValue.toFixed(2) : '฿' + numericValue.toLocaleString('en-US', { maximumFractionDigits: 0 }); }} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+                  <Area yAxisId="value" type="monotone" name="Portfolio value" dataKey="valueThb" stroke="#2dd4bf" strokeWidth={3} fill="url(#chart-grad-pf)" isAnimationActive={false} />
+                  <Line yAxisId="fx" type="monotone" name="USD/THB" dataKey="fxRate" stroke="#facc15" strokeWidth={2} dot={false} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : latestSnapshot ? (
+            <div style={{ minHeight: 180, display: 'grid', placeItems: 'center', textAlign: 'center', border: '1px solid rgba(45,212,191,0.22)', borderRadius: 12, background: 'rgba(45,212,191,0.04)', padding: '1rem' }}>
+              <div>
+                <div style={{ color: '#94a3b8', fontSize: '0.82rem', marginBottom: '0.45rem' }}>RECORDED {latestSnapshot.date}</div>
+                <div style={{ color: '#2dd4bf', fontSize: '1.8rem', fontWeight: 700 }}>฿{latestSnapshot.valueThb.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                <div style={{ color: '#64748b', fontSize: '0.82rem', marginTop: '0.5rem' }}>USD/THB {latestSnapshot.fxRate.toFixed(2)} · One more daily record will unlock the trend chart.</div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ minHeight: 180, display: 'grid', placeItems: 'center', textAlign: 'center', border: '1px dashed rgba(148,163,184,0.2)', borderRadius: 12, color: '#64748b', fontSize: '0.88rem', padding: '1rem' }}>
+              ยังมีข้อมูลรายวันไม่พอสำหรับช่วงที่เลือก — ระบบจะแสดงกราฟเมื่อมีอย่างน้อย 2 วันที่บันทึกจริง และจะไม่สร้างเส้นกราฟย้อนหลังให้ดูเหมือนมีข้อมูล
+            </div>
+          )}
         </div>
-
         {/* Holdings Table */}
         <div className="pf-table-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
@@ -588,7 +595,7 @@ export default function Portfolio() {
               <thead>
                 <tr>
                   <th>Asset</th><th>Type</th><th>Quantity</th><th>Avg Cost</th>
-                  <th>Live Price</th><th>Total Value</th><th>P&amp;L</th><th>Actions</th>
+                  <th>Live Price</th><th>Total Value</th><th>FX P/L (THB)</th><th>P&amp;L</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -596,7 +603,7 @@ export default function Portfolio() {
                   <tr><td colSpan={8} style={{ textAlign: 'center', padding: '3rem', color: '#334155' }}>Loading…</td></tr>
                 ) : filtered.length > 0 ? (
                   filtered.map((h, i) => (
-                    <HoldingRow key={h.id} h={h} idx={i} livePrices={livePrices} onEdit={openEdit} onDelete={openDelete} onAddTx={openAddTx} />
+                    <HoldingRow key={h.id} h={h} idx={i} livePrices={livePrices} currentFx={fxRate} onEdit={openEdit} onDelete={openDelete} onAddTx={openAddTx} />
                   ))
                 ) : (
                   <tr>
@@ -672,6 +679,7 @@ export default function Portfolio() {
                 {txForm.quantity && txForm.price && (
                   <div className="pf-calc-preview">Total: {fmt(parseFloat(txForm.quantity) * parseFloat(txForm.price))}</div>
                 )}
+{txForm.type === 'BUY' && (selectedHolding?.type === 'stock' || selectedHolding?.type === 'etf') && <div className="pf-form-row"><label>FX Rate at Purchase (THB per USD)</label><input className="pf-input" type="number" min="0" step="0.0001" placeholder="e.g. 32.85" value={txForm.purchaseFxRate} onChange={e => setTxForm(f => ({ ...f, purchaseFxRate: e.target.value }))} /><small>Use the rate you actually paid; it drives average FX cost and FX P/L.</small></div>}
                 <div className="pf-form-row"><label>Fees (USD)</label><input className="pf-input" type="number" min="0" step="any" placeholder="0.00" value={txForm.fees} onChange={e => setTxForm(f => ({ ...f, fees: e.target.value }))} /></div>
                 <div className="pf-form-row"><label>Date *</label><input className="pf-input" type="date" value={txForm.date} onChange={e => setTxForm(f => ({ ...f, date: e.target.value }))} /></div>
                 <div className="pf-form-row"><label>Notes (optional)</label><input className="pf-input" placeholder="e.g. DCA buy" value={txForm.notes} onChange={e => setTxForm(f => ({ ...f, notes: e.target.value }))} /></div>

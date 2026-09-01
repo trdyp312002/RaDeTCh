@@ -36,6 +36,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
+  const cronSecret = process.env.CRON_SECRET?.trim()
+  if (cronSecret && req.headers.get("x-cron-secret") === cronSecret) {
+    return NextResponse.next()
+  }
+
   // Allow browser sessions using cookie (hashed password)
   const session = req.cookies.get("radetch_session")?.value
   if (session !== expected) {

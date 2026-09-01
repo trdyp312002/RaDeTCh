@@ -5,6 +5,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LineChart, Line,
 } from "recharts"
+import CurrencyImpactPanel from "./CurrencyImpactPanel"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,6 +118,7 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
   const [txQty, setTxQty] = useState("")
   const [txPrice, setTxPrice] = useState("")
   const [txFees, setTxFees] = useState("0")
+  const [txFxRate, setTxFxRate] = useState("")
   const [txDate, setTxDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [txNotes, setTxNotes] = useState("")
   const [addingTx, setAddingTx] = useState(false)
@@ -283,11 +285,11 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
         body: JSON.stringify({
           holdingId, type: txType,
           quantity: parseFloat(txQty), price: parseFloat(txPrice),
-          fees: parseFloat(txFees) || 0, date: txDate, notes: txNotes || null,
+          fees: parseFloat(txFees) || 0, purchaseFxRate: txFxRate ? parseFloat(txFxRate) : undefined, date: txDate, notes: txNotes || null,
         }),
       })
       if (!res.ok) return
-      setTxQty(""); setTxPrice(""); setTxFees("0"); setTxNotes(""); setTxHoldingId(null)
+      setTxQty(""); setTxPrice(""); setTxFees("0"); setTxFxRate(""); setTxNotes(""); setTxHoldingId(null)
       await fetchHoldings()
     } catch (e) { console.error(e) }
     finally { setAddingTx(false) }
@@ -295,7 +297,7 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
 
   const openTxForm = (holdingId: string) => {
     setTxHoldingId(holdingId)
-    setTxType("BUY"); setTxQty(""); setTxPrice(""); setTxFees("0"); setTxNotes("")
+    setTxType("BUY"); setTxQty(""); setTxPrice(""); setTxFees("0"); setTxFxRate(""); setTxNotes("")
     setTxDate(new Date().toISOString().slice(0, 10))
   }
 
@@ -398,6 +400,8 @@ export default function PortfolioTab({ portfolio, displayCurrency, fxRates }: Pr
           </div>
         )}
       </div>
+
+      <CurrencyImpactPanel holdings={holdings} currentFx={thbRate} />
 
       {/* ── Add Holding Form ── */}
       {showAddHolding && (
